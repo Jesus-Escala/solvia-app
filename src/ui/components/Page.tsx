@@ -1,0 +1,57 @@
+import type { ReactNode } from 'react';
+import { cx } from './cx';
+
+/**
+ * Page wrapper inside the app shell.
+ *
+ * - `fill`: the page takes exactly the available height (no page scroll) and its last child
+ *   (usually a DataTable) grows to fill the rest, scrolling internally. This mirrors the
+ *   "table takes the remaining page height" behavior of the TSI component library.
+ * - default: normal flowing content; the shell's content area scrolls.
+ */
+export function Page({
+  children,
+  fill = false,
+  className,
+}: {
+  children: ReactNode;
+  fill?: boolean;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cx(
+        'animate-page-in mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-8',
+        // min-h keeps tables usable on very short viewports; the shell scrolls in that case.
+        fill && 'flex h-full min-h-[560px] flex-col gap-4',
+        !fill && 'space-y-5',
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function PageHeader({
+  title,
+  description,
+  actions,
+  eyebrow,
+}: {
+  title: ReactNode;
+  description?: ReactNode;
+  actions?: ReactNode;
+  eyebrow?: ReactNode;
+}) {
+  return (
+    <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0">
+        {eyebrow && <div className="mb-1 text-xs font-medium text-muted">{eyebrow}</div>}
+        <h1 className="text-xl font-semibold tracking-tight text-ink sm:text-2xl">{title}</h1>
+        {description && <div className="mt-1 text-sm text-muted">{description}</div>}
+      </div>
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+    </div>
+  );
+}

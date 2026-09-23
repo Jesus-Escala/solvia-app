@@ -1,0 +1,435 @@
+/*
+ * Solvia design system: tokens (light/dark), base styles and shared animations.
+ * Apps import it right after Tailwind:  @import 'tailwindcss'; @import './ui/styles.css';
+ */
+@import '@fontsource-variable/inter';
+
+/* Dark mode follows the data-theme attribute set by ThemeProvider (light | dark), not the OS directly. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/*
+ * Semantic design tokens. Components only use these names (bg-surface, text-muted, border-line...),
+ * so a theme is just a different set of values below.
+ */
+@theme inline {
+  --font-sans:
+    'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-ink: var(--primary-ink);
+  --color-on-primary: var(--on-primary);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-ink: var(--success-ink);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-ink: var(--warning-ink);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-ink: var(--danger-ink);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-ink: var(--info-ink);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+
+  --shadow-card: var(--shadow-card);
+  --shadow-pop: var(--shadow-pop);
+}
+
+:root,
+[data-theme='light'] {
+  --canvas: #f4f6f9;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --surface-3: #eef2f6;
+  --line: #e4e8ee;
+  --line-strong: #cfd6df;
+  --ink: #0f172a;
+  --muted: #5b6475;
+  --subtle: #8a93a3;
+
+  --primary: #0f766e;
+  --primary-hover: #115e59;
+  --primary-soft: #e6f4f2;
+  --primary-ink: #0b5a54;
+  --on-primary: #ffffff;
+
+  /* Status colors (validated data-viz status palette); always paired with a label or icon. */
+  --success: #0ca30c;
+  --success-soft: #e8f6e8;
+  --success-ink: #0a6b0a;
+  --warning: #fab219;
+  --warning-soft: #fdf3dc;
+  --warning-ink: #8a5a00;
+  --danger: #d03b3b;
+  --danger-soft: #fbe9e9;
+  --danger-ink: #a52a2a;
+  --info: #2a78d6;
+  --info-soft: #e7f0fb;
+  --info-ink: #1c5cab;
+
+  /* Categorical chart slots (validated order). */
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-grid: #e7e6e2;
+  --chart-axis: #52514e;
+  --chart-neutral: #64748b;
+
+  /* Receivables aging: validated single-hue ordinal ramp, current (lightest) -> 90+ days (darkest). */
+  --aging-0: #86b6ef;
+  --aging-1: #5598e7;
+  --aging-2: #2a78d6;
+  --aging-3: #1c5cab;
+  --aging-4: #0d366b;
+
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.06);
+  --shadow-pop: 0 12px 32px -8px rgb(15 23 42 / 0.18), 0 4px 12px -4px rgb(15 23 42 / 0.08);
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --canvas: #0b0f14;
+  --surface: #12171e;
+  --surface-2: #171d25;
+  --surface-3: #1e252f;
+  --line: #242c37;
+  --line-strong: #323c49;
+  --ink: #e8edf3;
+  --muted: #a3adbb;
+  --subtle: #748091;
+
+  --primary: #2bb3a3;
+  --primary-hover: #3fc6b6;
+  --primary-soft: #0f2d2a;
+  --primary-ink: #7fded2;
+  --on-primary: #04211e;
+
+  --success: #0ca30c;
+  --success-soft: #0f2a12;
+  --success-ink: #7fd67f;
+  --warning: #fab219;
+  --warning-soft: #2e2410;
+  --warning-ink: #f7cc6b;
+  --danger: #d03b3b;
+  --danger-soft: #331617;
+  --danger-ink: #f19a9a;
+  --info: #3987e5;
+  --info-soft: #132338;
+  --info-ink: #9cc4f3;
+
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-grid: #2a2f37;
+  --chart-axis: #c3c2b7;
+  --chart-neutral: #8a96a8;
+
+  /* On dark, the least severe step sits closest to the surface. */
+  --aging-0: #184f95;
+  --aging-1: #256abf;
+  --aging-2: #3987e5;
+  --aging-3: #6da7ec;
+  --aging-4: #9ec5f4;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-pop: 0 16px 40px -8px rgb(0 0 0 / 0.6);
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-canvas font-sans text-ink antialiased;
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+/* Thin, theme-aware scrollbars (tables scroll internally). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+::selection {
+  background: var(--primary-soft);
+  color: var(--primary-ink);
+}
+
+@layer components {
+  .input {
+    @apply block w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink shadow-xs transition placeholder:text-subtle focus:border-primary focus:ring-3 focus:ring-primary/15 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-ink;
+  }
+}
+
+/* Auth page: slowly drifting aurora blobs. */
+@keyframes auth-blob {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(40px, -30px) scale(1.08);
+  }
+  66% {
+    transform: translate(-30px, 25px) scale(0.95);
+  }
+}
+
+.auth-blob {
+  animation: auth-blob 18s ease-in-out infinite;
+}
+
+/* Feature bubbles on the auth page: a slow, looping drift (duration/delay set inline). */
+@keyframes auth-bubble {
+  0%,
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  25% {
+    translate: 6px -12px;
+    rotate: 0.6deg;
+  }
+  50% {
+    translate: -4px -20px;
+    rotate: -0.4deg;
+  }
+  75% {
+    translate: -8px -8px;
+    rotate: 0.3deg;
+  }
+}
+
+.auth-bubble {
+  animation: auth-bubble 10s ease-in-out infinite;
+}
+
+/* Soli the owl: periodic blink and waving wing. */
+@keyframes mascot-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes mascot-wave {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(16deg);
+  }
+}
+
+.mascot-blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mascot-blink 4.8s ease-in-out infinite;
+}
+
+.mascot-wave {
+  animation: mascot-wave 0.9s ease-in-out infinite;
+}
+
+@keyframes table-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+
+/*
+ * Motion system shared by every Solvia app. Enter animations are short (200-400ms) with an
+ * ease-out curve; exits are faster with an ease-in curve. Reduced motion disables them (below).
+ */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+}
+
+@keyframes pop-out {
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes sheet-out {
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.95);
+  }
+}
+
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateX(24px) scale(0.97);
+  }
+}
+
+/* Route content: every page fades and rises in when it mounts. */
+.animate-page-in {
+  animation: page-in 360ms var(--ease-out) both;
+}
+
+.animate-fade-in {
+  animation: fade-in 240ms var(--ease-out) both;
+}
+
+.animate-pop-in {
+  animation: pop-in 180ms var(--ease-out) both;
+  transform-origin: top center;
+}
+
+/* Children appear one after another (KPI rows, card grids). */
+.stagger-in > * {
+  animation: page-in 420ms var(--ease-out) both;
+}
+.stagger-in > :nth-child(2) {
+  animation-delay: 40ms;
+}
+.stagger-in > :nth-child(3) {
+  animation-delay: 80ms;
+}
+.stagger-in > :nth-child(4) {
+  animation-delay: 120ms;
+}
+.stagger-in > :nth-child(5) {
+  animation-delay: 160ms;
+}
+.stagger-in > :nth-child(n + 6) {
+  animation-delay: 200ms;
+}
+
+/* Modal (native <dialog>): pops in on desktop, slides up as a bottom sheet on phones. */
+.modal[data-state='open'] {
+  animation: pop-in 260ms var(--ease-out) both;
+}
+.modal[data-state='open']::backdrop {
+  animation: fade-in 260ms var(--ease-out) both;
+}
+.modal[data-state='closing'] {
+  animation: pop-out 170ms var(--ease-in) both;
+}
+.modal[data-state='closing']::backdrop {
+  animation: fade-out 170ms var(--ease-in) both;
+}
+@media (max-width: 639px) {
+  .modal[data-state='open'] {
+    animation: sheet-in 320ms var(--ease-out) both;
+  }
+  .modal[data-state='closing'] {
+    animation: sheet-out 220ms var(--ease-in) both;
+  }
+}
+
+.toast[data-state='open'] {
+  animation: toast-in 320ms var(--ease-out) both;
+}
+.toast[data-state='closing'] {
+  animation: toast-out 180ms var(--ease-in) both;
+}
+
+/* Scroll reveal (see <Reveal>): content rises in the first time it enters the viewport. */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 600ms var(--ease-out),
+    transform 600ms var(--ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}

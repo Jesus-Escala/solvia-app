@@ -1,0 +1,501 @@
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Columns3 } from 'lucide-react';
+import { useMemo, useState, type HTMLAttributes, type ReactNode } from 'react';
+import { useUiI18n } from '../i18n/context';
+import { IconButton } from './Button';
+import { cx } from './cx';
+import { EmptyState, Skeleton } from './Feedback';
+import { Popover } from './Overlays';
+
+export interface DataTableColumn<T> {
+  id: string;
+  header: string;
+  cell: (row: T) => ReactNode;
+  align?: 'left' | 'right' | 'center';
+  /** Minimum column width in px (the table scrolls horizontally when needed). */
+  minWidth?: number;
+  sortable?: boolean;
+  /** Can the user hide this column from the columns menu? Default: true. */
+  hideable?: boolean;
+  defaultHidden?: boolean;
+  /** How the column appears in the mobile card view. Default: 'field' (label + value). */
+  mobile?: 'title' | 'subtitle' | 'aside' | 'field' | 'hidden';
+  className?: string;
+}
+
+export interface DataTableSort {
+  id: string;
+  dir: 'asc' | 'desc';
+}
+
+export interface DataTablePagination {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+  pageSizeOptions?: number[];
+}
+
+export interface DataTableProps<T> extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
+  columns: Array<DataTableColumn<T>>;
+  rows: T[] | undefined;
+  rowKey: (row: T) => string;
+  /** First load: shows skeleton rows. */
+  loading?: boolean;
+  /** Background refetch: shows a thin progress bar and keeps the current rows. */
+  fetching?: boolean;
+  /** Rendered above the rows (e.g. an <Alert>) when the query failed. */
+  error?: ReactNode;
+  empty?: { title: string; description?: string; action?: ReactNode };
+  onRowClick?: (row: T) => void;
+  rowActions?: (row: T) => ReactNode;
+  sort?: DataTableSort;
+  onSortChange?: (sort: DataTableSort) => void;
+  pagination?: DataTablePagination;
+  /** Left side of the toolbar (filters, search). */
+  toolbar?: ReactNode;
+  /** Right side of the toolbar (extra buttons). */
+  toolbarEnd?: ReactNode;
+  /** Persist column visibility in localStorage under this key. */
+  columnsStorageKey?: string;
+  /**
+   * `true` (default): the table is as tall as its rows need, but never taller than the space left
+   * in its flex parent; beyond that only its body scrolls, so the page itself never scrolls.
+   * `false`: natural height up to `maxHeight` px (for tables embedded in scrolling pages).
+   */
+  fill?: boolean;
+  maxHeight?: number;
+  rowClassName?: (row: T) => string | undefined;
+  caption?: string;
+}
+
+const SKELETON_ROWS = 8;
+
+function readHidden(
+  key: string | undefined,
+  columns: Array<DataTableColumn<unknown>>,
+): Set<string> {
+  const defaults = new Set(
+    columns.filter((column) => column.defaultHidden).map((column) => column.id),
+  );
+  if (!key) return defaults;
+  try {
+    const stored = localStorage.getItem(`solvia.table.${key}`);
+    if (stored) return new Set(JSON.parse(stored) as string[]);
+  } catch {
+    // Ignore corrupt or unavailable storage.
+  }
+  return defaults;
+}
+
+function alignClass(align: DataTableColumn<unknown>['align']) {
+  return align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left';
+}
+
+/**
+ * Reusable data table: sticky header, internal scroll, server-driven sorting and pagination,
+ * column visibility, loading/empty states and a card layout on small screens.
+ */
+export function DataTable<T>({
+  columns,
+  rows,
+  rowKey,
+  loading = false,
+  fetching = false,
+  error,
+  empty,
+  onRowClick,
+  rowActions,
+  sort,
+  onSortChange,
+  pagination,
+  toolbar,
+  toolbarEnd,
+  columnsStorageKey,
+  fill = true,
+  maxHeight = 480,
+  rowClassName,
+  caption,
+  className,
+  ...rest
+}: DataTableProps<T>) {
+  const { t, fmt } = useUiI18n();
+  const [hidden, setHidden] = useState(() =>
+    readHidden(columnsStorageKey, columns as Array<DataTableColumn<unknown>>),
+  );
+
+  const visibleColumns = useMemo(
+    () => columns.filter((column) => !hidden.has(column.id)),
+    [columns, hidden],
+  );
+  const hideableColumns = columns.filter((column) => column.hideable !== false);
+  const showSkeleton = loading && !rows;
+  const isEmpty = !showSkeleton && rows !== undefined && rows.length === 0;
+
+  const toggleColumn = (id: string) => {
+    setHidden((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      if (columnsStorageKey) {
+        try {
+          localStorage.setItem(`solvia.table.${columnsStorageKey}`, JSON.stringify([...next]));
+        } catch {
+          // Not persisted.
+        }
+      }
+      return next;
+    });
+  };
+
+  const resetColumns = () => {
+    if (columnsStorageKey) {
+      try {
+        localStorage.removeItem(`solvia.table.${columnsStorageKey}`);
+      } catch {
+        // Ignore.
+      }
+    }
+    setHidden(new Set(columns.filter((column) => column.defaultHidden).map((column) => column.id)));
+  };
+
+  const onHeaderClick = (column: DataTableColumn<T>) => {
+    if (!column.sortable || !onSortChange) return;
+    onSortChange({
+      id: column.id,
+      dir: sort?.id === column.id && sort.dir === 'asc' ? 'desc' : 'asc',
+    });
+  };
+
+  const columnsMenu =
+    hideableColumns.length > 1 ? (
+      <Popover
+        width={240}
+        trigger={({ toggle, ref }) => (
+          <IconButton
+            ref={ref}
+            label={t('table.columns')}
+            variant="secondary"
+            size="sm"
+            onClick={toggle}
+          >
+            <Columns3 className="h-4 w-4" />
+          </IconButton>
+        )}
+      >
+        {() => (
+          <div className="space-y-0.5">
+            <p className="px-2.5 pt-1 pb-1.5 text-xs font-semibold text-muted">
+              {t('table.columns')}
+            </p>
+            {hideableColumns.map((column) => (
+              <label
+                key={column.id}
+                className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-surface-3"
+              >
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-[var(--primary)]"
+                  checked={!hidden.has(column.id)}
+                  onChange={() => toggleColumn(column.id)}
+                />
+                {column.header}
+              </label>
+            ))}
+            <button
+              type="button"
+              onClick={resetColumns}
+              className="mt-1 w-full rounded-lg px-2.5 py-1.5 text-left text-xs text-primary-ink hover:bg-surface-3"
+            >
+              {t('table.resetColumns')}
+            </button>
+          </div>
+        )}
+      </Popover>
+    ) : null;
+
+  const hasToolbar = Boolean(toolbar || toolbarEnd || columnsMenu);
+  const titleColumn = columns.find((column) => column.mobile === 'title') ?? visibleColumns[0];
+  const subtitleColumns = visibleColumns.filter((column) => column.mobile === 'subtitle');
+  const asideColumns = visibleColumns.filter((column) => column.mobile === 'aside');
+  const fieldColumns = visibleColumns.filter(
+    (column) => column !== titleColumn && (column.mobile ?? 'field') === 'field',
+  );
+
+  const firstRow = pagination ? (pagination.page - 1) * pagination.pageSize + 1 : 1;
+  const lastRow = pagination
+    ? Math.min(pagination.total, pagination.page * pagination.pageSize)
+    : 0;
+
+  return (
+    <section
+      className={cx(
+        'flex min-w-0 flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-card',
+        // flex: 0 1 auto -> content height, shrinking to the available space (then scrolls).
+        fill && 'min-h-0 max-h-full shrink',
+        className,
+      )}
+      {...rest}
+    >
+      {hasToolbar && (
+        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-line px-4 py-3">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">{toolbar}</div>
+          <div className="flex items-center gap-2">
+            {toolbarEnd}
+            {columnsMenu}
+          </div>
+        </div>
+      )}
+
+      <div
+        className={cx('relative min-h-0 shrink overflow-auto', fill && 'min-h-40')}
+        style={fill ? undefined : { maxHeight }}
+        aria-busy={loading || fetching}
+      >
+        {fetching && !showSkeleton && (
+          <div className="sticky top-0 z-20 h-0.5 w-full overflow-hidden bg-primary-soft">
+            <div className="h-full w-1/3 animate-[table-progress_1.1s_ease-in-out_infinite] bg-primary" />
+          </div>
+        )}
+        {error && <div className="p-4">{error}</div>}
+
+        {/* Desktop: table */}
+        <table className="hidden w-full border-separate border-spacing-0 text-sm md:table">
+          {caption && <caption className="sr-only">{caption}</caption>}
+          <thead>
+            <tr>
+              {visibleColumns.map((column) => {
+                const active = sort?.id === column.id;
+                const sortable = column.sortable && onSortChange;
+                return (
+                  <th
+                    key={column.id}
+                    scope="col"
+                    style={{ minWidth: column.minWidth }}
+                    aria-sort={
+                      active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined
+                    }
+                    className={cx(
+                      'sticky top-0 z-10 border-b border-line bg-surface-2 px-4 py-2.5 text-[11px] font-semibold tracking-wide whitespace-nowrap text-muted uppercase',
+                      alignClass(column.align),
+                    )}
+                  >
+                    {sortable ? (
+                      <button
+                        type="button"
+                        onClick={() => onHeaderClick(column)}
+                        title={t('table.sortBy', { column: column.header })}
+                        className={cx(
+                          'inline-flex items-center gap-1 uppercase transition hover:text-ink',
+                          column.align === 'right' && 'flex-row-reverse',
+                          active && 'text-ink',
+                        )}
+                      >
+                        {column.header}
+                        {active ? (
+                          sort.dir === 'asc' ? (
+                            <ArrowUp className="h-3 w-3" />
+                          ) : (
+                            <ArrowDown className="h-3 w-3" />
+                          )
+                        ) : (
+                          <ArrowUpDown className="h-3 w-3 opacity-40" />
+                        )}
+                      </button>
+                    ) : (
+                      column.header
+                    )}
+                  </th>
+                );
+              })}
+              {rowActions && (
+                <th
+                  scope="col"
+                  className="sticky top-0 z-10 w-px border-b border-line bg-surface-2 px-4 py-2.5"
+                >
+                  <span className="sr-only">{t('table.actions')}</span>
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {showSkeleton &&
+              Array.from({ length: SKELETON_ROWS }, (_, index) => (
+                <tr key={index}>
+                  {visibleColumns.map((column) => (
+                    <td key={column.id} className="border-b border-line px-4 py-3">
+                      <Skeleton
+                        className={cx('h-4', column.align === 'right' ? 'ml-auto w-16' : 'w-3/4')}
+                      />
+                    </td>
+                  ))}
+                  {rowActions && <td className="border-b border-line px-4 py-3" />}
+                </tr>
+              ))}
+            {rows?.map((row) => (
+              <tr
+                key={rowKey(row)}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                onKeyDown={
+                  onRowClick
+                    ? (event) => {
+                        if (event.key === 'Enter' && event.target === event.currentTarget)
+                          onRowClick(row);
+                      }
+                    : undefined
+                }
+                tabIndex={onRowClick ? 0 : undefined}
+                className={cx(
+                  'group transition-colors even:bg-surface-2/60 hover:bg-primary-soft/40 focus-visible:bg-primary-soft/50 focus-visible:outline-none',
+                  onRowClick && 'cursor-pointer',
+                  rowClassName?.(row),
+                )}
+              >
+                {visibleColumns.map((column) => (
+                  <td
+                    key={column.id}
+                    className={cx(
+                      'h-12 border-b border-line px-4 py-2 align-middle',
+                      alignClass(column.align),
+                      column.align === 'right' && 'tabular-nums',
+                      column.className,
+                    )}
+                  >
+                    {column.cell(row)}
+                  </td>
+                ))}
+                {rowActions && (
+                  <td
+                    className="border-b border-line px-3 py-2 text-right"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-end gap-1">{rowActions(row)}</div>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Mobile: cards */}
+        <ul className="space-y-2.5 bg-surface-2 p-2.5 empty:hidden md:hidden">
+          {showSkeleton &&
+            Array.from({ length: 5 }, (_, index) => (
+              <li key={index} className="space-y-2 rounded-xl border border-line bg-surface p-4">
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-3 w-1/2" />
+              </li>
+            ))}
+          {rows?.map((row) => (
+            <li
+              key={rowKey(row)}
+              className={cx(
+                'rounded-xl border border-line bg-surface p-4 shadow-xs transition',
+                onRowClick && 'cursor-pointer active:scale-[0.99] active:bg-surface-2',
+              )}
+              onClick={onRowClick ? () => onRowClick(row) : undefined}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  {titleColumn && <div className="font-medium">{titleColumn.cell(row)}</div>}
+                  {subtitleColumns.map((column) => (
+                    <div key={column.id} className="mt-0.5 text-xs text-muted">
+                      {column.cell(row)}
+                    </div>
+                  ))}
+                </div>
+                {asideColumns.length > 0 && (
+                  <div className="flex shrink-0 flex-col items-end gap-1 text-right">
+                    {asideColumns.map((column) => (
+                      <div key={column.id}>{column.cell(row)}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {fieldColumns.length > 0 && (
+                <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 rounded-lg bg-surface-2 px-3 py-2.5 text-sm">
+                  {fieldColumns.map((column) => (
+                    <div key={column.id} className="min-w-0">
+                      <dt className="text-[11px] tracking-wide text-subtle uppercase">
+                        {column.header}
+                      </dt>
+                      <dd className="truncate">{column.cell(row)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+              {rowActions && (
+                <div
+                  className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-line pt-3"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  {rowActions(row)}
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+
+        {isEmpty && (
+          <EmptyState
+            title={empty?.title ?? t('table.empty')}
+            description={empty?.description}
+            action={empty?.action}
+          />
+        )}
+      </div>
+
+      {pagination && pagination.total > 0 && (
+        <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-line bg-surface px-4 py-2.5 text-xs text-muted">
+          <span className="tabular-nums">
+            {t('table.range', {
+              from: fmt.number(firstRow),
+              to: fmt.number(lastRow),
+              total: fmt.number(pagination.total),
+            })}
+          </span>
+          <div className="flex items-center gap-3">
+            {pagination.onPageSizeChange && (
+              <label className="flex items-center gap-2">
+                {t('table.rowsPerPage')}
+                <select
+                  className="rounded-md border border-line bg-surface px-1.5 py-1 text-xs text-ink"
+                  value={pagination.pageSize}
+                  onChange={(event) => pagination.onPageSizeChange?.(Number(event.target.value))}
+                >
+                  {(pagination.pageSizeOptions ?? [10, 20, 50, 100]).map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <div className="flex items-center gap-1">
+              <IconButton
+                size="sm"
+                label={t('table.previous')}
+                disabled={pagination.page <= 1}
+                onClick={() => pagination.onPageChange(pagination.page - 1)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </IconButton>
+              <span className="min-w-12 text-center tabular-nums">
+                {pagination.page} / {pagination.totalPages}
+              </span>
+              <IconButton
+                size="sm"
+                label={t('table.next')}
+                disabled={pagination.page >= pagination.totalPages}
+                onClick={() => pagination.onPageChange(pagination.page + 1)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </IconButton>
+            </div>
+          </div>
+        </footer>
+      )}
+    </section>
+  );
+}

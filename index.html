@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <meta name="theme-color" content="#0f766e" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Solvia" />
+    <script>
+      // Keep the "install app" prompt for the in-app install button (see src/ui/pwa).
+      window.addEventListener('beforeinstallprompt', function (event) {
+        event.preventDefault();
+        window.__pwaPrompt = event;
+      });
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Solvia - gestión de créditos y cobranzas para pequeñas empresas"
+    />
+    <title>Solvia</title>
+    <script>
+      // Apply the saved theme before first paint to avoid a light/dark flash (see src/ui/theme/ThemeProvider.tsx).
+      (function () {
+        var preference = 'system';
+        try {
+          preference = localStorage.getItem('solvia.theme') || 'system';
+        } catch (e) {}
+        var dark =
+          preference === 'dark' ||
+          (preference === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

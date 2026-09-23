@@ -1,0 +1,49 @@
+# nginx for this single-page app: SPA fallback + proxy of /api (and /files) to the Solvia API.
+# API_UPSTREAM (e.g. http://backend:4000) is substituted by the nginx image at container start.
+server {
+  listen 80;
+  server_name _;
+  root /usr/share/nginx/html;
+  index index.html;
+
+  client_max_body_size 10m;
+
+  # API and uploaded/generated files are proxied to the backend (same origin for the browser).
+  location /api/ {
+    proxy_pass ${API_UPSTREAM};
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  location /files/ {
+    proxy_pass ${API_UPSTREAM};
+  }
+
+  # Installable app (PWA): the service worker and manifest must always be revalidated so a new
+  # deployment is detected; everything else under /assets is fingerprinted.
+  location = /sw.js {
+    add_header Cache-Control "no-cache";
+    try_files $uri =404;
+  }
+
+  location = /manifest.webmanifest {
+    add_header Cache-Control "no-cache";
+    default_type application/manifest+json;
+    try_files $uri =404;
+  }
+
+  # Long-term caching for fingerprinted assets.
+  location /assets/ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+    try_files $uri =404;
+  }
+
+  # Single-page application fallback.
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+}
