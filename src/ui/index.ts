@@ -4,7 +4,6 @@
  */
 
 // UI kit
-export { ActivityBar } from './components/ActivityBar';
 export { Button, IconButton, type ButtonProps, type ButtonVariant } from './components/Button';
 export { cx } from './components/cx';
 export {
@@ -26,6 +25,7 @@ export {
   type TabItem,
 } from './components/Form';
 export { IndustrySelect } from './components/IndustrySelect';
+export { LoadingOverlay, LoadingPill } from './components/LoadingOverlay';
 export { KpiCard, KpiRow, type KpiCardProps } from './components/KpiCard';
 export { Modal, type ModalProps } from './components/Modal';
 export {

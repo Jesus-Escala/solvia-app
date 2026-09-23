@@ -62,7 +62,8 @@ export function CustomerDetailPage() {
   const errors = useErrorText();
   const { isAdmin } = useAuth();
   const { toast, confirm } = useFeedback();
-  const { data: customer, isLoading, error } = useCustomer(id);
+  const { data: customer, isLoading, isFetching, error } = useCustomer(id);
+  const refreshing = isFetching && !isLoading;
   const [tab, setTab] = useState<TabKey>('receivables');
   const [editing, setEditing] = useState(false);
   const [addingReceivable, setAddingReceivable] = useState(false);
@@ -314,6 +315,7 @@ export function CustomerDetailPage() {
 
         <KpiRow>
           <KpiCard
+            fetching={refreshing}
             label={t('customerDetail.kpi.outstanding')}
             value={fmt.money(customer.summary.totalOutstanding)}
             hint={t('customerDetail.kpi.outstandingHint', {
@@ -322,6 +324,7 @@ export function CustomerDetailPage() {
             icon={<Wallet />}
           />
           <KpiCard
+            fetching={refreshing}
             label={t('customerDetail.kpi.paid')}
             value={fmt.money(customer.summary.totalPaid)}
             tone="success"
@@ -336,6 +339,7 @@ export function CustomerDetailPage() {
             icon={<HandCoins />}
           />
           <KpiCard
+            fetching={refreshing}
             label={t('customerDetail.kpi.onTime')}
             value={metrics.onTimeRate === null ? '—' : fmt.percent(metrics.onTimeRate)}
             gauge={metrics.onTimeRate ?? undefined}
@@ -348,6 +352,7 @@ export function CustomerDetailPage() {
             icon={<CheckCircle2 />}
           />
           <KpiCard
+            fetching={refreshing}
             label={t('customerDetail.kpi.avgLate')}
             value={t('customerDetail.kpi.avgLateValue', {
               days: fmt.number(metrics.averageDaysOverdue),

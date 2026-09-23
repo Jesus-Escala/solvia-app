@@ -110,7 +110,15 @@ function DashboardHeader({
   );
 }
 
-function Kpis({ summary, loading }: { summary?: DashboardSummary; loading: boolean }) {
+function Kpis({
+  summary,
+  loading,
+  fetching,
+}: {
+  summary?: DashboardSummary;
+  loading: boolean;
+  fetching: boolean;
+}) {
   const { t, fmt } = useI18n();
   if (loading || !summary) {
     return (
@@ -132,12 +140,14 @@ function Kpis({ summary, loading }: { summary?: DashboardSummary; loading: boole
   return (
     <KpiRow data-tour="kpis">
       <KpiCard
+        fetching={fetching}
         label={t('dashboard.kpi.outstanding')}
         value={fmt.money(totals.outstanding)}
         hint={t('dashboard.kpi.outstandingHint', { count: openCount })}
         icon={<Wallet />}
       />
       <KpiCard
+        fetching={fetching}
         label={t('dashboard.kpi.overdue')}
         value={fmt.money(totals.overdue)}
         tone={totals.overdue > 0 ? 'danger' : 'default'}
@@ -149,6 +159,7 @@ function Kpis({ summary, loading }: { summary?: DashboardSummary; loading: boole
         icon={<AlertTriangle />}
       />
       <KpiCard
+        fetching={fetching}
         label={t('dashboard.kpi.collectedMonth')}
         value={fmt.money(totals.collectedThisMonth)}
         tone="success"
@@ -158,6 +169,7 @@ function Kpis({ summary, loading }: { summary?: DashboardSummary; loading: boole
         icon={<HandCoins />}
       />
       <KpiCard
+        fetching={fetching}
         label={t('dashboard.kpi.dueSoon')}
         value={fmt.money(totals.dueNext7Days.amount)}
         tone="warning"
@@ -165,6 +177,7 @@ function Kpis({ summary, loading }: { summary?: DashboardSummary; loading: boole
         icon={<CalendarClock />}
       />
       <KpiCard
+        fetching={fetching}
         label={t('dashboard.kpi.highRisk')}
         value={fmt.number(riskDistribution.high)}
         tone={riskDistribution.high > 0 ? 'danger' : 'default'}
@@ -173,6 +186,7 @@ function Kpis({ summary, loading }: { summary?: DashboardSummary; loading: boole
         icon={<ShieldAlert />}
       />
       <KpiCard
+        fetching={fetching}
         label={t('dashboard.kpi.collectedAll')}
         value={fmt.money(totals.collectedAllTime)}
         hint={t('dashboard.kpi.collectedAllHint', { count: byStatus.paid.count })}
@@ -187,12 +201,13 @@ function CashFlowCard() {
   const [groupBy, setGroupBy] = useState<'week' | 'month'>('week');
   const [view, setView] = useState<'chart' | 'table'>('chart');
   const periods = groupBy === 'week' ? 8 : 6;
-  const { data, isLoading } = useCashFlow(groupBy, periods);
+  const { data, isLoading, isFetching } = useCashFlow(groupBy, periods);
   const expected = data?.buckets.reduce((sum, bucket) => sum + bucket.amount, 0) ?? 0;
 
   return (
     <Card
       data-tour="cash-flow"
+      loading={isFetching && !isLoading}
       className="lg:col-span-8"
       title={t('dashboard.cashFlow.title')}
       subtitle={t('dashboard.cashFlow.subtitle')}
@@ -339,6 +354,8 @@ export function DashboardPage() {
   const summary = useDashboardSummary();
   const cashFlowRefresh = useCashFlow('week', 8);
   const data = summary.data;
+  // Background refresh (after saving something, or the refresh button): shown on each card.
+  const refreshing = summary.isFetching && !summary.isLoading;
 
   const alertColumns: Array<DataTableColumn<DashboardSummary['overdueAlerts'][number]>> = [
     {
@@ -392,10 +409,11 @@ export function DashboardPage() {
 
       {summary.error && <Alert tone="danger">{errors.message(summary.error)}</Alert>}
 
-      <Kpis summary={data} loading={summary.isLoading} />
+      <Kpis summary={data} loading={summary.isLoading} fetching={refreshing} />
 
       <div className="grid gap-4 lg:grid-cols-12">
         <Card
+          loading={refreshing}
           className="lg:col-span-8"
           title={t('dashboard.trend.title')}
           subtitle={t('dashboard.trend.subtitle')}
@@ -407,6 +425,7 @@ export function DashboardPage() {
           )}
         </Card>
         <Card
+          loading={refreshing}
           className="lg:col-span-4"
           title={t('dashboard.statusMix.title')}
           subtitle={t('dashboard.statusMix.subtitle')}
@@ -433,6 +452,7 @@ export function DashboardPage() {
       <div className="grid gap-4 lg:grid-cols-12">
         <CashFlowCard />
         <Card
+          loading={refreshing}
           data-tour="debtors"
           className="lg:col-span-4"
           title={t('dashboard.debtors.title')}
@@ -461,6 +481,7 @@ export function DashboardPage() {
 
       <div className="grid gap-4 lg:grid-cols-12">
         <Card
+          loading={refreshing}
           className="lg:col-span-7"
           title={t('dashboard.aging.title')}
           subtitle={t('dashboard.aging.subtitle')}

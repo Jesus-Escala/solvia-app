@@ -5,6 +5,7 @@ import { useUiI18n } from '../i18n/context';
 import { IconButton } from './Button';
 import { cx } from './cx';
 import { EmptyState, Skeleton } from './Feedback';
+import { LoadingPill } from './LoadingOverlay';
 import { Popover } from './Overlays';
 
 export interface DataTableColumn<T> {
@@ -257,8 +258,11 @@ export function DataTable<T>({
         aria-busy={showSkeleton || showFetching}
       >
         {showFetching && !showSkeleton && (
-          <div className="sticky top-0 z-20 h-1 w-full overflow-hidden bg-primary-soft">
-            <div className="h-full w-1/3 animate-[table-progress_1.1s_ease-in-out_infinite] bg-primary" />
+          <div className="sticky top-0 z-20 h-0">
+            <div className="h-1 w-full overflow-hidden bg-primary-soft">
+              <div className="h-full w-1/3 animate-[table-progress_1.1s_ease-in-out_infinite] bg-primary" />
+            </div>
+            <LoadingPill className="absolute top-14 left-1/2 -translate-x-1/2" />
           </div>
         )}
         {error && <div className="p-4">{error}</div>}
@@ -322,7 +326,12 @@ export function DataTable<T>({
               )}
             </tr>
           </thead>
-          <tbody>
+          <tbody
+            className={cx(
+              'transition-opacity duration-200',
+              showFetching && !showSkeleton && 'opacity-40',
+            )}
+          >
             {showSkeleton &&
               Array.from({ length: SKELETON_ROWS }, (_, index) => (
                 <tr key={index}>
@@ -383,7 +392,13 @@ export function DataTable<T>({
         </table>
 
         {/* Mobile: cards */}
-        <ul className="space-y-2.5 bg-surface-2 p-2.5 empty:hidden md:hidden">
+        <ul
+          className={cx(
+            'space-y-2.5 bg-surface-2 p-2.5 empty:hidden md:hidden',
+            'transition-opacity duration-200',
+            showFetching && !showSkeleton && 'opacity-40',
+          )}
+        >
           {showSkeleton &&
             Array.from({ length: 5 }, (_, index) => (
               <li key={index} className="space-y-2 rounded-xl border border-line bg-surface p-4">

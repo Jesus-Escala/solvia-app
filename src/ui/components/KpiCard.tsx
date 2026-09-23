@@ -1,7 +1,8 @@
 import { TrendingDown, TrendingUp } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { cx } from './cx';
-import { Skeleton } from './Feedback';
+import { useMinimumLoading } from '../hooks/useMinimumLoading';
+import { Skeleton, Spinner } from './Feedback';
 
 export type KpiTone = 'default' | 'danger' | 'success' | 'warning';
 
@@ -19,6 +20,8 @@ export interface KpiCardProps {
   /** 0..1 ring gauge shown next to the value. */
   gauge?: number;
   loading?: boolean;
+  /** Refreshing: the icon becomes a spinner and the value dims. */
+  fetching?: boolean;
   formatPercent?: (value: number) => string;
 }
 
@@ -65,8 +68,10 @@ export function KpiCard({
   higherIsBetter = true,
   gauge,
   loading = false,
+  fetching = false,
   formatPercent = (v) => `${Math.round(v * 100)}%`,
 }: KpiCardProps) {
+  const refreshing = useMinimumLoading(fetching, 500);
   if (loading) {
     return (
       <article className="flex h-full flex-col gap-2 rounded-xl border border-line bg-surface p-4 shadow-card">
@@ -92,11 +97,17 @@ export function KpiCard({
               ICON_TONES[tone],
             )}
           >
-            {icon}
+            {refreshing ? <Spinner className="h-4 w-4" /> : icon}
           </span>
         )}
       </div>
-      <div className="flex min-w-0 items-center gap-2">
+      <div
+        className={cx(
+          'flex min-w-0 items-center gap-2 transition-opacity duration-200',
+          refreshing && 'opacity-45',
+        )}
+        aria-busy={refreshing || undefined}
+      >
         {gauge !== undefined && <Gauge value={gauge} tone={tone} />}
         <p
           className={cx(

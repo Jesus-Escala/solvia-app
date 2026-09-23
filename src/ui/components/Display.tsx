@@ -1,5 +1,6 @@
 import { useId, type ReactNode } from 'react';
 import { cx } from './cx';
+import { LoadingOverlay } from './LoadingOverlay';
 
 // --- Badge ----------------------------------------------------------------------------
 
@@ -54,6 +55,7 @@ export function Card({
   className,
   bodyClassName,
   padded = true,
+  loading = false,
   ...rest
 }: {
   title?: ReactNode;
@@ -63,6 +65,8 @@ export function Card({
   className?: string;
   bodyClassName?: string;
   padded?: boolean;
+  /** Refreshing: dims the body and shows a spinner over it. */
+  loading?: boolean;
 } & Omit<React.HTMLAttributes<HTMLElement>, 'title'>) {
   return (
     <section
@@ -83,13 +87,14 @@ export function Card({
       )}
       <div
         className={cx(
-          'min-h-0 flex-1',
+          'relative min-h-0 flex-1',
           padded && 'px-5 pb-5',
           !title && !actions && padded && 'pt-5',
           bodyClassName,
         )}
       >
         {children}
+        <LoadingOverlay active={loading} />
       </div>
     </section>
   );
