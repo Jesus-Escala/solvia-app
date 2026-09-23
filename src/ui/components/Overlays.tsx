@@ -103,7 +103,9 @@ export function Popover({ trigger, children, align = 'end', width = 224 }: Popov
           >
             {children(close)}
           </div>,
-          document.body,
+          // Inside a modal <dialog> (browser top layer) the panel must live in the dialog itself,
+          // otherwise it would render underneath the modal.
+          anchor?.closest('dialog') ?? document.body,
         )}
     </>
   );

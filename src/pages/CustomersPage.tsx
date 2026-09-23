@@ -19,6 +19,7 @@ import {
   useFeedback,
   type DataTableColumn,
   useErrorText,
+  formatPhone,
 } from '@/ui';
 import { useCustomers, useDeleteCustomer, type CustomerListParams } from '../hooks/queries';
 import { useUrlState } from '@/ui';
@@ -97,7 +98,7 @@ export function CustomersPage() {
       id: 'phone',
       header: t('customers.columns.phone'),
       mobile: 'subtitle',
-      cell: (row) => <span className="tabular-nums">{row.phone}</span>,
+      cell: (row) => <span className="tabular-nums">{formatPhone(row.phone)}</span>,
     },
     {
       id: 'risk',

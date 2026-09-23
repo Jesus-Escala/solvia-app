@@ -40,6 +40,7 @@ import {
   useFeedback,
   type DataTableColumn,
   useErrorText,
+  formatPhone,
 } from '@/ui';
 import {
   useCustomer,
@@ -241,7 +242,7 @@ export function CustomerDetailPage() {
               </div>
               <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
                 <span className="inline-flex items-center gap-1.5 tabular-nums">
-                  <Phone className="h-3.5 w-3.5" /> {customer.phone}
+                  <Phone className="h-3.5 w-3.5" /> {formatPhone(customer.phone)}
                 </span>
                 {customer.documentId && (
                   <span>{t('customers.documentLabel', { id: customer.documentId })}</span>

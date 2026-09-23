@@ -37,6 +37,8 @@ export {
 export { Page, PageHeader } from './components/Page';
 export { PasswordChecklist } from './components/PasswordChecklist';
 export { meetsPasswordPolicy, PASSWORD_RULES } from './components/passwordRules';
+export { PhoneInput } from './components/PhoneInput';
+export { formatPhone, isValidPhone } from './components/phoneCountries';
 export { PreferencesControls } from './components/PreferencesControls';
 export { Reveal } from './components/Reveal';
 export {

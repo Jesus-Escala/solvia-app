@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useSaveCustomer } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
-import { useErrorText, Alert, Button, Field, Modal, useFeedback } from '@/ui';
+import { useErrorText, Alert, Button, Field, Modal, PhoneInput, useFeedback } from '@/ui';
 import type { Customer } from '../../lib/types';
 
 interface Props {
@@ -32,7 +32,7 @@ function CustomerForm({ customer, onClose, onSaved }: Omit<Props, 'open'>) {
   const save = useSaveCustomer(customer?.id);
   const [form, setForm] = useState({
     name: customer?.name ?? '',
-    phone: customer?.phone ?? '+51',
+    phone: customer?.phone ?? '',
     documentId: customer?.documentId ?? '',
     notes: customer?.notes ?? '',
   });
@@ -77,14 +77,13 @@ function CustomerForm({ customer, onClose, onSaved }: Omit<Props, 'open'>) {
         error={errors.field(save.error, 'phone')}
       >
         {(id, describedBy) => (
-          <input
+          <PhoneInput
             id={id}
-            aria-describedby={describedBy}
-            className="input"
-            type="tel"
+            describedBy={describedBy}
             required
+            invalid={Boolean(errors.field(save.error, 'phone'))}
             value={form.phone}
-            onChange={(e) => update('phone')(e.target.value)}
+            onChange={update('phone')}
           />
         )}
       </Field>

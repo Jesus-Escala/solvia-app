@@ -274,7 +274,7 @@ export const es = {
       titleEdit: 'Editar cliente',
       name: 'Nombre o razón social',
       phone: 'WhatsApp',
-      phoneHint: 'Incluye el código de país, por ejemplo +51987654321',
+      phoneHint: 'Elige el país y escribe el número; se guarda con su código internacional.',
       documentId: 'Documento',
       documentHint: 'DNI, RUC u otro documento',
       notes: 'Notas',

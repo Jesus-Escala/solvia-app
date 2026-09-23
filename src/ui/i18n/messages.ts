@@ -4,6 +4,14 @@
  */
 
 export const uiEs = {
+  phone: {
+    country: 'País del número',
+    search: 'Buscar país o código…',
+    frequent: 'Frecuentes',
+    all: 'Todos los países',
+    noResults: 'Sin resultados',
+    invalid: 'Número no válido para el país elegido',
+  },
   team: {
     title: 'Usuarios',
     new: 'Nuevo usuario',
@@ -174,7 +182,7 @@ export const uiEs = {
     },
     fields: {
       generic: 'Valor no válido',
-      phone: 'Incluye el código de país, por ejemplo +51987654321',
+      phone: 'Número no válido para el país elegido',
       email: 'Correo no válido',
       password: 'La contraseña no cumple los requisitos',
       name: 'Mínimo 2 caracteres',
@@ -189,6 +197,14 @@ export const uiEs = {
 };
 
 export const uiEn: UiMessages = {
+  phone: {
+    country: 'Phone country',
+    search: 'Search country or code…',
+    frequent: 'Frequent',
+    all: 'All countries',
+    noResults: 'No results',
+    invalid: 'Not a valid number for the selected country',
+  },
   team: {
     title: 'Users',
     new: 'New user',
@@ -360,7 +376,7 @@ export const uiEn: UiMessages = {
     },
     fields: {
       generic: 'Invalid value',
-      phone: 'Include the country code, e.g. +51987654321',
+      phone: 'Not a valid number for the selected country',
       email: 'Invalid email address',
       password: 'The password does not meet the requirements',
       name: 'At least 2 characters',

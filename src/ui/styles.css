@@ -379,8 +379,10 @@ body {
 }
 
 /* Modal (native <dialog>): pops in on desktop, slides up as a bottom sheet on phones. */
+/* `backwards` (not `both`): once the entrance ends no transform stays applied, so fixed-position
+   popovers inside the dialog are positioned against the viewport, not the dialog. */
 .modal[data-state='open'] {
-  animation: pop-in 260ms var(--ease-out) both;
+  animation: pop-in 260ms var(--ease-out) backwards;
 }
 .modal[data-state='open']::backdrop {
   animation: fade-in 260ms var(--ease-out) both;
@@ -393,7 +395,7 @@ body {
 }
 @media (max-width: 639px) {
   .modal[data-state='open'] {
-    animation: sheet-in 320ms var(--ease-out) both;
+    animation: sheet-in 320ms var(--ease-out) backwards;
   }
   .modal[data-state='closing'] {
     animation: sheet-out 220ms var(--ease-in) both;

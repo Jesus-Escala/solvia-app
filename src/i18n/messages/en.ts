@@ -269,7 +269,7 @@ export const en: Messages = {
       titleEdit: 'Edit customer',
       name: 'Full or business name',
       phone: 'WhatsApp',
-      phoneHint: 'Include the country code, e.g. +51987654321',
+      phoneHint: 'Pick the country and type the number; it is saved with its international code.',
       documentId: 'Document ID',
       documentHint: 'National ID, tax ID or other document',
       notes: 'Notes',
