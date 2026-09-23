@@ -94,7 +94,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       changePassword: async (currentPassword, newPassword) => {
         startSession(
-          await api.post<AuthResponse>('/auth/change-password', { currentPassword, newPassword }),
+          await api.post<AuthResponse>('/auth/change-password', {
+            // Google-only accounts have no current password: the field is omitted.
+            currentPassword: currentPassword || undefined,
+            newPassword,
+          }),
         );
       },
       logout,
