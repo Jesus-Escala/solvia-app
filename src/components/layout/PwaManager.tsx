@@ -20,7 +20,7 @@ export function PwaManager({ appName }: { appName: string }) {
     <>
       <PwaInstallGuide appName={appName} />
       <PwaUpdatePrompt
-        open={needRefresh}
+        open={needRefresh && import.meta.env.PROD}
         onUpdate={() => void updateServiceWorker(true)}
         onDismiss={() => setNeedRefresh(false)}
       />

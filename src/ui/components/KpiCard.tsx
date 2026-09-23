@@ -9,6 +9,8 @@ export type KpiTone = 'default' | 'danger' | 'success' | 'warning';
 export interface KpiCardProps {
   label: string;
   value: string;
+  /** Full value shown on hover when `value` is abbreviated (e.g. "S/ 6.1 M"). */
+  valueTitle?: string;
   hint?: ReactNode;
   icon?: ReactNode;
   tone?: KpiTone;
@@ -60,6 +62,7 @@ function Gauge({ value, tone }: { value: number; tone: KpiTone }) {
 export function KpiCard({
   label,
   value,
+  valueTitle,
   hint,
   icon,
   tone = 'default',
@@ -111,17 +114,19 @@ export function KpiCard({
         {gauge !== undefined && <Gauge value={gauge} tone={tone} />}
         <p
           className={cx(
-            'min-w-0 truncate text-xl font-semibold tracking-tight tabular-nums',
+            'min-w-0 text-lg leading-tight font-semibold tracking-tight break-words tabular-nums sm:text-xl',
             tone === 'danger' ? 'text-danger-ink' : 'text-ink',
           )}
-          title={value}
+          title={valueTitle ?? value}
         >
           {value}
         </p>
-        {hasDelta && (
+      </div>
+      {hasDelta && (
+        <p className="flex min-w-0 items-center gap-1.5 text-[11px] text-subtle">
           <span
             className={cx(
-              'ml-auto inline-flex shrink-0 items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums',
+              'inline-flex shrink-0 items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold tabular-nums',
               good ? 'bg-success-soft text-success-ink' : 'bg-danger-soft text-danger-ink',
             )}
           >
@@ -129,15 +134,10 @@ export function KpiCard({
             {positive ? '+' : ''}
             {formatPercent(delta)}
           </span>
-        )}
-      </div>
-      {(hint || deltaLabel) && (
-        <p className="truncate text-[11px] text-subtle">
-          {hint}
-          {hint && deltaLabel && ' · '}
-          {deltaLabel}
+          {deltaLabel && <span className="truncate">{deltaLabel}</span>}
         </p>
       )}
+      {hint && <p className="line-clamp-2 text-[11px] text-subtle">{hint}</p>}
     </article>
   );
 }
@@ -149,7 +149,7 @@ export function KpiRow({
 }: { children: ReactNode } & React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className="stagger-in grid grid-cols-2 gap-3 md:grid-cols-3 2xl:grid-flow-col 2xl:grid-cols-none 2xl:auto-cols-fr"
+      className="stagger-in grid grid-cols-2 gap-3 max-md:[&>*:last-child:nth-child(odd)]:col-span-2 md:grid-cols-3 2xl:grid-flow-col 2xl:grid-cols-none 2xl:auto-cols-fr"
       {...rest}
     >
       {children}

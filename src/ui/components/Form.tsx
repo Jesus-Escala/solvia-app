@@ -118,18 +118,21 @@ export function Tabs<T extends string>({
   items,
   onChange,
   label,
+  stretch = false,
   ...rest
 }: {
   value: T;
   items: Array<TabItem<T>>;
   onChange: (value: T) => void;
   label: string;
+  /** Phones: equal-width tabs with the icon above the label, so 4–5 tabs always fit. */
+  stretch?: boolean;
 } & Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'>) {
   return (
     <div
       role="tablist"
       aria-label={label}
-      className="flex gap-1 overflow-x-auto border-b border-line"
+      className="flex gap-1 overflow-x-auto overflow-y-hidden border-b border-line [scrollbar-width:none]! [&::-webkit-scrollbar]:hidden"
       {...rest}
     >
       {items.map((item) => {
@@ -143,6 +146,8 @@ export function Tabs<T extends string>({
             onClick={() => onChange(item.value)}
             className={cx(
               '-mb-px inline-flex items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium whitespace-nowrap transition',
+              stretch &&
+                'max-sm:min-w-0 max-sm:flex-1 max-sm:flex-col max-sm:gap-1 max-sm:px-1 max-sm:py-2 max-sm:text-[11px]',
               active
                 ? 'border-primary text-ink'
                 : 'border-transparent text-muted hover:border-line-strong hover:text-ink',

@@ -23,6 +23,8 @@ import type {
   SortDir,
   TemplateType,
   AuthConfig,
+  AnalyticsGranularity,
+  DashboardAnalytics,
   TenantUser,
   UserRole,
 } from '../lib/types';
@@ -128,6 +130,19 @@ export function useDashboardSummary() {
   return useQuery({
     queryKey: queryKeys.dashboard,
     queryFn: () => api.get<DashboardSummary>('/dashboard/summary'),
+  });
+}
+
+/** Period analytics (keeps the previous period's data on screen while the next one loads). */
+export function useDashboardAnalytics(params: {
+  from: string;
+  to: string;
+  granularity?: AnalyticsGranularity;
+}) {
+  return useQuery({
+    queryKey: [...queryKeys.dashboard, 'analytics', params],
+    queryFn: () => api.get<DashboardAnalytics>('/dashboard/analytics', { ...params }),
+    placeholderData: keepPreviousData,
   });
 }
 

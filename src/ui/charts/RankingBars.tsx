@@ -35,11 +35,11 @@ export function RankingBars({
         {items.map((item, index) => {
           const highlighted = Math.min(item.highlighted ?? 0, item.value);
           const label = item.href ? (
-            <Link to={item.href} className="truncate hover:underline">
+            <Link to={item.href} className="block truncate hover:underline">
               {item.label}
             </Link>
           ) : (
-            <span className="truncate">{item.label}</span>
+            <span className="block truncate">{item.label}</span>
           );
           return (
             <li

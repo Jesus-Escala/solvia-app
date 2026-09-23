@@ -7,7 +7,7 @@ import { useI18n } from './i18n/I18nProvider';
 import { ChangePasswordPage, LoginPage, RegisterPage } from './pages/AuthPages';
 import { CustomerDetailPage } from './pages/CustomerDetailPage';
 import { CustomersPage } from './pages/CustomersPage';
-import { DashboardPage } from './pages/DashboardPage';
+import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { HelpPage } from './pages/HelpPage';
 import { ReceivablesPage } from './pages/ReceivablesPage';
 import { SettingsPage } from './pages/SettingsPage';

@@ -228,3 +228,65 @@ export interface ReminderRunSummary {
   sent: number;
   failed: number;
 }
+
+/** Current value and the value of the previous equal-length period (null when not computable). */
+export interface PeriodMetric {
+  value: number | null;
+  previous: number | null;
+}
+
+export type AnalyticsGranularity = 'day' | 'week' | 'month';
+
+/** `GET /dashboard/analytics`: performance of a date range compared with the previous one. */
+export interface DashboardAnalytics {
+  period: {
+    from: string;
+    to: string;
+    granularity: AnalyticsGranularity;
+    previous: { from: string; to: string };
+  };
+  kpis: {
+    collected: PeriodMetric;
+    payments: PeriodMetric;
+    averagePayment: PeriodMetric;
+    issued: PeriodMetric;
+    receivablesIssued: PeriodMetric;
+    dueInPeriod: PeriodMetric;
+    collectionRate: PeriodMetric;
+    averageDaysToPay: PeriodMetric;
+    newCustomers: PeriodMetric;
+  };
+  snapshot: {
+    outstanding: number;
+    overdue: number;
+    overdueRate: number;
+    openReceivables: number;
+    customers: number;
+    dueToday?: AmountCount;
+    dueNext30Days?: AmountCount;
+    overdueOver30Days?: AmountCount;
+  };
+  series: Array<{
+    bucket: string;
+    collected: number;
+    issued: number;
+    due: number;
+    payments: number;
+  }>;
+  byMethod: Array<{ method: PaymentMethod; amount: number; count: number }>;
+  byWeekday: Array<{ weekday: 1 | 2 | 3 | 4 | 5 | 6 | 7; amount: number; count: number }>;
+  topPayers: Array<{ customerId: string; name: string; amount: number; payments: number }>;
+  reminders?: {
+    sent: PeriodMetric;
+    failed: PeriodMetric;
+    byType: Array<{ type: TemplateType; sent: number; failed: number }>;
+    /** Share (0..1) of reminded receivables that got a payment within 7 days. */
+    paidAfterReminder: PeriodMetric;
+  };
+  generatedAt: string;
+}
+
+export interface AmountCount {
+  amount: number;
+  count: number;
+}

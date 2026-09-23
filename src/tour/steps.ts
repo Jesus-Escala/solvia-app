@@ -5,9 +5,10 @@
  */
 export const TOUR_STEPS = [
   { id: 'navigation', route: '/', target: 'nav' },
-  { id: 'kpis', route: '/', target: 'kpis' },
-  { id: 'cashFlow', route: '/', target: 'cash-flow' },
-  { id: 'debtors', route: '/', target: 'debtors' },
+  { id: 'kpis', route: '/?view=summary', target: 'kpis' },
+  { id: 'period', route: '/?view=collection', target: 'period' },
+  { id: 'cashFlow', route: '/?view=projection', target: 'cash-flow' },
+  { id: 'debtors', route: '/?view=portfolio', target: 'debtors' },
   { id: 'newCustomer', route: '/customers', target: 'new-customer' },
   { id: 'customersTable', route: '/customers', target: 'customers-table' },
   { id: 'statusFilter', route: '/receivables', target: 'status-filter' },

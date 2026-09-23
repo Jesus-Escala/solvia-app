@@ -223,7 +223,11 @@ function TourOverlay({
   useEffect(() => {
     // Each step remounts this component (key={index}), so `ready` starts false.
     const signal = { cancelled: false };
-    if (step.route && location.pathname !== step.route) {
+    // Routes may include a query (e.g. a dashboard view): compare it too when present.
+    const current = step.route?.includes('?')
+      ? location.pathname + location.search
+      : location.pathname;
+    if (step.route && current !== step.route) {
       navigate(step.route);
       return () => {
         signal.cancelled = true;
@@ -248,7 +252,7 @@ function TourOverlay({
     return () => {
       signal.cancelled = true;
     };
-  }, [step, location.pathname, navigate]);
+  }, [step, location.pathname, location.search, navigate]);
 
   // Keep the spotlight aligned on resize/scroll.
   useEffect(() => {
