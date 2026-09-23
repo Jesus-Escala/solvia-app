@@ -1,4 +1,5 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { useMinimumLoading } from '../hooks/useMinimumLoading';
 import { cx } from './cx';
 import { Spinner } from './Feedback';
 
@@ -40,11 +41,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   },
   ref,
 ) {
+  // Fast requests still show the spinner long enough to be noticed.
+  const busy = useMinimumLoading(loading);
   return (
     <button
       ref={ref}
       type={type}
-      disabled={disabled || loading}
+      disabled={disabled || busy}
+      aria-busy={busy || undefined}
       className={cx(
         'inline-flex shrink-0 items-center justify-center font-medium whitespace-nowrap transition-colors focus-visible:ring-3 focus-visible:ring-primary/30 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-55',
         SIZES[size],
@@ -53,7 +57,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       )}
       {...props}
     >
-      {loading ? <Spinner className="h-4 w-4" /> : icon}
+      {busy ? <Spinner className="h-4 w-4" /> : icon}
       {children}
     </button>
   );

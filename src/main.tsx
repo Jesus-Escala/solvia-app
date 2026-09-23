@@ -5,7 +5,7 @@ import { BrowserRouter } from 'react-router';
 import { App } from './App';
 import { PwaManager } from './components/layout/PwaManager';
 import { AuthProvider } from './auth/AuthContext';
-import { FeedbackProvider, ThemeProvider } from '@/ui';
+import { ActivityBar, FeedbackProvider, ThemeProvider } from '@/ui';
 import { I18nProvider } from './i18n/I18nProvider';
 import { ApiError } from './lib/api';
 import './index.css';
@@ -31,6 +31,7 @@ createRoot(root).render(
     <ThemeProvider>
       <I18nProvider>
         <QueryClientProvider client={queryClient}>
+          <ActivityBar />
           <BrowserRouter>
             <AuthProvider>
               <FeedbackProvider>

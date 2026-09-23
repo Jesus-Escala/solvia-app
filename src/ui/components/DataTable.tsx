@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Columns3 } from 'lucide-react';
 import { useMemo, useState, type HTMLAttributes, type ReactNode } from 'react';
+import { useMinimumLoading } from '../hooks/useMinimumLoading';
 import { useUiI18n } from '../i18n/context';
 import { IconButton } from './Button';
 import { cx } from './cx';
@@ -130,7 +131,9 @@ export function DataTable<T>({
     [columns, hidden],
   );
   const hideableColumns = columns.filter((column) => column.hideable !== false);
-  const showSkeleton = loading && !rows;
+  // Minimum visible time so loading feedback is noticeable even with a very fast API.
+  const showSkeleton = useMinimumLoading(loading && !rows, 400);
+  const showFetching = useMinimumLoading(fetching, 500);
   const isEmpty = !showSkeleton && rows !== undefined && rows.length === 0;
 
   const toggleColumn = (id: string) => {
@@ -251,10 +254,10 @@ export function DataTable<T>({
       <div
         className={cx('relative min-h-0 shrink overflow-auto', fill && 'min-h-40')}
         style={fill ? undefined : { maxHeight }}
-        aria-busy={loading || fetching}
+        aria-busy={showSkeleton || showFetching}
       >
-        {fetching && !showSkeleton && (
-          <div className="sticky top-0 z-20 h-0.5 w-full overflow-hidden bg-primary-soft">
+        {showFetching && !showSkeleton && (
+          <div className="sticky top-0 z-20 h-1 w-full overflow-hidden bg-primary-soft">
             <div className="h-full w-1/3 animate-[table-progress_1.1s_ease-in-out_infinite] bg-primary" />
           </div>
         )}
@@ -333,48 +336,49 @@ export function DataTable<T>({
                   {rowActions && <td className="border-b border-line px-4 py-3" />}
                 </tr>
               ))}
-            {rows?.map((row) => (
-              <tr
-                key={rowKey(row)}
-                onClick={onRowClick ? () => onRowClick(row) : undefined}
-                onKeyDown={
-                  onRowClick
-                    ? (event) => {
-                        if (event.key === 'Enter' && event.target === event.currentTarget)
-                          onRowClick(row);
-                      }
-                    : undefined
-                }
-                tabIndex={onRowClick ? 0 : undefined}
-                className={cx(
-                  'group transition-colors even:bg-surface-2/60 hover:bg-primary-soft/40 focus-visible:bg-primary-soft/50 focus-visible:outline-none',
-                  onRowClick && 'cursor-pointer',
-                  rowClassName?.(row),
-                )}
-              >
-                {visibleColumns.map((column) => (
-                  <td
-                    key={column.id}
-                    className={cx(
-                      'h-12 border-b border-line px-4 py-2 align-middle',
-                      alignClass(column.align),
-                      column.align === 'right' && 'tabular-nums',
-                      column.className,
-                    )}
-                  >
-                    {column.cell(row)}
-                  </td>
-                ))}
-                {rowActions && (
-                  <td
-                    className="border-b border-line px-3 py-2 text-right"
-                    onClick={(event) => event.stopPropagation()}
-                  >
-                    <div className="flex items-center justify-end gap-1">{rowActions(row)}</div>
-                  </td>
-                )}
-              </tr>
-            ))}
+            {!showSkeleton &&
+              rows?.map((row) => (
+                <tr
+                  key={rowKey(row)}
+                  onClick={onRowClick ? () => onRowClick(row) : undefined}
+                  onKeyDown={
+                    onRowClick
+                      ? (event) => {
+                          if (event.key === 'Enter' && event.target === event.currentTarget)
+                            onRowClick(row);
+                        }
+                      : undefined
+                  }
+                  tabIndex={onRowClick ? 0 : undefined}
+                  className={cx(
+                    'group transition-colors even:bg-surface-2/60 hover:bg-primary-soft/40 focus-visible:bg-primary-soft/50 focus-visible:outline-none',
+                    onRowClick && 'cursor-pointer',
+                    rowClassName?.(row),
+                  )}
+                >
+                  {visibleColumns.map((column) => (
+                    <td
+                      key={column.id}
+                      className={cx(
+                        'h-12 border-b border-line px-4 py-2 align-middle',
+                        alignClass(column.align),
+                        column.align === 'right' && 'tabular-nums',
+                        column.className,
+                      )}
+                    >
+                      {column.cell(row)}
+                    </td>
+                  ))}
+                  {rowActions && (
+                    <td
+                      className="border-b border-line px-3 py-2 text-right"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <div className="flex items-center justify-end gap-1">{rowActions(row)}</div>
+                    </td>
+                  )}
+                </tr>
+              ))}
           </tbody>
         </table>
 
@@ -387,54 +391,55 @@ export function DataTable<T>({
                 <Skeleton className="h-3 w-1/2" />
               </li>
             ))}
-          {rows?.map((row) => (
-            <li
-              key={rowKey(row)}
-              className={cx(
-                'rounded-xl border border-line bg-surface p-4 shadow-xs transition',
-                onRowClick && 'cursor-pointer active:scale-[0.99] active:bg-surface-2',
-              )}
-              onClick={onRowClick ? () => onRowClick(row) : undefined}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  {titleColumn && <div className="font-medium">{titleColumn.cell(row)}</div>}
-                  {subtitleColumns.map((column) => (
-                    <div key={column.id} className="mt-0.5 text-xs text-muted">
-                      {column.cell(row)}
-                    </div>
-                  ))}
-                </div>
-                {asideColumns.length > 0 && (
-                  <div className="flex shrink-0 flex-col items-end gap-1 text-right">
-                    {asideColumns.map((column) => (
-                      <div key={column.id}>{column.cell(row)}</div>
+          {!showSkeleton &&
+            rows?.map((row) => (
+              <li
+                key={rowKey(row)}
+                className={cx(
+                  'rounded-xl border border-line bg-surface p-4 shadow-xs transition',
+                  onRowClick && 'cursor-pointer active:scale-[0.99] active:bg-surface-2',
+                )}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    {titleColumn && <div className="font-medium">{titleColumn.cell(row)}</div>}
+                    {subtitleColumns.map((column) => (
+                      <div key={column.id} className="mt-0.5 text-xs text-muted">
+                        {column.cell(row)}
+                      </div>
                     ))}
                   </div>
-                )}
-              </div>
-              {fieldColumns.length > 0 && (
-                <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 rounded-lg bg-surface-2 px-3 py-2.5 text-sm">
-                  {fieldColumns.map((column) => (
-                    <div key={column.id} className="min-w-0">
-                      <dt className="text-[11px] tracking-wide text-subtle uppercase">
-                        {column.header}
-                      </dt>
-                      <dd className="truncate">{column.cell(row)}</dd>
+                  {asideColumns.length > 0 && (
+                    <div className="flex shrink-0 flex-col items-end gap-1 text-right">
+                      {asideColumns.map((column) => (
+                        <div key={column.id}>{column.cell(row)}</div>
+                      ))}
                     </div>
-                  ))}
-                </dl>
-              )}
-              {rowActions && (
-                <div
-                  className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-line pt-3"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  {rowActions(row)}
+                  )}
                 </div>
-              )}
-            </li>
-          ))}
+                {fieldColumns.length > 0 && (
+                  <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 rounded-lg bg-surface-2 px-3 py-2.5 text-sm">
+                    {fieldColumns.map((column) => (
+                      <div key={column.id} className="min-w-0">
+                        <dt className="text-[11px] tracking-wide text-subtle uppercase">
+                          {column.header}
+                        </dt>
+                        <dd className="truncate">{column.cell(row)}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+                {rowActions && (
+                  <div
+                    className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-line pt-3"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    {rowActions(row)}
+                  </div>
+                )}
+              </li>
+            ))}
         </ul>
 
         {isEmpty && (

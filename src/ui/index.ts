@@ -4,6 +4,7 @@
  */
 
 // UI kit
+export { ActivityBar } from './components/ActivityBar';
 export { Button, IconButton, type ButtonProps, type ButtonVariant } from './components/Button';
 export { cx } from './components/cx';
 export {
@@ -96,6 +97,7 @@ export {
 } from './lib/http';
 
 // Hooks
+export { useMinimumLoading } from './hooks/useMinimumLoading';
 export { useUrlState } from './hooks/useUrlState';
 
 // Install as an app (PWA)

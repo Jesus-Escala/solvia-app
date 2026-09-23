@@ -423,6 +423,20 @@ body {
   transform: none;
 }
 
+/* Global activity bar (see <ActivityBar>): an indeterminate sweep across the top edge. */
+@keyframes activity-sweep {
+  from {
+    left: -40%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+.activity-bar {
+  animation: activity-sweep 1.1s var(--ease-in) infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
