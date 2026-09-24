@@ -221,12 +221,11 @@ export const en: Messages = {
     collector: 'Collector',
   },
   auth: {
-    heroTitle: 'Get paid on time, without chasing anyone.',
-    heroSubtitle:
-      'Solvia organizes what you are owed, sends WhatsApp reminders and shows how much money will come in every week.',
-    heroPoint1: 'Automatic reminders with payment links',
-    heroPoint2: 'Instant PDF account statements',
-    heroPoint3: 'Risk score for every customer',
+    heroTitle: 'Your business in order, from your phone.',
+    heroSubtitle: 'Sell, collect what you are owed and track your stock in one place.',
+    heroPoint1: 'Automatic WhatsApp payment reminders',
+    heroPoint2: 'Sales with barcodes and stock up to date',
+    heroPoint3: 'PDF and Excel reports right inside Solvia',
     signInTitle: 'Sign in',
     signInSubtitle: 'Use your email and password.',
     email: 'Email',

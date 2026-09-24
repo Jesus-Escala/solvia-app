@@ -29,7 +29,7 @@ export default defineConfig(({ mode }) => {
           id: '/',
           name: 'Solvia',
           short_name: 'Solvia',
-          description: 'Gestión de créditos y cobranzas para pequeñas empresas',
+          description: 'Ventas, cobranza e inventario para pequeños negocios',
           lang: 'es',
           start_url: '/',
           scope: '/',
