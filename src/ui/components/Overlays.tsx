@@ -29,7 +29,7 @@ interface PopoverProps {
     ref: (node: HTMLElement | null) => void;
   }) => ReactNode;
   children: (close: () => void) => ReactNode;
-  align?: 'start' | 'end';
+  align?: 'start' | 'center' | 'end';
   width?: number;
 }
 
@@ -52,7 +52,12 @@ export function Popover({ trigger, children, align = 'end', width = 224 }: Popov
     const panelHeight = panelRef.current?.offsetHeight ?? 200;
     const spaceBelow = window.innerHeight - rect.bottom - 8;
     const openUp = spaceBelow < panelHeight && rect.top > spaceBelow;
-    const left = align === 'end' ? rect.right - width : rect.left;
+    const left =
+      align === 'end'
+        ? rect.right - width
+        : align === 'center'
+          ? rect.left + rect.width / 2 - width / 2
+          : rect.left;
     setPosition({
       top: openUp ? Math.max(8, rect.top - panelHeight - 6) : rect.bottom + 6,
       left: Math.min(Math.max(8, left), window.innerWidth - width - 8),

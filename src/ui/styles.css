@@ -393,18 +393,6 @@ h1,
   }
 }
 
-@keyframes sheet-in {
-  from {
-    transform: translateY(100%);
-  }
-}
-
-@keyframes sheet-out {
-  to {
-    transform: translateY(100%);
-  }
-}
-
 @keyframes toast-timer {
   from {
     transform: scaleX(1);
@@ -448,7 +436,7 @@ h1,
   animation-delay: 200ms;
 }
 
-/* Modal (native <dialog>): pops in on desktop, slides up as a bottom sheet on phones. */
+/* Modal (native <dialog>): a centered card that pops in, on every screen size. */
 /* `backwards` (not `both`): once the entrance ends no transform stays applied, so fixed-position
    popovers inside the dialog are positioned against the viewport, not the dialog. */
 .modal[data-state='open'] {
@@ -462,14 +450,6 @@ h1,
 }
 .modal[data-state='closing']::backdrop {
   animation: fade-out 170ms var(--ease-in) both;
-}
-@media (max-width: 639px) {
-  .modal[data-state='open'] {
-    animation: sheet-in 320ms var(--ease-out) backwards;
-  }
-  .modal[data-state='closing'] {
-    animation: sheet-out 220ms var(--ease-in) both;
-  }
 }
 
 /* Countdown bar under each toast; its duration and play state are set inline. */

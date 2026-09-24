@@ -252,12 +252,15 @@ export function HomePage() {
                           )}
                         </span>
                       </Link>
-                      <span className="font-display text-lg font-semibold tabular-nums sm:w-32 sm:text-right">
-                        {fmt.money(row.outstandingAmount)}
-                      </span>
-                      <span className="flex shrink-0 items-center gap-1.5">
-                        {actions.render(row)}
-                      </span>
+                      {/* Phones: amount and buttons share one line; wider screens: one row for all. */}
+                      <div className="flex items-center justify-between gap-2 sm:contents">
+                        <span className="font-display text-lg font-semibold tabular-nums sm:w-32 sm:text-right">
+                          {fmt.money(row.outstandingAmount)}
+                        </span>
+                        <span className="flex shrink-0 items-center gap-1.5">
+                          {actions.render(row)}
+                        </span>
+                      </div>
                     </li>
                   );
                 })}

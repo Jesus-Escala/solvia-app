@@ -47,12 +47,18 @@ function useFloatingPosition(anchor: HTMLElement | null, open: boolean) {
       });
     };
     update();
+    // Follow the input when the page scrolls or resizes, and when an animation moves it (e.g. the
+    // modal's entrance: measuring mid-animation would leave the list out of place).
     window.addEventListener('resize', update);
     window.addEventListener('scroll', update, true);
+    document.addEventListener('animationend', update, true);
+    document.addEventListener('transitionend', update, true);
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener('resize', update);
       window.removeEventListener('scroll', update, true);
+      document.removeEventListener('animationend', update, true);
+      document.removeEventListener('transitionend', update, true);
     };
   }, [anchor, open]);
 
@@ -188,7 +194,9 @@ export function CustomerPicker({
         disabled={disabled}
         placeholder={t('picker.placeholder')}
         value={search}
-        onFocus={() => setOpen(true)}
+        // Opens on tap or typing, not on focus: forms focus this box on open, and a list popping
+        // up by itself would cover the form.
+        onClick={() => setOpen(true)}
         onChange={(event) => {
           setSearch(event.target.value);
           setActive(0);

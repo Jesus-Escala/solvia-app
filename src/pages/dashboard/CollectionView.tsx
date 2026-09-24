@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  ChevronDown,
   ChevronRight,
   FilePlus2,
   Filter,
@@ -71,7 +72,11 @@ function FilterBar({
   onChange: (changes: Partial<CollectionFilters>) => void;
 }) {
   const { t } = useI18n();
-  const active = !!(filters.method || filters.customerId || filters.weekday);
+  const count = [filters.method, filters.customerId, filters.weekday].filter(Boolean).length;
+  const active = count > 0;
+  // Phones: the three fields fold behind one "Filtrar" button to keep the answer and the KPIs in
+  // view; wider screens always show them.
+  const [expanded, setExpanded] = useState(false);
   const selectClass = (on: boolean) =>
     cx('input h-10 min-w-0', on && 'border-primary bg-primary-soft/50 font-medium');
 
@@ -82,7 +87,27 @@ function FilterBar({
         active ? 'border-primary/30 bg-primary-soft/30' : 'border-line bg-surface',
       )}
     >
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1.4fr_1fr_auto] lg:items-end">
+      <button
+        type="button"
+        aria-expanded={expanded}
+        onClick={() => setExpanded((value) => !value)}
+        className="flex w-full items-center gap-2 text-left text-sm font-semibold sm:hidden"
+      >
+        <Filter className="h-4 w-4 text-primary-ink" />
+        <span className="flex-1">{t('dashboard.filters.toggle')}</span>
+        {active && (
+          <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-on-primary">
+            {count}
+          </span>
+        )}
+        <ChevronDown className={cx('h-4 w-4 text-muted transition', expanded && 'rotate-180')} />
+      </button>
+      <div
+        className={cx(
+          'grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1.4fr_1fr_auto] lg:items-end',
+          expanded ? 'max-sm:mt-3' : 'max-sm:hidden',
+        )}
+      >
         <label className="block min-w-0">
           <span className="label flex items-center gap-1.5">
             <Filter className="h-3.5 w-3.5" />
@@ -134,7 +159,12 @@ function FilterBar({
           {t('dashboard.filters.clear')}
         </Button>
       </div>
-      <p className="mt-2 flex items-start gap-1.5 text-xs text-muted">
+      <p
+        className={cx(
+          'mt-2 flex items-start gap-1.5 text-xs text-muted',
+          !expanded && 'max-sm:hidden',
+        )}
+      >
         <MousePointerClick className="mt-px h-3.5 w-3.5 shrink-0" />
         {filters.method || filters.weekday
           ? t('dashboard.filters.scopeNote')

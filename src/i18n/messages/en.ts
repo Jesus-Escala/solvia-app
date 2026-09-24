@@ -349,6 +349,7 @@ export const en: Messages = {
       vs: 'Compared with {range}',
     },
     filters: {
+      toggle: 'Filter by method, customer or day',
       hint: 'Click a payment method, a weekday or a customer to filter the whole dashboard.',
       active: 'Filtering by',
       method: 'Payment method',

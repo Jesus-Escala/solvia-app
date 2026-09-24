@@ -75,14 +75,14 @@ export function PaymentMethodPicker({
             aria-checked={active}
             onClick={() => onChange(method)}
             className={cx(
-              'relative flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm font-semibold transition sm:flex-col sm:gap-2 sm:px-2 sm:py-3 sm:text-center',
+              'relative flex flex-col items-center gap-1.5 rounded-xl border px-2 py-2.5 text-center text-sm font-semibold transition sm:gap-2 sm:py-3',
               active
                 ? 'border-primary bg-primary-soft text-primary-ink shadow-sm ring-2 ring-primary/25'
                 : 'border-line bg-surface text-muted hover:border-line-strong hover:bg-surface-2 hover:text-ink',
             )}
           >
             <PaymentMethodMark method={method} />
-            <span className="min-w-0 truncate">{t(`methods.${method}`)}</span>
+            <span className="max-w-full min-w-0 truncate">{t(`methods.${method}`)}</span>
             {active && (
               <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-on-primary">
                 <Check className="h-2.5 w-2.5" strokeWidth={3} />

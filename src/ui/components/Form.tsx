@@ -68,7 +68,7 @@ export function SegmentedControl<T extends string>({
     <div
       role="radiogroup"
       aria-label={label}
-      className="inline-flex max-w-full shrink-0 flex-nowrap gap-0.5 overflow-x-auto rounded-full border border-line bg-surface-2 p-[3px] [scrollbar-width:none]! [&::-webkit-scrollbar]:hidden"
+      className="inline-flex max-w-full shrink-0 flex-wrap gap-0.5 rounded-2xl border border-line bg-surface-2 p-[3px] sm:flex-nowrap sm:overflow-x-auto sm:rounded-full sm:[scrollbar-width:none]! sm:[&::-webkit-scrollbar]:hidden"
       {...rest}
     >
       {options.map((option) => {

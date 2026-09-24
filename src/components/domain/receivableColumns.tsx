@@ -19,7 +19,8 @@ export function useReceivableColumns({ showCustomer = true } = {}): Array<
       sortable: true,
       minWidth: 200,
       hideable: false,
-      mobile: 'title',
+      // On phones the customer's name is the card title when it is shown.
+      mobile: showCustomer ? 'subtitle' : 'title',
       cell: (row) => (
         <div className="min-w-0">
           <p className="truncate font-medium">{row.description}</p>
@@ -142,7 +143,7 @@ export function useReceivableColumns({ showCustomer = true } = {}): Array<
       header: t('receivables.columns.customer'),
       sortable: true,
       minWidth: 170,
-      mobile: 'subtitle',
+      mobile: 'title',
       cell: (row) => (
         <Link
           to={`/customers/${row.customerId}`}

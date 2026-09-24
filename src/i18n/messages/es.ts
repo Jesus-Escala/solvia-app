@@ -354,6 +354,7 @@ export const es = {
       vs: 'Comparado con {range}',
     },
     filters: {
+      toggle: 'Filtrar por medio de pago, cliente o día',
       hint: 'También puedes tocar un medio de pago, un día o un cliente en los gráficos de abajo.',
       active: 'Filtrando por',
       method: 'Medio de pago',
@@ -535,7 +536,7 @@ export const es = {
     title: 'Clientes',
     subtitle: 'Las personas a las que les fías. Toca una para ver lo que te debe y cobrarle.',
     new: 'Nuevo cliente',
-    searchPlaceholder: 'Buscar por nombre, teléfono o documento',
+    searchPlaceholder: 'Buscar por nombre o teléfono',
     columns: {
       customer: 'Cliente',
       phone: 'Teléfono',
@@ -634,7 +635,7 @@ export const es = {
     title: 'Me deben',
     subtitle: 'Todo lo que fiaste. Toca «Me pagó» cuando te paguen o «WhatsApp» para recordarle.',
     new: 'Anotar fiado',
-    searchPlaceholder: 'Buscar por cliente o lo que se llevó',
+    searchPlaceholder: 'Buscar cliente o producto',
     methodsCount: '{count} medios',
     filters: {
       open: 'Por cobrar',

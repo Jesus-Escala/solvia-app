@@ -195,7 +195,7 @@ export function QuickAddMenu({ variant = 'button' }: { variant?: 'button' | 'fab
 
   return (
     <Popover
-      align={variant === 'fab' ? 'start' : 'end'}
+      align={variant === 'fab' ? 'center' : 'end'}
       width={296}
       trigger={({ toggle, ref, open: menuOpen }) =>
         variant === 'fab' ? (

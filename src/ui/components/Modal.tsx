@@ -98,18 +98,13 @@ export function Modal({
         if (fromBackdrop && event.target === ref.current && phase === 'open') onClose();
       }}
       className={cx(
-        'modal m-auto w-[calc(100%-2rem)] rounded-2xl border border-line bg-surface p-0 text-ink shadow-pop backdrop:bg-slate-950/50 backdrop:backdrop-blur-[2px]',
-        // Phones: bottom sheet (full width, anchored to the bottom, rounded top corners).
-        'max-sm:mx-0 max-sm:mt-auto max-sm:mb-0 max-sm:w-full max-sm:max-w-none max-sm:rounded-b-none max-sm:border-x-0 max-sm:border-b-0',
+        // Centered card on every screen size (phones get a 12px margin on each side).
+        'modal m-auto w-[calc(100%-1.5rem)] rounded-2xl border border-line bg-surface p-0 text-ink shadow-pop backdrop:bg-slate-950/50 backdrop:backdrop-blur-[2px] sm:w-[calc(100%-2rem)]',
         SIZES[size],
       )}
     >
       {phase !== 'closed' && (
-        <div className="flex max-h-[calc(100dvh-2rem)] flex-col max-sm:max-h-[92dvh]">
-          <span
-            className="mx-auto mt-2 h-1 w-10 rounded-full bg-line-strong sm:hidden"
-            aria-hidden="true"
-          />
+        <div className="flex max-h-[calc(100dvh-1.5rem)] flex-col sm:max-h-[calc(100dvh-2rem)]">
           <header className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
             <div className="min-w-0">
               <h2 className="font-display text-xl font-semibold">{content.title}</h2>

@@ -94,7 +94,7 @@ export function KpiCard({
   const good = hasDelta && (positive ? higherIsBetter : !higherIsBetter);
 
   return (
-    <article className="flex h-full min-w-0 flex-col gap-1 rounded-xl border border-line bg-surface p-4 shadow-card">
+    <article className="@container flex h-full min-w-0 flex-col gap-1 rounded-xl border border-line bg-surface p-4 shadow-card">
       <div className="flex items-start justify-between gap-2">
         <p className="flex min-w-0 items-center gap-1 text-[11px] font-semibold tracking-[0.08em] text-muted uppercase">
           <span className="min-w-0">{label}</span>
@@ -121,7 +121,9 @@ export function KpiCard({
         {gauge !== undefined && <Gauge value={gauge} tone={tone} />}
         <p
           className={cx(
-            'min-w-0 font-display text-[1.35rem] leading-tight font-semibold break-words tabular-nums sm:text-[1.6rem]',
+            // Scales with the card's width (container units) so amounts fit on one line on phones;
+            // if they still don't, they wrap at the space after "S/", never inside the number.
+            'min-w-0 font-display text-[clamp(1.05rem,11cqi,1.35rem)] leading-tight font-semibold tabular-nums sm:text-[clamp(1.2rem,11cqi,1.6rem)]',
             tone === 'danger' ? 'text-danger-ink' : 'text-ink',
           )}
           title={valueTitle ?? value}
