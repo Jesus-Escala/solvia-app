@@ -37,7 +37,9 @@ export {
   type MenuItem,
   type ToastApi,
 } from './components/Overlays';
+export { InfoTip } from './components/InfoTip';
 export { Page, PageHeader } from './components/Page';
+export { downloadCsv } from './lib/csv';
 export { PaperBackdrop } from './components/PaperBackdrop';
 export { PasswordChecklist } from './components/PasswordChecklist';
 export { meetsPasswordPolicy, PASSWORD_RULES } from './components/passwordRules';

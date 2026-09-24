@@ -1,6 +1,8 @@
 import {
   BarChart3,
+  ChevronRight,
   FilePlus2,
+  Undo2,
   HandCoins,
   ReceiptText,
   Table2,
@@ -25,7 +27,12 @@ import {
 } from '@/ui';
 import { PeriodChart } from '../../components/charts/PeriodChart';
 import { WeekdayBars } from '../../components/charts/WeekdayBars';
-import type { Granularity, PeriodRange } from '../../components/dashboard/period';
+import {
+  fromIso,
+  toIso,
+  type Granularity,
+  type PeriodRange,
+} from '../../components/dashboard/period';
 import { PeriodPicker } from '../../components/dashboard/PeriodPicker';
 import { useDashboardAnalytics } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -65,6 +72,7 @@ function PeriodKpis({
       <KpiCard
         fetching={fetching}
         label={t('dashboard.analytics.kpi.collected')}
+        info={t('dashboard.analytics.info.collected')}
         value={tileMoney(fmt, kpis.collected.value ?? 0)}
         valueTitle={fmt.money(kpis.collected.value ?? 0)}
         tone="success"
@@ -80,6 +88,7 @@ function PeriodKpis({
       <KpiCard
         fetching={fetching}
         label={t('dashboard.analytics.kpi.issued')}
+        info={t('dashboard.analytics.info.issued')}
         value={tileMoney(fmt, kpis.issued.value ?? 0)}
         valueTitle={fmt.money(kpis.issued.value ?? 0)}
         delta={change(kpis.issued)}
@@ -92,6 +101,7 @@ function PeriodKpis({
       <KpiCard
         fetching={fetching}
         label={t('dashboard.analytics.kpi.collectionRate')}
+        info={t('dashboard.analytics.info.collectionRate')}
         value={rate.value === null ? '—' : fmt.percent(rate.value)}
         gauge={rate.value ?? 0}
         tone={
@@ -117,6 +127,7 @@ function PeriodKpis({
       <KpiCard
         fetching={fetching}
         label={t('dashboard.analytics.kpi.daysToPay')}
+        info={t('dashboard.analytics.info.daysToPay')}
         value={
           days.value === null
             ? '—'
@@ -131,6 +142,7 @@ function PeriodKpis({
       <KpiCard
         fetching={fetching}
         label={t('dashboard.analytics.series.payments')}
+        info={t('dashboard.analytics.info.payments')}
         value={fmt.number(kpis.payments.value ?? 0)}
         delta={change(kpis.payments)}
         formatPercent={fmt.percent}
@@ -143,6 +155,7 @@ function PeriodKpis({
       <KpiCard
         fetching={fetching}
         label={t('dashboard.analytics.kpi.newCustomers')}
+        info={t('dashboard.analytics.info.newCustomers')}
         value={fmt.number(kpis.newCustomers.value ?? 0)}
         delta={change(kpis.newCustomers)}
         formatPercent={fmt.percent}
@@ -170,6 +183,33 @@ export function CollectionView({
   const colors = useChartColors();
   const errors = useErrorText();
   const [view, setView] = useState<'chart' | 'table'>('chart');
+  // Drill-down trail: the ranges we zoomed in from. Only valid while the current range is the
+  // one we drilled into (picking another period from the picker leaves the trail behind).
+  const [trail, setTrail] = useState<{ stack: PeriodRange[]; at: PeriodRange } | null>(null);
+  const activeTrail =
+    trail && trail.at.from === range.from && trail.at.to === range.to ? trail.stack : [];
+  const drillInto = (bucket: string) => {
+    if (granularity === 'day') return;
+    const start = fromIso(bucket);
+    const end =
+      granularity === 'month'
+        ? new Date(start.getFullYear(), start.getMonth() + 1, 0)
+        : new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
+    const today = new Date();
+    const next = { from: toIso(start), to: toIso(end > today ? today : end) };
+    setTrail({ stack: [...activeTrail, range], at: next });
+    onRangeChange(next);
+  };
+  const drillBack = (index: number) => {
+    const target = activeTrail[index]!;
+    const stack = activeTrail.slice(0, index);
+    setTrail(stack.length > 0 ? { stack, at: target } : null);
+    onRangeChange(target);
+  };
+  const rangeLabel = (value: PeriodRange) =>
+    value.from === value.to
+      ? fmt.date(value.from)
+      : `${fmt.shortDate(value.from)} – ${fmt.shortDate(value.to)}`;
   const analytics = useDashboardAnalytics({ ...range, granularity });
   const data = analytics.data;
   const loading = analytics.isLoading;
@@ -207,6 +247,8 @@ export function CollectionView({
       <div className="grid gap-4 lg:grid-cols-12">
         <Card
           loading={fetching}
+          expandable
+          info={t('dashboard.analytics.info.chart')}
           className="lg:col-span-8"
           title={t('dashboard.analytics.chartTitle')}
           subtitle={t('dashboard.analytics.chartSubtitle', {
@@ -224,8 +266,44 @@ export function CollectionView({
             />
           }
         >
+          {activeTrail.length > 0 && (
+            <nav
+              aria-label={t('dashboard.analytics.drillTrail')}
+              className="mb-3 flex flex-wrap items-center gap-1 text-xs"
+            >
+              <button
+                type="button"
+                onClick={() => drillBack(activeTrail.length - 1)}
+                className="mr-1 inline-flex items-center gap-1 rounded-full bg-primary-soft px-2.5 py-1 font-semibold text-primary-ink transition hover:bg-primary hover:text-on-primary"
+              >
+                <Undo2 className="h-3.5 w-3.5" />
+                {t('dashboard.analytics.drillBack')}
+              </button>
+              {activeTrail.map((step, index) => (
+                <span key={index} className="inline-flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => drillBack(index)}
+                    className="rounded-md px-1.5 py-0.5 text-muted hover:bg-surface-3 hover:text-ink"
+                  >
+                    {rangeLabel(step)}
+                  </button>
+                  <ChevronRight className="h-3 w-3 text-subtle" />
+                </span>
+              ))}
+              <span className="rounded-md bg-surface-3 px-1.5 py-0.5 font-semibold text-ink">
+                {rangeLabel(range)}
+              </span>
+            </nav>
+          )}
           {data ? (
-            <PeriodChart series={data.series} granularity={data.period.granularity} view={view} />
+            <PeriodChart
+              series={data.series}
+              granularity={data.period.granularity}
+              view={view}
+              onBucketClick={data.period.granularity === 'day' ? undefined : drillInto}
+              exportName={`solvia-cobranza-${range.from}-${range.to}`}
+            />
           ) : (
             <Skeleton className="h-[300px] w-full" />
           )}
@@ -233,6 +311,8 @@ export function CollectionView({
         <Card
           loading={fetching}
           className="lg:col-span-4"
+          expandable
+          info={t('dashboard.analytics.info.methods')}
           title={t('dashboard.analytics.methods.title')}
           subtitle={t('dashboard.analytics.methods.subtitle')}
         >
@@ -259,6 +339,8 @@ export function CollectionView({
         <Card
           loading={fetching}
           className="lg:col-span-5"
+          expandable
+          info={t('dashboard.analytics.info.weekday')}
           title={t('dashboard.analytics.weekday.title')}
           subtitle={
             data && collected > 0 && bestDay
@@ -277,6 +359,8 @@ export function CollectionView({
         <Card
           loading={fetching}
           className="lg:col-span-7"
+          expandable
+          info={t('dashboard.analytics.info.payers')}
           title={t('dashboard.analytics.payers.title')}
           subtitle={t('dashboard.analytics.payers.subtitle')}
         >
@@ -317,13 +401,50 @@ function RemindersCard({
   const sent = reminders.sent.value ?? 0;
   const effectiveness = reminders.paidAfterReminder.value;
   const maxType = Math.max(...reminders.byType.map((item) => item.sent + item.failed), 1);
+  const failed = reminders.failed.value ?? 0;
+  const paid = effectiveness === null ? 0 : Math.round(sent * effectiveness);
+  const funnel = [
+    { key: 'attempted', value: sent + failed, tone: 'bg-primary/35' },
+    { key: 'delivered', value: sent, tone: 'bg-primary/70' },
+    { key: 'paid', value: paid, tone: 'bg-success' },
+  ] as const;
 
   return (
     <Card
       loading={loading}
       title={t('dashboard.analytics.reminders.title')}
       subtitle={t('dashboard.analytics.reminders.subtitle')}
+      info={t('dashboard.analytics.info.reminders')}
     >
+      {/* Funnel: every step is a subset of the previous one */}
+      <ol className="mb-5 space-y-1.5" aria-label={t('dashboard.analytics.reminders.funnel')}>
+        {funnel.map((step, index) => {
+          const base = funnel[0].value || 1;
+          const share = step.value / base;
+          return (
+            <li key={step.key} className="flex items-center gap-3 text-sm">
+              <span className="w-40 shrink-0 truncate text-muted">
+                {t(`dashboard.analytics.reminders.steps.${step.key}`)}
+              </span>
+              <div className="flex h-7 flex-1 items-center">
+                <div
+                  className={cx(
+                    'flex h-full items-center justify-end rounded-lg px-2 text-xs font-semibold text-ink transition-[width] duration-700',
+                    step.tone,
+                    index === 2 && 'text-white',
+                  )}
+                  style={{ width: `${Math.max(share * 100, 6)}%` }}
+                >
+                  {fmt.number(step.value)}
+                </div>
+              </div>
+              <span className="w-12 shrink-0 text-right text-xs text-subtle tabular-nums">
+                {index === 0 ? '' : fmt.percent(share)}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
       <div className="grid gap-5 lg:grid-cols-12">
         <dl className="grid grid-cols-3 gap-3 lg:col-span-5">
           <div className="rounded-xl bg-surface-2 p-3">

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { cx } from './cx';
 import { useMinimumLoading } from '../hooks/useMinimumLoading';
 import { Skeleton, Spinner } from './Feedback';
+import { InfoTip } from './InfoTip';
 
 export type KpiTone = 'default' | 'danger' | 'success' | 'warning';
 
@@ -25,6 +26,8 @@ export interface KpiCardProps {
   /** Refreshing: the icon becomes a spinner and the value dims. */
   fetching?: boolean;
   formatPercent?: (value: number) => string;
+  /** How the figure is calculated, in an ⓘ next to the label. */
+  info?: ReactNode;
 }
 
 const ICON_TONES: Record<KpiTone, string> = {
@@ -73,6 +76,7 @@ export function KpiCard({
   loading = false,
   fetching = false,
   formatPercent = (v) => `${Math.round(v * 100)}%`,
+  info,
 }: KpiCardProps) {
   const refreshing = useMinimumLoading(fetching, 500);
   if (loading) {
@@ -92,7 +96,10 @@ export function KpiCard({
   return (
     <article className="flex h-full min-w-0 flex-col gap-1 rounded-xl border border-line bg-surface p-4 shadow-card">
       <div className="flex items-start justify-between gap-2">
-        <p className="text-[11px] font-semibold tracking-[0.08em] text-muted uppercase">{label}</p>
+        <p className="flex min-w-0 items-center gap-1 text-[11px] font-semibold tracking-[0.08em] text-muted uppercase">
+          <span className="min-w-0">{label}</span>
+          {info && <InfoTip align="start">{info}</InfoTip>}
+        </p>
         {icon && (
           <span
             className={cx(

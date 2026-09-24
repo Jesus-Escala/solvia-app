@@ -258,6 +258,28 @@ export const en: Messages = {
       vs: 'Compared with {range}',
     },
     analytics: {
+      drillHint: 'Click a bar to see its detail.',
+      drillBack: 'Back',
+      drillTrail: 'Detail levels',
+      export: 'Export to Excel (CSV)',
+      info: {
+        collected: 'Sum of every payment recorded in the period, whenever the receivable was due.',
+        issued: 'Total amount of receivables issued within the period.',
+        collectionRate:
+          'Of what fell due in the period, the share already paid. Compared in percentage points with the previous period.',
+        daysToPay:
+          'Average days between issuing a receivable and its last payment, for receivables paid in the period. Lower is better.',
+        payments: 'Number of payments recorded (a partial payment counts as one).',
+        newCustomers: 'Customers created within the period.',
+        chart:
+          'Bars: collected and issued in each bucket. Line: what fell due. When collected is above what fell due, you are recovering older debt.',
+        methods: 'How customers paid in the period, by amount.',
+        weekday:
+          'Amount collected by weekday of the payment: tells you which days reminders work best.',
+        payers: 'Customers who paid the most in the period.',
+        reminders:
+          'WhatsApp reminders of the period. "Paid" counts customers who paid within 7 days of the message.',
+      },
       kpi: {
         collected: 'Collected',
         collectedHint: '{count|# payment|# payments}, average ticket {average}',
@@ -301,6 +323,12 @@ export const en: Messages = {
         empty: 'No payments in the period.',
       },
       reminders: {
+        funnel: 'Reminder funnel',
+        steps: {
+          attempted: 'Attempted',
+          delivered: 'Delivered',
+          paid: 'Paid within 7 days',
+        },
         title: 'WhatsApp reminders',
         subtitle: 'Sent in the period and how many ended in a payment.',
         sent: 'Sent',

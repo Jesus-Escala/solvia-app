@@ -1,6 +1,11 @@
-import { useId, type ReactNode } from 'react';
+import { Maximize2 } from 'lucide-react';
+import { useId, useState, type ReactNode } from 'react';
+import { useUiI18n } from '../i18n/context';
+import { IconButton } from './Button';
 import { cx } from './cx';
+import { InfoTip } from './InfoTip';
 import { LoadingOverlay } from './LoadingOverlay';
+import { Modal } from './Modal';
 
 // --- Badge ----------------------------------------------------------------------------
 
@@ -56,10 +61,16 @@ export function Card({
   bodyClassName,
   padded = true,
   loading = false,
+  info,
+  expandable = false,
   ...rest
 }: {
   title?: ReactNode;
   subtitle?: ReactNode;
+  /** Explains the card ("how is this calculated?") in an ⓘ next to the title. */
+  info?: ReactNode;
+  /** Adds a button that opens the same content full-screen (charts, big tables). */
+  expandable?: boolean;
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
@@ -68,6 +79,19 @@ export function Card({
   /** Refreshing: dims the body and shows a spinner over it. */
   loading?: boolean;
 } & Omit<React.HTMLAttributes<HTMLElement>, 'title'>) {
+  const { t } = useUiI18n();
+  const [expanded, setExpanded] = useState(false);
+  const toolbar =
+    actions || expandable ? (
+      <div className="flex flex-wrap items-center gap-2">
+        {actions}
+        {expandable && (
+          <IconButton label={t('card.expand')} onClick={() => setExpanded(true)}>
+            <Maximize2 className="h-4 w-4" />
+          </IconButton>
+        )}
+      </div>
+    ) : null;
   return (
     <section
       className={cx(
@@ -76,26 +100,44 @@ export function Card({
       )}
       {...rest}
     >
-      {(title || actions) && (
+      {(title || toolbar) && (
         <header className="flex flex-wrap items-start justify-between gap-3 px-5 pt-4 pb-3">
           <div className="min-w-0">
-            {title && <h2 className="font-display text-[17px] font-semibold text-ink">{title}</h2>}
+            {title && (
+              <h2 className="flex items-center gap-1.5 font-display text-[17px] font-semibold text-ink">
+                {title}
+                {info && <InfoTip align="start">{info}</InfoTip>}
+              </h2>
+            )}
             {subtitle && <p className="mt-0.5 text-xs text-muted">{subtitle}</p>}
           </div>
-          {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+          {toolbar}
         </header>
       )}
       <div
         className={cx(
           'relative min-h-0 flex-1',
           padded && 'px-5 pb-5',
-          !title && !actions && padded && 'pt-5',
+          !title && !toolbar && padded && 'pt-5',
           bodyClassName,
         )}
       >
         {children}
         <LoadingOverlay active={loading} />
       </div>
+      {expandable && (
+        <Modal
+          open={expanded}
+          size="xl"
+          title={title ?? ''}
+          description={subtitle}
+          closeLabel={t('card.close')}
+          onClose={() => setExpanded(false)}
+        >
+          {/* Same content, with room: charts grow to the dialog width */}
+          <div className="min-w-0 [&_.recharts-responsive-container]:min-h-[60vh]">{children}</div>
+        </Modal>
+      )}
     </section>
   );
 }

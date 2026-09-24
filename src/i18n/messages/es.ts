@@ -263,6 +263,29 @@ export const es = {
       vs: 'Comparado con {range}',
     },
     analytics: {
+      drillHint: 'Haz clic en una barra para ver su detalle.',
+      drillBack: 'Volver',
+      drillTrail: 'Niveles del detalle',
+      export: 'Exportar a Excel (CSV)',
+      info: {
+        collected:
+          'Suma de todos los pagos registrados en el periodo, sin importar cuándo vencía la deuda.',
+        issued: 'Monto total de las deudas con fecha de emisión dentro del periodo.',
+        collectionRate:
+          'De lo que vencía en el periodo, qué parte ya está pagada. Se compara en puntos porcentuales con el periodo anterior.',
+        daysToPay:
+          'Días promedio entre la emisión de una deuda y su último pago, para las deudas pagadas en el periodo. Menos es mejor.',
+        payments: 'Cantidad de pagos registrados (un abono parcial cuenta como un pago).',
+        newCustomers: 'Clientes creados dentro del periodo.',
+        chart:
+          'Barras: lo cobrado y lo emitido en cada tramo. Línea: lo que vencía. Si lo cobrado supera lo que vencía, estás recuperando deuda antigua.',
+        methods: 'Cómo te pagaron en el periodo, por monto.',
+        weekday:
+          'Monto cobrado según el día de la semana del pago: te dice qué días conviene enviar recordatorios.',
+        payers: 'Clientes que más pagaron en el periodo.',
+        reminders:
+          'Recordatorios de WhatsApp del periodo. "Pagaron" cuenta a quienes pagaron dentro de los 7 días siguientes al mensaje.',
+      },
       kpi: {
         collected: 'Cobrado',
         collectedHint: '{count|# pago|# pagos}, ticket promedio {average}',
@@ -306,6 +329,12 @@ export const es = {
         empty: 'Sin pagos en el periodo.',
       },
       reminders: {
+        funnel: 'Embudo de recordatorios',
+        steps: {
+          attempted: 'Intentados',
+          delivered: 'Entregados',
+          paid: 'Pagaron en 7 días',
+        },
         title: 'Recordatorios por WhatsApp',
         subtitle: 'Enviados en el periodo y cuántos terminaron en pago.',
         sent: 'Enviados',
