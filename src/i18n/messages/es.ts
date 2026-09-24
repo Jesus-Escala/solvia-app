@@ -1107,7 +1107,7 @@ export const es = {
     usedOf: '{used} de {limit}',
     unlimitedUsed: '{used} · ilimitado',
     manual:
-      'Los recordatorios que envías desde tu propio WhatsApp son ilimitados y no cuentan aquí.',
+      'Los recordatorios que envías tú desde tu celular, con un toque, son gratis y no cuentan aquí.',
     packs:
       '¿Necesitas más mensajes automáticos? Pide un paquete de {size} al equipo de Solvia y se suma a este mes.',
     limitReachedTitle: 'Ya usaste los mensajes automáticos del mes',

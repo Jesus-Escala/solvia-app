@@ -1102,7 +1102,8 @@ export const en: Messages = {
     customers: 'Customers',
     usedOf: '{used} of {limit}',
     unlimitedUsed: '{used} · unlimited',
-    manual: 'Reminders you send from your own WhatsApp are unlimited and do not count here.',
+    manual:
+      'Reminders you send yourself from your phone, in one tap, are free and do not count here.',
     packs:
       'Need more automatic messages? Ask the Solvia team for a pack of {size}; it adds to this month.',
     limitReachedTitle: 'You used this month\u2019s automatic messages',
