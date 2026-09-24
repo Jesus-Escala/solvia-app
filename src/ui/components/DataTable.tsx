@@ -237,7 +237,8 @@ export function DataTable<T>({
       className={cx(
         'flex min-w-0 flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-card',
         // flex: 0 1 auto -> content height, shrinking to the available space (then scrolls).
-        fill && 'min-h-0 max-h-full shrink',
+        // Phones: natural height, the page scrolls (see <Page fill>).
+        fill && 'md:max-h-full md:min-h-0 md:shrink',
         className,
       )}
       {...rest}
@@ -253,8 +254,11 @@ export function DataTable<T>({
       )}
 
       <div
-        className={cx('relative min-h-0 shrink overflow-auto', fill && 'min-h-40')}
-        style={fill ? undefined : { maxHeight }}
+        className={cx(
+          'relative min-h-0 shrink overflow-auto',
+          fill ? 'md:min-h-40' : 'md:max-h-(--table-max-h)',
+        )}
+        style={fill ? undefined : ({ '--table-max-h': `${maxHeight}px` } as React.CSSProperties)}
         aria-busy={showSkeleton || showFetching}
       >
         {showFetching && !showSkeleton && (

@@ -4,9 +4,10 @@ import { cx } from './cx';
 /**
  * Page wrapper inside the app shell.
  *
- * - `fill`: the page takes exactly the available height (no page scroll) and its last child
- *   (usually a DataTable) grows to fill the rest, scrolling internally. This mirrors the
- *   "table takes the remaining page height" behavior of the TSI component library.
+ * - `fill`: from `md` up, the page takes exactly the available height (no page scroll) and its
+ *   last child (usually a DataTable) grows to fill the rest, scrolling internally. This mirrors
+ *   the "table takes the remaining page height" behavior of the TSI component library. On
+ *   phones there is too little height for that, so the page flows and scrolls normally.
  * - default: normal flowing content; the shell's content area scrolls.
  */
 export function Page({
@@ -23,7 +24,7 @@ export function Page({
       className={cx(
         'animate-page-in mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-8',
         // min-h keeps tables usable on very short viewports; the shell scrolls in that case.
-        fill && 'flex h-full min-h-[560px] flex-col gap-4',
+        fill && 'space-y-4 md:flex md:h-full md:min-h-[560px] md:flex-col md:gap-4 md:space-y-0',
         !fill && 'space-y-5',
         className,
       )}
