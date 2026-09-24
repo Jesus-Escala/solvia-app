@@ -94,3 +94,32 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
     </button>
   );
 });
+
+export interface TextButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  /** `inherit` takes the surrounding text size. */
+  size?: 'xs' | 'sm' | 'inherit';
+  icon?: ReactNode;
+}
+
+/** A button that looks like a link: small secondary actions inside text or forms. */
+export const TextButton = forwardRef<HTMLButtonElement, TextButtonProps>(function TextButton(
+  { size = 'inherit', icon, className, children, type = 'button', ...props },
+  ref,
+) {
+  return (
+    <button
+      ref={ref}
+      type={type}
+      className={cx(
+        'inline-flex items-center gap-1.5 rounded font-medium text-primary-ink underline-offset-2 hover:underline focus-visible:ring-3 focus-visible:ring-primary/30 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-55 [&>svg]:h-4 [&>svg]:w-4',
+        size === 'xs' && 'text-xs [&>svg]:h-3.5 [&>svg]:w-3.5',
+        size === 'sm' && 'text-sm',
+        className,
+      )}
+      {...props}
+    >
+      {icon}
+      {children}
+    </button>
+  );
+});

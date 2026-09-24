@@ -1,15 +1,19 @@
-import { FileText, HandCoins, Minus, Plus, ReceiptText, ShoppingBasket, X } from 'lucide-react';
-import { useId, useState, type FormEvent } from 'react';
+import { FileText, HandCoins, ReceiptText, ShoppingBasket, X } from 'lucide-react';
+import { useState, type FormEvent } from 'react';
 import {
   Button,
   cx,
   Field,
   Modal,
-  PhoneInput,
   useErrorText,
   useErrorToast,
   useFeedback,
+  TextButton,
+  IconButton,
 } from '@/ui';
+import { NewCustomerFields, type NewCustomer } from './NewCustomerFields';
+import { roundQuantity } from './quantity';
+import { QuantityStepper } from './QuantityStepper';
 import { useCreateSale, useSaveCustomer } from '../../hooks/queries';
 import { useModules } from '../../hooks/useModules';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -30,8 +34,6 @@ const DOC_TYPES: SaleDocType[] = ['sale_note', 'receipt', 'invoice'];
 /** Whole units step by 1; kilos, liters and meters by 0.5 (the number can still be typed). */
 const stepFor = (product: ProductOption) =>
   product.unit === 'kg' || product.unit === 'liter' || product.unit === 'meter' ? 0.5 : 1;
-
-const round3 = (value: number) => Math.round(value * 1000) / 1000;
 
 export function SaleFormModal({
   open,
@@ -68,14 +70,13 @@ function SaleForm({ onClose, preset }: { onClose: () => void; preset?: PickedCus
   const modules = useModules();
   const create = useCreateSale();
   const saveCustomer = useSaveCustomer();
-  const phoneId = useId();
   const today = todayIso();
 
   const [lines, setLines] = useState<Line[]>([]);
   const [paymentType, setPaymentType] = useState<'cash' | 'credit'>(preset ? 'credit' : 'cash');
   const [method, setMethod] = useState<PaymentMethod>('cash');
   const [customer, setCustomer] = useState<PickedCustomer | null>(preset ?? null);
-  const [newCustomer, setNewCustomer] = useState<{ name: string; phone: string } | null>(null);
+  const [newCustomer, setNewCustomer] = useState<NewCustomer | null>(null);
   const [dueDate, setDueDate] = useState(addDaysIso(today, 7));
   const [showDoc, setShowDoc] = useState(false);
   const [docType, setDocType] = useState<SaleDocType>('sale_note');
@@ -90,7 +91,7 @@ function SaleForm({ onClose, preset }: { onClose: () => void; preset?: PickedCus
       if (existing) {
         return current.map((line) =>
           line === existing
-            ? { ...line, quantity: round3(line.quantity + stepFor(product)) }
+            ? { ...line, quantity: roundQuantity(line.quantity + stepFor(product)) }
             : line,
         );
       }
@@ -99,7 +100,7 @@ function SaleForm({ onClose, preset }: { onClose: () => void; preset?: PickedCus
   const setQuantity = (id: string, quantity: number) =>
     setLines((current) =>
       current.map((line) =>
-        line.product.id === id ? { ...line, quantity: Math.max(0, round3(quantity)) } : line,
+        line.product.id === id ? { ...line, quantity: Math.max(0, roundQuantity(quantity)) } : line,
       ),
     );
   const remove = (id: string) =>
@@ -183,51 +184,23 @@ function SaleForm({ onClose, preset }: { onClose: () => void; preset?: PickedCus
                       )}
                     </p>
                   </div>
-                  <div className="flex items-center rounded-lg border border-line">
-                    <button
-                      type="button"
-                      aria-label={t('sales.form.less')}
-                      onClick={() =>
-                        line.quantity <= step
-                          ? remove(line.product.id)
-                          : setQuantity(line.product.id, line.quantity - step)
-                      }
-                      className="flex h-9 w-9 items-center justify-center text-muted hover:text-ink"
-                    >
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <input
-                      aria-label={t('sales.form.quantity')}
-                      className="h-9 w-14 border-x border-line bg-transparent text-center text-sm font-semibold tabular-nums outline-none"
-                      type="number"
-                      inputMode="decimal"
-                      min="0"
-                      step="any"
-                      value={line.quantity}
-                      onChange={(event) =>
-                        setQuantity(line.product.id, Number(event.target.value) || 0)
-                      }
-                    />
-                    <button
-                      type="button"
-                      aria-label={t('sales.form.more')}
-                      onClick={() => setQuantity(line.product.id, line.quantity + step)}
-                      className="flex h-9 w-9 items-center justify-center text-muted hover:text-ink"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
+                  <QuantityStepper
+                    value={line.quantity}
+                    step={step}
+                    onChange={(quantity) => setQuantity(line.product.id, quantity)}
+                    onRemove={() => remove(line.product.id)}
+                  />
                   <span className="w-24 text-right font-semibold tabular-nums">
                     {fmt.money(line.quantity * line.product.price)}
                   </span>
-                  <button
-                    type="button"
-                    aria-label={t('sales.form.remove', { name: line.product.name })}
+                  <IconButton
+                    size="sm"
+                    label={t('sales.form.remove', { name: line.product.name })}
                     onClick={() => remove(line.product.id)}
-                    className="rounded-md p-1 text-subtle hover:bg-surface-3 hover:text-danger-ink"
+                    className="hover:text-danger-ink"
                   >
                     <X className="h-4 w-4" />
-                  </button>
+                  </IconButton>
                 </li>
               );
             })}
@@ -289,38 +262,12 @@ function SaleForm({ onClose, preset }: { onClose: () => void; preset?: PickedCus
       >
         {(id) =>
           newCustomer ? (
-            <div className="space-y-3 rounded-xl border border-primary/30 bg-primary-soft/40 p-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-primary-ink">
-                  {t('receivables.form.newCustomer')}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setNewCustomer(null)}
-                  className="text-xs font-medium text-primary-ink hover:underline"
-                >
-                  {t('receivables.form.searchInstead')}
-                </button>
-              </div>
-              <input
-                id={id}
-                className="input"
-                required
-                minLength={2}
-                aria-label={t('customers.form.name')}
-                value={newCustomer.name}
-                onChange={(event) => setNewCustomer({ ...newCustomer, name: event.target.value })}
-              />
-              <div>
-                <PhoneInput
-                  id={phoneId}
-                  required
-                  value={newCustomer.phone}
-                  onChange={(phone) => setNewCustomer({ ...newCustomer, phone })}
-                />
-                <p className="mt-1 text-xs text-muted">{t('receivables.form.phoneWhy')}</p>
-              </div>
-            </div>
+            <NewCustomerFields
+              id={id}
+              value={newCustomer}
+              onChange={setNewCustomer}
+              onCancel={() => setNewCustomer(null)}
+            />
           ) : (
             <CustomerPicker
               id={id}
@@ -376,14 +323,10 @@ function SaleForm({ onClose, preset }: { onClose: () => void; preset?: PickedCus
           </Field>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => setShowDoc(true)}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-ink hover:underline"
-        >
+        <TextButton size="sm" onClick={() => setShowDoc(true)}>
           <FileText className="h-4 w-4" />
           {t('sales.form.addDoc')}
-        </button>
+        </TextButton>
       )}
 
       <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">

@@ -35,6 +35,8 @@ import {
   LOCALES,
   useTheme,
   type ThemePreference,
+  Checkbox,
+  Switch,
 } from '@/ui';
 import {
   useNotifications,
@@ -154,24 +156,14 @@ function RemindersTab() {
           </Alert>
         )}
         <form onSubmit={(event) => void submit(event)} className="space-y-5">
-          <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-line bg-surface-2 px-4 py-3">
-            <span className="flex items-center gap-3 text-sm font-medium">
-              <BellRing className="h-4 w-4 text-primary" />
-              {t('settings.reminders.enabled')}
-            </span>
-            <input
-              type="checkbox"
-              role="switch"
-              className="peer sr-only"
-              checked={rules.enabled}
-              disabled={!isAdmin}
-              onChange={(e) => update('enabled', e.target.checked)}
-            />
-            <span
-              aria-hidden="true"
-              className="relative h-6 w-11 shrink-0 rounded-full bg-line-strong transition peer-checked:bg-primary peer-focus-visible:ring-3 peer-focus-visible:ring-primary/30 after:absolute after:top-0.5 after:left-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition peer-checked:after:translate-x-5"
-            />
-          </label>
+          <Switch
+            card
+            icon={<BellRing />}
+            label={t('settings.reminders.enabled')}
+            checked={rules.enabled}
+            disabled={!isAdmin}
+            onChange={(checked) => update('enabled', checked)}
+          />
 
           <fieldset
             disabled={!isAdmin || !rules.enabled}
@@ -205,15 +197,12 @@ function RemindersTab() {
                 {t('settings.reminders.overdueEveryHint')}
               </span>
             </label>
-            <label className="flex items-center gap-3 text-sm sm:col-span-2">
-              <input
-                type="checkbox"
-                className="h-4 w-4 accent-[var(--primary)]"
-                checked={rules.onDueDate}
-                onChange={(e) => update('onDueDate', e.target.checked)}
-              />
-              {t('settings.reminders.onDueDate')}
-            </label>
+            <Checkbox
+              className="sm:col-span-2"
+              checked={rules.onDueDate}
+              onChange={(checked) => update('onDueDate', checked)}
+              label={t('settings.reminders.onDueDate')}
+            />
           </fieldset>
 
           {isAdmin && (

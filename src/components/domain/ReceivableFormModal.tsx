@@ -1,7 +1,8 @@
-import { useId, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useSaveCustomer, useSaveReceivable } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
-import { Button, Field, Modal, PhoneInput, useErrorText, useErrorToast, useFeedback } from '@/ui';
+import { Button, Field, Modal, useErrorText, useErrorToast, useFeedback, TextButton } from '@/ui';
+import { NewCustomerFields, type NewCustomer } from './NewCustomerFields';
 import type { Receivable } from '../../lib/types';
 import { CustomerPicker, type PickedCustomer } from './CustomerPicker';
 import { DueDateField } from './DueDateField';
@@ -42,7 +43,6 @@ function ReceivableForm({ onClose, customer: preset, receivable }: Omit<Props, '
   const saveCustomer = useSaveCustomer();
   const editing = Boolean(receivable);
   const today = todayIso();
-  const phoneId = useId();
 
   const [customer, setCustomer] = useState<PickedCustomer | null>(
     preset ??
@@ -56,7 +56,7 @@ function ReceivableForm({ onClose, customer: preset, receivable }: Omit<Props, '
         : null),
   );
   // A customer created from this form (name typed in the search box).
-  const [newCustomer, setNewCustomer] = useState<{ name: string; phone: string } | null>(null);
+  const [newCustomer, setNewCustomer] = useState<NewCustomer | null>(null);
   const [amount, setAmount] = useState(receivable ? String(receivable.totalAmount) : '');
   const [description, setDescription] = useState(receivable?.description ?? '');
   const [issueDate, setIssueDate] = useState(receivable?.issueDate ?? today);
@@ -97,39 +97,13 @@ function ReceivableForm({ onClose, customer: preset, receivable }: Omit<Props, '
       <Field label={t('receivables.form.customer')} error={errors.field(save.error, 'customerId')}>
         {(id) =>
           newCustomer ? (
-            <div className="space-y-3 rounded-xl border border-primary/30 bg-primary-soft/40 p-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-primary-ink">
-                  {t('receivables.form.newCustomer')}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setNewCustomer(null)}
-                  className="text-xs font-medium text-primary-ink hover:underline"
-                >
-                  {t('receivables.form.searchInstead')}
-                </button>
-              </div>
-              <input
-                id={id}
-                className="input"
-                required
-                minLength={2}
-                aria-label={t('customers.form.name')}
-                value={newCustomer.name}
-                onChange={(event) => setNewCustomer({ ...newCustomer, name: event.target.value })}
-              />
-              <div>
-                <PhoneInput
-                  id={phoneId}
-                  required
-                  invalid={Boolean(errors.field(saveCustomer.error, 'phone'))}
-                  value={newCustomer.phone}
-                  onChange={(phone) => setNewCustomer({ ...newCustomer, phone })}
-                />
-                <p className="mt-1 text-xs text-muted">{t('receivables.form.phoneWhy')}</p>
-              </div>
-            </div>
+            <NewCustomerFields
+              id={id}
+              value={newCustomer}
+              onChange={setNewCustomer}
+              onCancel={() => setNewCustomer(null)}
+              phoneInvalid={Boolean(errors.field(saveCustomer.error, 'phone'))}
+            />
           ) : (
             <CustomerPicker
               id={id}
@@ -218,13 +192,9 @@ function ReceivableForm({ onClose, customer: preset, receivable }: Omit<Props, '
       ) : (
         <p className="text-xs text-muted">
           {t('receivables.form.soldToday')}{' '}
-          <button
-            type="button"
-            onClick={() => setChangeIssue(true)}
-            className="font-medium text-primary-ink hover:underline"
-          >
+          <TextButton onClick={() => setChangeIssue(true)}>
             {t('receivables.form.changeDate')}
-          </button>
+          </TextButton>
         </p>
       )}
 

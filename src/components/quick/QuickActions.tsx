@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
-import { Button, cx, EmptyState, Modal, Popover, Skeleton } from '@/ui';
+import { Button, cx, EmptyState, Modal, Popover, Skeleton, TextButton } from '@/ui';
 import { useReceivables } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { Receivable } from '../../lib/types';
@@ -110,14 +110,10 @@ function QuickPayment({ preset, onClose }: { preset?: PickedCustomer; onClose: (
     return (
       <div className="space-y-3">
         {(chosen || !preset) && (
-          <button
-            type="button"
-            onClick={() => (chosen ? setChosen(null) : setCustomer(null))}
-            className="inline-flex items-center gap-1 text-xs font-medium text-primary-ink hover:underline"
-          >
+          <TextButton size="xs" onClick={() => (chosen ? setChosen(null) : setCustomer(null))}>
             <ArrowLeft className="h-3.5 w-3.5" />
             {t('quick.payment.back')}
-          </button>
+          </TextButton>
         )}
         <PaymentForm receivable={receivable} onClose={onClose} />
       </div>

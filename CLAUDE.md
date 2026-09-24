@@ -67,6 +67,9 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
 - **Inventory** (`inventory` module): `PurchasesPage` + `PurchaseFormModal` (stock goes up, costs
   updated), `SuppliersPage`, `AdjustStockModal` (count / loss / damage / correction), "Por
   acabarse" filter in products and a low-stock notice on Home.
+- **Reusable pieces** (use them instead of hand-made markup): kit `TextButton` (link-looking
+  button), `Checkbox`, `Switch`, `IconButton`; domain `SearchPicker` + `PickedChip` (customer and
+  supplier pickers), `NewCustomerFields`, `QuantityStepper`, `FileViewer`, `ModulesOffer`.
 - **Pickers** use the light `/products/lookup` and `/customers/lookup` (cached 30 s, previous
   request cancelled via AbortSignal, Enter waits for fresh results — `useSearchBox.ts`).
 - **FileViewer** (`components/files/`): PDF (pdf.js, pages on canvases, zoom) and Excel (SheetJS

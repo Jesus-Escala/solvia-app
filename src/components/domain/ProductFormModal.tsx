@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Button, cx, Field, Modal, useErrorText, useErrorToast, useFeedback } from '@/ui';
+import { Button, cx, Field, Modal, useErrorText, useErrorToast, useFeedback, Checkbox } from '@/ui';
 import { useSaveProduct } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { Product, ProductUnit } from '../../lib/types';
@@ -191,18 +191,12 @@ function ProductForm({ product, onClose }: { product?: Product; onClose: () => v
       </Field>
 
       <div className="rounded-xl border border-line bg-surface-2 p-3">
-        <label className="flex cursor-pointer items-start gap-3">
-          <input
-            type="checkbox"
-            className="mt-0.5 h-4 w-4 accent-[var(--primary)]"
-            checked={form.trackStock}
-            onChange={(event) => update('trackStock', event.target.checked)}
-          />
-          <span>
-            <span className="block text-sm font-semibold">{t('products.form.trackStock')}</span>
-            <span className="block text-xs text-muted">{t('products.form.trackStockHint')}</span>
-          </span>
-        </label>
+        <Checkbox
+          checked={form.trackStock}
+          onChange={(checked) => update('trackStock', checked)}
+          label={t('products.form.trackStock')}
+          hint={t('products.form.trackStockHint')}
+        />
         <div className={cx('mt-3 pl-7', !form.trackStock && 'hidden')}>
           <Field
             label={t('products.form.minStock')}

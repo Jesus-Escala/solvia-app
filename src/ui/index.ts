@@ -4,7 +4,14 @@
  */
 
 // UI kit
-export { Button, IconButton, type ButtonProps, type ButtonVariant } from './components/Button';
+export {
+  Button,
+  IconButton,
+  type ButtonProps,
+  type ButtonVariant,
+  TextButton,
+  type TextButtonProps,
+} from './components/Button';
 export { cx } from './components/cx';
 export {
   DataTable,
@@ -24,6 +31,7 @@ export {
   type SegmentOption,
   type TabItem,
 } from './components/Form';
+export { Checkbox, Switch } from './components/Choice';
 export { IndustrySelect } from './components/IndustrySelect';
 export { LoadingOverlay, LoadingPill } from './components/LoadingOverlay';
 export { KpiCard, KpiRow, type KpiCardProps } from './components/KpiCard';

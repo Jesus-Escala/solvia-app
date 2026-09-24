@@ -2,7 +2,16 @@ import { FileCheck2, Paperclip, X } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
 import { useRegisterPayment } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
-import { useErrorText, Button, Field, Modal, ProgressBar, useFeedback, useErrorToast } from '@/ui';
+import {
+  useErrorText,
+  Button,
+  Field,
+  Modal,
+  ProgressBar,
+  useFeedback,
+  useErrorToast,
+  TextButton,
+} from '@/ui';
 import type { PaymentMethod, Receivable } from '../../lib/types';
 import { todayIso } from './dueLabel';
 import { PaymentMethodPicker } from './PaymentMethods';
@@ -132,13 +141,9 @@ export function PaymentForm({
               />
             </div>
             {!isFull && (
-              <button
-                type="button"
-                onClick={() => setAmount(String(receivable.outstandingAmount))}
-                className="text-xs font-medium text-primary-ink hover:underline"
-              >
+              <TextButton size="xs" onClick={() => setAmount(String(receivable.outstandingAmount))}>
                 {t('payment.payAll', { amount: fmt.money(receivable.outstandingAmount) })}
-              </button>
+              </TextButton>
             )}
           </div>
         )}
@@ -209,13 +214,9 @@ export function PaymentForm({
       ) : (
         <p className="text-xs text-muted">
           {t('payment.paidToday')}{' '}
-          <button
-            type="button"
-            onClick={() => setChangeDate(true)}
-            className="font-medium text-primary-ink hover:underline"
-          >
+          <TextButton onClick={() => setChangeDate(true)}>
             {t('receivables.form.changeDate')}
-          </button>
+          </TextButton>
         </p>
       )}
 

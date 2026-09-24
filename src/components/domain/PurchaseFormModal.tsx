@@ -1,6 +1,17 @@
-import { FileText, Minus, Plus, Truck, X } from 'lucide-react';
+import { FileText, Truck, X } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
-import { Button, Field, Modal, useErrorToast, useFeedback } from '@/ui';
+import {
+  Button,
+  Field,
+  Modal,
+  useErrorToast,
+  useFeedback,
+  TextButton,
+  Checkbox,
+  IconButton,
+} from '@/ui';
+import { roundQuantity } from './quantity';
+import { QuantityStepper } from './QuantityStepper';
 import { useCreatePurchase, useSaveSupplier } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { ProductOption, SaleDocType, SupplierOption } from '../../lib/types';
@@ -15,7 +26,6 @@ interface Line {
 }
 
 const DOC_TYPES: SaleDocType[] = ['receipt', 'invoice', 'sale_note'];
-const round3 = (value: number) => Math.round(value * 1000) / 1000;
 
 export function PurchaseFormModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useI18n();
@@ -56,7 +66,7 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
       const existing = current.find((line) => line.product.id === product.id) ?? null;
       if (existing !== null) {
         return current.map((line) =>
-          line === existing ? { ...line, quantity: round3(line.quantity + 1) } : line,
+          line === existing ? { ...line, quantity: roundQuantity(line.quantity + 1) } : line,
         );
       }
       return [...current, { product, quantity: 1, unitCost: String(product.cost ?? '') }];
@@ -124,47 +134,16 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
                     <p className="text-xs text-muted">
                       {t('purchases.form.stockAfter', {
                         from: fmt.number(line.product.stock),
-                        to: fmt.number(round3(line.product.stock + line.quantity)),
+                        to: fmt.number(roundQuantity(line.product.stock + line.quantity)),
                       })}
                     </p>
                   )}
                 </div>
-                <div className="flex items-center rounded-lg border border-line">
-                  <button
-                    type="button"
-                    aria-label={t('sales.form.less')}
-                    onClick={() =>
-                      line.quantity <= 1
-                        ? remove(line.product.id)
-                        : update(line.product.id, { quantity: round3(line.quantity - 1) })
-                    }
-                    className="flex h-9 w-9 items-center justify-center text-muted hover:text-ink"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </button>
-                  <input
-                    aria-label={t('sales.form.quantity')}
-                    className="h-9 w-14 border-x border-line bg-transparent text-center text-sm font-semibold tabular-nums outline-none"
-                    type="number"
-                    inputMode="decimal"
-                    min="0"
-                    step="any"
-                    value={line.quantity}
-                    onChange={(event) =>
-                      update(line.product.id, {
-                        quantity: Math.max(0, round3(Number(event.target.value) || 0)),
-                      })
-                    }
-                  />
-                  <button
-                    type="button"
-                    aria-label={t('sales.form.more')}
-                    onClick={() => update(line.product.id, { quantity: round3(line.quantity + 1) })}
-                    className="flex h-9 w-9 items-center justify-center text-muted hover:text-ink"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
-                </div>
+                <QuantityStepper
+                  value={line.quantity}
+                  onChange={(quantity) => update(line.product.id, { quantity })}
+                  onRemove={() => remove(line.product.id)}
+                />
                 <label className="relative w-28">
                   <span className="sr-only">{t('purchases.form.unitCost')}</span>
                   <span className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-xs text-muted">
@@ -185,14 +164,14 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
                 <span className="w-24 text-right font-semibold tabular-nums">
                   {fmt.money(line.quantity * (Number(line.unitCost) || 0))}
                 </span>
-                <button
-                  type="button"
-                  aria-label={t('sales.form.remove', { name: line.product.name })}
+                <IconButton
+                  size="sm"
+                  label={t('sales.form.remove', { name: line.product.name })}
                   onClick={() => remove(line.product.id)}
-                  className="rounded-md p-1 text-subtle hover:bg-surface-3 hover:text-danger-ink"
+                  className="hover:text-danger-ink"
                 >
                   <X className="h-4 w-4" />
-                </button>
+                </IconButton>
               </li>
             ))}
           </ul>
@@ -248,28 +227,19 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
           </Field>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => setShowDoc(true)}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-ink hover:underline"
-        >
+        <TextButton size="sm" onClick={() => setShowDoc(true)}>
           <FileText className="h-4 w-4" />
           {t('purchases.form.addDoc')}
-        </button>
+        </TextButton>
       )}
 
-      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line bg-surface-2 p-3">
-        <input
-          type="checkbox"
-          className="mt-0.5 h-4 w-4 accent-[var(--primary)]"
-          checked={updateCosts}
-          onChange={(event) => setUpdateCosts(event.target.checked)}
-        />
-        <span>
-          <span className="block text-sm font-semibold">{t('purchases.form.updateCosts')}</span>
-          <span className="block text-xs text-muted">{t('purchases.form.updateCostsHint')}</span>
-        </span>
-      </label>
+      <Checkbox
+        card
+        checked={updateCosts}
+        onChange={setUpdateCosts}
+        label={t('purchases.form.updateCosts')}
+        hint={t('purchases.form.updateCostsHint')}
+      />
 
       <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
         <Button variant="secondary" onClick={onClose}>

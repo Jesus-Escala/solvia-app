@@ -13,7 +13,7 @@ import {
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
-import { Mascot, Button, cx, Modal } from '@/ui';
+import { Mascot, Button, cx, Modal, IconButton } from '@/ui';
 import { useI18n } from '../i18n/I18nProvider';
 import { TOUR_STEPS } from './steps';
 
@@ -335,14 +335,9 @@ function TourOverlay({
               {t('tour.progress', { current: index + 1, total: TOUR_STEPS.length })}
             </span>
           </span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1 text-subtle hover:bg-surface-3 hover:text-ink"
-            aria-label={t('tour.skip')}
-          >
+          <IconButton size="sm" label={t('tour.skip')} onClick={onClose}>
             <X className="h-4 w-4" />
-          </button>
+          </IconButton>
         </div>
         <h2 id="tour-title" className="text-base font-semibold">
           {t(`tour.steps.${step.id}.title`)}
