@@ -54,6 +54,12 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
   Enter freezes the text and resolves it in order, so fast scans are never lost), cash or
   credit, optional customer on cash. Stock shortages are traced (sale/line badges, "Sin stock"
   filter, `KardexModal`) when the inventory module is on.
+- **Navigation** (`components/layout/navItems.tsx`): sections by business area — Comercial,
+  Cuentas por cobrar, Inventario, Números — plus settings/help at the bottom; phones show three
+  places, the "+" and "Más" (a sheet with every section). Items of disabled modules disappear.
+- **Inventory** (`inventory` module): `PurchasesPage` + `PurchaseFormModal` (stock goes up, costs
+  updated), `SuppliersPage`, `AdjustStockModal` (count / loss / damage / correction), "Por
+  acabarse" filter in products and a low-stock notice on Home.
 - **Pickers** use the light `/products/lookup` and `/customers/lookup` (cached 30 s, previous
   request cancelled via AbortSignal, Enter waits for fresh results — `useSearchBox.ts`).
 - **Tables**: `onRowEdit` (right-click / long press) and `onRowDelete` (double-click, the page

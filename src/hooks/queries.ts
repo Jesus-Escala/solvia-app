@@ -28,6 +28,10 @@ import type {
   ReminderRunSummary,
   RiskLevel,
   SortDir,
+  Supplier,
+  SupplierOption,
+  Purchase,
+  AdjustmentReason,
   StockMovement,
   TemplateType,
   AuthConfig,
@@ -361,6 +365,8 @@ export function useSendReminder() {
 export interface ProductListParams {
   search?: string | null;
   status?: 'active' | 'archived' | 'all' | null;
+  /** Only counted products at or below their alert level. */
+  lowStock?: boolean | null;
   page: number;
   pageSize?: number | null;
   sortBy?: 'name' | 'code' | 'price' | 'cost' | 'createdAt' | null;
@@ -512,6 +518,116 @@ export function useVoidSale() {
   const invalidate = useInvalidateSales();
   return useMutation({
     mutationFn: (id: string) => api.post<Sale>(`/sales/${id}/void`, {}),
+    onSuccess: invalidate,
+  });
+}
+
+// --- Inventory: suppliers, purchases, adjustments (inventory module) --------
+
+export function useSuppliers(params: { search?: string | null; page: number; pageSize?: number }) {
+  return useQuery({
+    queryKey: ['suppliers', params] as const,
+    queryFn: () => api.get<Paginated<Supplier>>('/suppliers', { ...params }),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useSupplierLookup(search: string) {
+  return useQuery({
+    queryKey: ['suppliers', 'lookup', search] as const,
+    queryFn: ({ signal }) =>
+      api.get<{ data: SupplierOption[] }>('/suppliers/lookup', { search }, { signal }),
+    staleTime: LOOKUP_STALE_MS,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export interface SupplierInput {
+  name?: string;
+  documentId?: string | null;
+  phone?: string | null;
+  notes?: string | null;
+}
+
+export function useSaveSupplier(id: string | null = null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SupplierInput) =>
+      id === null
+        ? api.post<Supplier>('/suppliers', input)
+        : api.patch<Supplier>(`/suppliers/${id}`, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['suppliers'] }),
+  });
+}
+
+export function useDeleteSupplier() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/suppliers/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['suppliers'] }),
+  });
+}
+
+export function usePurchases(params: {
+  search?: string | null;
+  status?: 'completed' | 'voided' | null;
+  page: number;
+  pageSize?: number;
+}) {
+  return useQuery({
+    queryKey: ['purchases', params] as const,
+    queryFn: () => api.get<Paginated<Purchase>>('/purchases', { ...params }),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export interface PurchaseInput {
+  supplierId?: string;
+  docType?: SaleDocType;
+  docNumber?: string | null;
+  updateCosts?: boolean;
+  items: Array<{ productId: string; quantity: number; unitCost: number }>;
+}
+
+/** Purchases and adjustments change stock (and costs): products and the kardex refresh. */
+function useInvalidateStock() {
+  const queryClient = useQueryClient();
+  return () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['purchases'] }),
+      queryClient.invalidateQueries({ queryKey: ['products'] }),
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] }),
+    ]);
+}
+
+export function useCreatePurchase() {
+  const invalidate = useInvalidateStock();
+  return useMutation({
+    mutationFn: (input: PurchaseInput) => api.post<Purchase>('/purchases', input),
+    onSuccess: invalidate,
+  });
+}
+
+export function useVoidPurchase() {
+  const invalidate = useInvalidateStock();
+  return useMutation({
+    mutationFn: (id: string) => api.post<Purchase>(`/purchases/${id}/void`, {}),
+    onSuccess: invalidate,
+  });
+}
+
+export function useAdjustStock() {
+  const invalidate = useInvalidateStock();
+  return useMutation({
+    mutationFn: ({
+      productId,
+      ...input
+    }: {
+      productId: string;
+      reason: AdjustmentReason;
+      quantity: number;
+      note: string | null;
+    }) => api.post<Product>(`/products/${productId}/adjust`, input),
     onSuccess: invalidate,
   });
 }

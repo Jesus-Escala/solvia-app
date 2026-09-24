@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   BarChart3,
   ChevronRight,
   HandCoins,
@@ -13,7 +14,12 @@ import { useAuth } from '../auth/AuthContext';
 import { addDaysIso, dueLabel, todayIso } from '../components/domain/dueLabel';
 import { useReceivableActions } from '../components/domain/useReceivableActions';
 import { useQuickActions } from '../components/quick/quickActionsContext';
-import { useDashboardAnalytics, useDashboardSummary, useReceivables } from '../hooks/queries';
+import {
+  useDashboardAnalytics,
+  useDashboardSummary,
+  useProducts,
+  useReceivables,
+} from '../hooks/queries';
 import { useModules } from '../hooks/useModules';
 import { useI18n } from '../i18n/I18nProvider';
 import { presetRange } from '../components/dashboard/period';
@@ -25,19 +31,24 @@ function ActionTile({
   hint,
   onClick,
   primary = false,
+  wide = false,
 }: {
   icon: ReactNode;
   label: string;
   hint: string;
   onClick: () => void;
   primary?: boolean;
+  /** Takes the whole row on phones (the first of an odd number of tiles). */
+  wide?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cx(
-        'group flex items-center gap-3 rounded-2xl border p-4 text-left shadow-card transition hover:-translate-y-0.5 hover:shadow-pop sm:flex-col sm:items-start sm:gap-3 sm:p-5',
+        // Phones: compact tiles in a 2-column grid; wider screens: roomier cards.
+        'group flex flex-col items-start gap-2 rounded-2xl border p-3.5 text-left shadow-card transition hover:-translate-y-0.5 hover:shadow-pop sm:gap-3 sm:p-5',
+        wide && 'col-span-2 sm:col-span-1',
         primary
           ? 'border-primary bg-primary text-on-primary'
           : 'border-line bg-surface text-ink hover:border-primary/40',
@@ -45,15 +56,22 @@ function ActionTile({
     >
       <span
         className={cx(
-          'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl [&>svg]:h-6 [&>svg]:w-6',
+          'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl sm:h-11 sm:w-11 [&>svg]:h-5 [&>svg]:w-5 sm:[&>svg]:h-6 sm:[&>svg]:w-6',
           primary ? 'bg-white/15' : 'bg-primary-soft text-primary-ink',
         )}
       >
         {icon}
       </span>
       <span className="min-w-0">
-        <span className="block font-display text-lg leading-tight font-semibold">{label}</span>
-        <span className={cx('block text-sm', primary ? 'text-on-primary/80' : 'text-muted')}>
+        <span className="block font-display text-base leading-tight font-semibold sm:text-lg">
+          {label}
+        </span>
+        <span
+          className={cx(
+            'block text-xs leading-snug sm:text-sm',
+            primary ? 'text-on-primary/80' : 'text-muted',
+          )}
+        >
           {hint}
         </span>
       </span>
@@ -138,6 +156,9 @@ export function HomePage() {
     : 0;
   const hasAnyDebt = summary.data ? openCount + summary.data.byStatus.paid.count > 0 : true;
   const rows = toCollect.data?.data ?? [];
+  // Running low (inventory module): only the count, one tiny request.
+  const low = useProducts({ page: 1, pageSize: 1, lowStock: true }, modules.inventory);
+  const lowCount = modules.inventory ? (low.data?.meta.total ?? 0) : 0;
   const more = (toCollect.data?.meta.total ?? 0) - rows.length;
 
   return (
@@ -154,8 +175,8 @@ export function HomePage() {
 
       <div
         className={cx(
-          'grid gap-3',
-          modules.sales ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-3',
+          'grid grid-cols-2 gap-3',
+          modules.sales ? 'lg:grid-cols-4' : 'sm:grid-cols-3',
         )}
         data-tour="home-actions"
       >
@@ -170,6 +191,7 @@ export function HomePage() {
         )}
         <ActionTile
           primary={!modules.sales}
+          wide={!modules.sales}
           icon={<ReceiptText />}
           label={t('quick.receivable')}
           hint={t('quick.receivableHint')}
@@ -230,6 +252,22 @@ export function HomePage() {
               linkLabel={t('home.paidLink')}
             />
           </div>
+
+          {lowCount > 0 && (
+            <Link
+              to="/products?status=low"
+              className="flex items-center gap-3 rounded-2xl border border-warning/40 bg-warning-soft px-5 py-3.5 text-sm transition hover:brightness-95"
+            >
+              <AlertTriangle className="h-5 w-5 shrink-0 text-warning-ink" />
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold text-warning-ink">
+                  {t('home.lowStock', { count: lowCount })}
+                </span>
+                <span className="block text-muted">{t('home.lowStockHint')}</span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-warning-ink" />
+            </Link>
+          )}
 
           <Card
             data-tour="home-today"

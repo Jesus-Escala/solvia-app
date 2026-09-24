@@ -11,7 +11,9 @@ import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { HelpPage } from './pages/HelpPage';
 import { HomePage } from './pages/HomePage';
 import { ProductsPage } from './pages/ProductsPage';
+import { PurchasesPage } from './pages/PurchasesPage';
 import { SalesPage } from './pages/SalesPage';
+import { SuppliersPage } from './pages/SuppliersPage';
 import { ReceivablesPage } from './pages/ReceivablesPage';
 import { SettingsPage } from './pages/SettingsPage';
 
@@ -50,6 +52,8 @@ export function App() {
           <Route path="receivables" element={<ReceivablesPage />} />
           <Route path="products" element={<ProductsPage />} />
           <Route path="sales" element={<SalesPage />} />
+          <Route path="purchases" element={<PurchasesPage />} />
+          <Route path="suppliers" element={<SuppliersPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="help" element={<HelpPage />} />
           <Route path="*" element={<NotFoundPage />} />

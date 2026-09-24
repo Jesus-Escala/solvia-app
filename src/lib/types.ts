@@ -254,9 +254,11 @@ export interface DebtConcentration {
   generatedAt: string;
 }
 
+export type AdjustmentReason = 'count' | 'loss' | 'damage' | 'correction';
+
 export interface StockMovement {
   id: string;
-  type: 'sale' | 'sale_void' | 'purchase' | 'adjustment';
+  type: 'sale' | 'sale_void' | 'purchase' | 'purchase_void' | 'adjustment';
   /** Signed: negative left, positive entered. */
   quantity: number;
   /** Stock the product was left with (null for movements recorded before it existed). */
@@ -264,14 +266,57 @@ export interface StockMovement {
   /** Part that left without stock to cover it. */
   shortage: number;
   sale: { id: string; number: number } | null;
+  purchase: { id: string; number: number } | null;
+  reason: AdjustmentReason | null;
   note: string | null;
   createdAt: string;
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  documentId: string | null;
+  phone: string | null;
+  notes: string | null;
+  /** How many purchases it has (null when not counted). */
+  purchases: number | null;
+  createdAt: string;
+}
+
+export interface SupplierOption {
+  id: string;
+  name: string;
+  phone: string | null;
+}
+
+export interface PurchaseItem {
+  id: string;
+  productId: string;
+  description: string;
+  quantity: number;
+  unitCost: number;
+  subtotal: number;
+}
+
+export interface Purchase {
+  id: string;
+  number: number;
+  date: string;
+  supplier: { id: string; name: string; phone: string | null } | null;
+  docType: SaleDocType;
+  docNumber: string | null;
+  total: number;
+  status: 'completed' | 'voided';
+  createdAt: string;
+  voidedAt: string | null;
+  items: PurchaseItem[];
+  summary: string;
 }
 
 /** What a product picker needs (from `GET /products/lookup`). */
 export type ProductOption = Pick<
   Product,
-  'id' | 'name' | 'code' | 'unit' | 'price' | 'trackStock' | 'stock' | 'minStock'
+  'id' | 'name' | 'code' | 'unit' | 'price' | 'cost' | 'trackStock' | 'stock' | 'minStock'
 >;
 
 /** What a customer picker needs (from `GET /customers/lookup`). */

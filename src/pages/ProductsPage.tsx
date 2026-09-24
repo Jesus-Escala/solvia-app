@@ -1,6 +1,8 @@
 import {
+  AlertTriangle,
   Archive,
   ArchiveRestore,
+  ClipboardCheck,
   History,
   Package,
   PackagePlus,
@@ -28,6 +30,7 @@ import {
   type DataTableColumn,
 } from '@/ui';
 import { useAuth } from '../auth/AuthContext';
+import { AdjustStockModal } from '../components/domain/AdjustStockModal';
 import { KardexModal } from '../components/domain/KardexModal';
 import { ProductFormModal } from '../components/domain/ProductFormModal';
 import {
@@ -79,12 +82,14 @@ function ProductsList() {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [kardex, setKardex] = useState<Product | null>(null);
+  const [adjusting, setAdjusting] = useState<Product | null>(null);
   const remove = useDeleteProduct();
   const setActive = useSetProductActive();
 
   const query = useProducts({
     search: state.search || null,
-    status: state.status as ProductListParams['status'],
+    status: (state.status === 'low' ? 'active' : state.status) as ProductListParams['status'],
+    lowStock: state.status === 'low' ? true : null,
     page: Number(state.page) || 1,
     pageSize: Number(state.pageSize) || 20,
     sortBy: (state.sortBy || null) as ProductListParams['sortBy'],
@@ -241,6 +246,9 @@ function ProductsList() {
               onChange={(status) => update({ status, page: '1' })}
               options={[
                 { value: 'active', label: t('products.filters.active'), icon: <Package /> },
+                ...(modules.inventory
+                  ? [{ value: 'low', label: t('products.filters.low'), icon: <AlertTriangle /> }]
+                  : []),
                 { value: 'archived', label: t('products.filters.archived'), icon: <Archive /> },
                 { value: 'all', label: t('common.all') },
               ]}
@@ -275,6 +283,12 @@ function ProductsList() {
                 close={close}
                 items={[
                   { label: t('common.edit'), icon: <Pencil />, onSelect: () => setEditing(row) },
+                  {
+                    label: t('adjust.open'),
+                    icon: <ClipboardCheck />,
+                    onSelect: () => setAdjusting(row),
+                    hidden: !modules.inventory || !row.trackStock,
+                  },
                   {
                     label: t('kardex.open'),
                     icon: <History />,
@@ -321,6 +335,7 @@ function ProductsList() {
       />
       <ProductFormModal open={creating} onClose={() => setCreating(false)} />
       <KardexModal product={kardex} onClose={() => setKardex(null)} />
+      <AdjustStockModal product={adjusting} onClose={() => setAdjusting(null)} />
       <ProductFormModal
         open={editing !== null}
         {...(editing !== null && { product: editing })}

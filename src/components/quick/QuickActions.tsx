@@ -1,4 +1,12 @@
-import { ArrowLeft, HandCoins, Plus, ReceiptText, ShoppingCart, UserPlus } from 'lucide-react';
+import {
+  ArrowLeft,
+  HandCoins,
+  Plus,
+  ReceiptText,
+  ShoppingCart,
+  UserPlus,
+  Warehouse,
+} from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { Button, cx, EmptyState, Modal, Popover, Skeleton } from '@/ui';
@@ -9,6 +17,7 @@ import { CustomerFormModal } from '../domain/CustomerFormModal';
 import { CustomerPicker, type PickedCustomer } from '../domain/CustomerPicker';
 import { dueLabel } from '../domain/dueLabel';
 import { PaymentForm } from '../domain/PaymentFormModal';
+import { PurchaseFormModal } from '../domain/PurchaseFormModal';
 import { ReceivableFormModal } from '../domain/ReceivableFormModal';
 import { SaleFormModal } from '../domain/SaleFormModal';
 import { useModules } from '../../hooks/useModules';
@@ -35,6 +44,7 @@ export function QuickActionsProvider({ children }: { children: ReactNode }) {
     <QuickActionsContext.Provider value={value}>
       {children}
       <SaleFormModal open={state?.action === 'sale'} customer={state?.customer} onClose={close} />
+      <PurchaseFormModal open={state?.action === 'purchase'} onClose={close} />
       <ReceivableFormModal
         open={state?.action === 'receivable'}
         customer={state?.customer}
@@ -199,6 +209,16 @@ export function QuickAddMenu({ variant = 'button' }: { variant?: 'button' | 'fab
       label: t('quick.payment.label'),
       hint: t('quick.paymentHint'),
     },
+    ...(modules.inventory
+      ? [
+          {
+            action: 'purchase' as const,
+            icon: <Warehouse />,
+            label: t('quick.purchase'),
+            hint: t('quick.purchaseHint'),
+          },
+        ]
+      : []),
     {
       action: 'customer',
       icon: <UserPlus />,

@@ -66,14 +66,28 @@ function Kardex({ product }: { product: Product }) {
               <span className="min-w-0 flex-1">
                 <span className="block font-medium">
                   {t(`kardex.types.${movement.type}`)}
-                  {movement.sale && (
+                  {movement.sale !== null && (
                     <span className="text-muted">
                       {' '}
                       · {t('sales.number', { number: movement.sale.number })}
                     </span>
                   )}
+                  {movement.purchase !== null && (
+                    <span className="text-muted">
+                      {' '}
+                      · {t('purchases.number', { number: movement.purchase.number })}
+                    </span>
+                  )}
+                  {movement.reason !== null && (
+                    <span className="text-muted"> · {t(`kardex.reasons.${movement.reason}`)}</span>
+                  )}
                 </span>
-                <span className="block text-xs text-muted">{fmt.dateTime(movement.createdAt)}</span>
+                <span className="block text-xs text-muted">
+                  {fmt.dateTime(movement.createdAt)}
+                  {movement.note !== null && movement.type === 'adjustment' && (
+                    <> · {movement.note}</>
+                  )}
+                </span>
                 {movement.shortage > 0 && (
                   <span className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-warning-ink">
                     <AlertTriangle className="h-3 w-3" />
