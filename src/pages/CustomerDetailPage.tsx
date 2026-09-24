@@ -4,7 +4,6 @@ import {
   Clock3,
   FileText,
   HandCoins,
-  MessageCircle,
   MoreHorizontal,
   Pencil,
   Phone,
@@ -43,6 +42,7 @@ import {
   type DataTableColumn,
   useErrorText,
   formatPhone,
+  WhatsAppIcon,
 } from '@/ui';
 import {
   useCustomer,
@@ -387,7 +387,7 @@ export function CustomerDetailPage() {
             {
               value: 'messages',
               label: t('customerDetail.tabs.messages'),
-              icon: <MessageCircle />,
+              icon: <WhatsAppIcon />,
               count: messages.data?.meta.total,
             },
           ]}

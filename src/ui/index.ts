@@ -61,6 +61,7 @@ export { Logo, LogoMark } from './brand/Logo';
 
 export { Mascot, MascotFace, type MascotMood } from './brand/Mascot';
 export { OWL, OWL_COLORS } from './brand/owlGeometry';
+export { WhatsAppIcon } from './brand/WhatsAppIcon';
 
 // Charts
 export { AXIS_TICK, CHART_HEIGHT, useChartColors, type ChartColors } from './charts/chartTheme';

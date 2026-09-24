@@ -1,4 +1,5 @@
-import { Check, Copy, KeyRound, MessageCircle } from 'lucide-react';
+import { WhatsAppIcon } from '../brand/WhatsAppIcon';
+import { Check, Copy, KeyRound } from 'lucide-react';
 import { useState } from 'react';
 import { useUiI18n } from '../i18n/context';
 import { Button } from './Button';
@@ -76,7 +77,7 @@ export function TemporaryPasswordDialog({
             rel="noreferrer"
             className="inline-flex items-center gap-2 text-sm font-medium text-primary-ink hover:underline"
           >
-            <MessageCircle className="h-4 w-4" />
+            <WhatsAppIcon />
             {t('tempPassword.whatsapp')}
           </a>
         </div>

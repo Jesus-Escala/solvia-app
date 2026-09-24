@@ -1,4 +1,4 @@
-import { MessageCircle, Pencil, Trash2, Truck } from 'lucide-react';
+import { Pencil, Trash2, Truck } from 'lucide-react';
 import { useId, useState, type FormEvent } from 'react';
 import {
   Alert,
@@ -20,6 +20,7 @@ import {
   urlSort,
   useUrlState,
   type DataTableColumn,
+  WhatsAppIcon,
 } from '@/ui';
 import { MoreHorizontal } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
@@ -197,7 +198,7 @@ function SuppliersList() {
             rel="noopener"
             className="inline-flex items-center gap-1.5 hover:underline"
           >
-            <MessageCircle className="h-3.5 w-3.5 text-success" />
+            <WhatsAppIcon className="h-3.5 w-3.5" />
             <span className="tabular-nums">{formatPhone(row.phone)}</span>
           </a>
         ),

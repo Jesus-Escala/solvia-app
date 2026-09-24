@@ -1,9 +1,9 @@
-import { HandCoins, Link2, MessageCircle, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { HandCoins, Link2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../../auth/AuthContext';
 import { useDeleteReceivable, usePaymentLink, useSendReminder } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
-import { Button, IconButton, MenuItems, Popover, useFeedback } from '@/ui';
+import { Button, IconButton, MenuItems, Popover, useFeedback, WhatsAppIcon } from '@/ui';
 import type { Receivable } from '../../lib/types';
 import { PaymentFormModal } from './PaymentFormModal';
 import { ReceivableFormModal } from './ReceivableFormModal';
@@ -84,7 +84,7 @@ export function useReceivableActions() {
             <Button
               size="sm"
               variant="secondary"
-              icon={<MessageCircle className="h-3.5 w-3.5" />}
+              icon={<WhatsAppIcon className="h-3.5 w-3.5" />}
               loading={remind.isPending && remind.variables === receivable.id}
               onClick={() => sendReminder(receivable)}
             >
