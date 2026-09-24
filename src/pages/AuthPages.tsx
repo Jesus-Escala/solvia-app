@@ -17,6 +17,7 @@ import {
   Logo,
   Button,
   cx,
+  PaperBackdrop,
   Field,
   PasswordInput,
   useErrorText,
@@ -134,21 +135,7 @@ function AuthLayout({
 
   return (
     <div className="relative flex min-h-dvh flex-col overflow-hidden bg-canvas">
-      {/* Aurora background: drifting blurred blobs + a dot grid that fades out from the center. */}
-      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <div className="auth-blob absolute -top-40 -left-32 h-[34rem] w-[34rem] rounded-full bg-[#2dd4bf]/30 blur-3xl dark:bg-[#2dd4bf]/15" />
-        <div className="auth-blob absolute top-1/3 -right-40 h-[30rem] w-[30rem] rounded-full bg-[#2a78d6]/20 blur-3xl [animation-delay:-6s] dark:bg-[#2a78d6]/15" />
-        <div className="auth-blob absolute -bottom-48 left-1/4 h-[28rem] w-[28rem] rounded-full bg-[#a7f3d0]/40 blur-3xl [animation-delay:-12s] dark:bg-[#0f766e]/25" />
-        <div
-          className="absolute inset-0 opacity-[0.35] dark:opacity-[0.18]"
-          style={{
-            backgroundImage: 'radial-gradient(circle, var(--line-strong) 1px, transparent 1px)',
-            backgroundSize: '24px 24px',
-            maskImage: 'radial-gradient(ellipse at center, black 20%, transparent 70%)',
-            WebkitMaskImage: 'radial-gradient(ellipse at center, black 20%, transparent 70%)',
-          }}
-        />
-      </div>
+      <PaperBackdrop />
 
       <header
         className={cx(
@@ -188,7 +175,7 @@ function AuthLayout({
                     compact ? '-top-[61px]' : '-top-[74px]',
                   )}
                 />
-                <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+                <h1 className="font-display text-[1.7rem] leading-tight font-semibold">{title}</h1>
                 <p
                   className={cx(
                     'mt-1 text-sm text-muted',

@@ -92,7 +92,7 @@ export function KpiCard({
   return (
     <article className="flex h-full min-w-0 flex-col gap-1 rounded-xl border border-line bg-surface p-4 shadow-card">
       <div className="flex items-start justify-between gap-2">
-        <p className="text-xs font-medium text-muted">{label}</p>
+        <p className="text-[11px] font-semibold tracking-[0.08em] text-muted uppercase">{label}</p>
         {icon && (
           <span
             className={cx(
@@ -114,7 +114,7 @@ export function KpiCard({
         {gauge !== undefined && <Gauge value={gauge} tone={tone} />}
         <p
           className={cx(
-            'min-w-0 text-lg leading-tight font-semibold tracking-tight break-words tabular-nums sm:text-xl',
+            'min-w-0 font-display text-[1.35rem] leading-tight font-semibold break-words tabular-nums sm:text-[1.6rem]',
             tone === 'danger' ? 'text-danger-ink' : 'text-ink',
           )}
           title={valueTitle ?? value}

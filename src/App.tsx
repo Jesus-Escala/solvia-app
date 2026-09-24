@@ -21,7 +21,7 @@ function NotFoundPage() {
           <Compass className="h-7 w-7" />
         </span>
         <p className="text-sm font-semibold text-primary-ink">404</p>
-        <h1 className="mt-1 text-2xl font-semibold">{t('notFound.title')}</h1>
+        <h1 className="mt-1 text-3xl font-semibold">{t('notFound.title')}</h1>
         <Link to="/" className="mt-6 text-sm font-medium text-primary-ink hover:underline">
           {t('notFound.back')}
         </Link>

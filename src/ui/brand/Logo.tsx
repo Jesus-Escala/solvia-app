@@ -20,9 +20,9 @@ export function LogoMark({ size = 32, className }: { size?: number; className?: 
     >
       <defs>
         <linearGradient id={bg} x1="4" y1="2" x2="60" y2="62" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#34d399" />
-          <stop offset="0.5" stopColor="#0d9488" />
-          <stop offset="1" stopColor="#0c3a47" />
+          <stop offset="0" stopColor="#2f9c88" />
+          <stop offset="0.5" stopColor="#125e56" />
+          <stop offset="1" stopColor="#0b2f2b" />
         </linearGradient>
         <radialGradient
           id={glow}
@@ -83,11 +83,14 @@ export function Logo({
       <LogoMark size={size} className="drop-shadow-sm" />
       {!collapsed && (
         <span
-          className={cx('font-bold tracking-tight', tone === 'light' ? 'text-white' : 'text-ink')}
+          className={cx(
+            'font-display font-semibold tracking-tight',
+            tone === 'light' ? 'text-white' : 'text-ink',
+          )}
           style={{ fontSize: size * 0.58 }}
         >
           Sol
-          <span className={tone === 'light' ? 'text-[#6ee7b7]' : 'text-primary'}>via</span>
+          <span className={tone === 'light' ? 'text-[#e9c77f]' : 'text-primary'}>via</span>
         </span>
       )}
     </span>

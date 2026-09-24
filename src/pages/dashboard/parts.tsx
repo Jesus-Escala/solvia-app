@@ -38,7 +38,7 @@ export function DashboardHeader({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
+        <h1 className="text-[1.75rem] leading-tight font-semibold sm:text-[2.1rem]">
           {t(greetingKey(), { name: firstName })}
         </h1>
         <p className="mt-1 text-sm text-muted">

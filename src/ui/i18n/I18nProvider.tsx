@@ -28,11 +28,19 @@ function lookup(dictionary: unknown, key: string): string | undefined {
   return typeof node === 'string' ? node : undefined;
 }
 
+/**
+ * Fills `{name}` placeholders. `{count|# item|# items}` picks the singular when the value is 1
+ * and the plural otherwise; `#` stands for the value ("1 deuda", "3 deudas").
+ */
 function interpolate(text: string, vars?: TranslationVars) {
   if (!vars) return text;
-  return text.replace(/\{(\w+)\}/g, (match, name: string) =>
-    name in vars ? String(vars[name]) : match,
-  );
+  return text
+    .replace(/\{(\w+)\|([^|}]*)\|([^}]*)\}/g, (match, name: string, one: string, other: string) =>
+      name in vars
+        ? (Number(vars[name]) === 1 ? one : other).replace(/#/g, String(vars[name]))
+        : match,
+    )
+    .replace(/\{(\w+)\}/g, (match, name: string) => (name in vars ? String(vars[name]) : match));
 }
 
 function createFormatters(intlLocale: string) {

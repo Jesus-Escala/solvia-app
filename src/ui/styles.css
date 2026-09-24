@@ -2,7 +2,8 @@
  * Solvia design system: tokens (light/dark), base styles and shared animations.
  * Apps import it right after Tailwind:  @import 'tailwindcss'; @import './ui/styles.css';
  */
-@import '@fontsource-variable/inter';
+@import '@fontsource-variable/instrument-sans';
+@import '@fontsource-variable/bricolage-grotesque';
 
 /* Dark mode follows the data-theme attribute set by ThemeProvider (light | dark), not the OS directly. */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
@@ -12,8 +13,12 @@
  * so a theme is just a different set of values below.
  */
 @theme inline {
+  /* A contemporary grotesque with character for titles and figures; a clean sans for text. */
   --font-sans:
-    'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    'Instrument Sans Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    sans-serif;
+  --font-display:
+    'Bricolage Grotesque Variable', 'Instrument Sans Variable', ui-sans-serif, system-ui, sans-serif;
 
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
@@ -30,6 +35,16 @@
   --color-primary-soft: var(--primary-soft);
   --color-primary-ink: var(--primary-ink);
   --color-on-primary: var(--on-primary);
+
+  /* Gold: the warm accent reserved for what matters (money in, highlights, the coin). */
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-ink: var(--sidebar-ink);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-active: var(--sidebar-active);
 
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
@@ -55,21 +70,31 @@
 
 :root,
 [data-theme='light'] {
-  --canvas: #f4f6f9;
+  /* Warm white (barely off-white), not grey and not beige; ink is a deep green-black. */
+  --canvas: #f7f7f4;
   --surface: #ffffff;
-  --surface-2: #f8fafc;
-  --surface-3: #eef2f6;
-  --line: #e4e8ee;
-  --line-strong: #cfd6df;
-  --ink: #0f172a;
-  --muted: #5b6475;
-  --subtle: #8a93a3;
+  --surface-2: #fafaf8;
+  --surface-3: #f1f1ec;
+  --line: #e7e6df;
+  --line-strong: #d5d3c9;
+  --ink: #151b18;
+  --muted: #5a605c;
+  --subtle: #8a8e89;
 
-  --primary: #0f766e;
-  --primary-hover: #115e59;
-  --primary-soft: #e6f4f2;
-  --primary-ink: #0b5a54;
+  --primary: #0f6b61;
+  --primary-hover: #0b554d;
+  --primary-soft: #e3f1ec;
+  --primary-ink: #0c5a51;
   --on-primary: #ffffff;
+
+  --accent: #bf8a2c;
+  --accent-soft: #f6ead2;
+  --accent-ink: #875e12;
+
+  --sidebar: #f1f1ec;
+  --sidebar-ink: #151b18;
+  --sidebar-muted: #676c67;
+  --sidebar-active: #ffffff;
 
   /* Status colors (validated data-viz status palette); always paired with a label or icon. */
   --success: #0ca30c;
@@ -85,13 +110,13 @@
   --info-soft: #e7f0fb;
   --info-ink: #1c5cab;
 
-  /* Categorical chart slots (validated order). */
-  --chart-1: #2a78d6;
-  --chart-2: #eb6834;
-  --chart-3: #1baf7a;
-  --chart-4: #eda100;
-  --chart-grid: #e7e6e2;
-  --chart-axis: #52514e;
+  /* Categorical chart slots: ink blue, terracotta, green, gold (validated, all pairs, CVD-safe). */
+  --chart-1: #2f5fa8;
+  --chart-2: #b6563b;
+  --chart-3: #1aa386;
+  --chart-4: #c28f1a;
+  --chart-grid: #ebeae3;
+  --chart-axis: #5d625a;
   --chart-neutral: #64748b;
 
   /* Receivables aging: validated single-hue ordinal ramp, current (lightest) -> 90+ days (darkest). */
@@ -101,27 +126,38 @@
   --aging-3: #1c5cab;
   --aging-4: #0d366b;
 
-  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.06);
-  --shadow-pop: 0 12px 32px -8px rgb(15 23 42 / 0.18), 0 4px 12px -4px rgb(15 23 42 / 0.08);
+  /* Hairline-first: cards lean on borders; shadows are faint and slightly warm. */
+  --shadow-card: 0 1px 2px rgb(30 34 28 / 0.04), 0 2px 8px -4px rgb(30 34 28 / 0.06);
+  --shadow-pop: 0 20px 48px -16px rgb(24 30 26 / 0.26), 0 6px 16px -8px rgb(24 30 26 / 0.12);
   color-scheme: light;
 }
 
 [data-theme='dark'] {
-  --canvas: #0b0f14;
-  --surface: #12171e;
-  --surface-2: #171d25;
-  --surface-3: #1e252f;
-  --line: #242c37;
-  --line-strong: #323c49;
-  --ink: #e8edf3;
-  --muted: #a3adbb;
-  --subtle: #748091;
+  /* Deep graphite with a hint of green, not pure black. */
+  --canvas: #0e1110;
+  --surface: #151918;
+  --surface-2: #1a1f1d;
+  --surface-3: #222826;
+  --line: #29302d;
+  --line-strong: #37403c;
+  --ink: #ecf0ed;
+  --muted: #a7afab;
+  --subtle: #7a837f;
 
-  --primary: #2bb3a3;
-  --primary-hover: #3fc6b6;
-  --primary-soft: #0f2d2a;
-  --primary-ink: #7fded2;
-  --on-primary: #04211e;
+  --primary: #45bba8;
+  --primary-hover: #5ccbb8;
+  --primary-soft: #133029;
+  --primary-ink: #93e0d0;
+  --on-primary: #06201b;
+
+  --accent: #dcaa4c;
+  --accent-soft: #33290f;
+  --accent-ink: #f0cf88;
+
+  --sidebar: #121615;
+  --sidebar-ink: #ecf0ed;
+  --sidebar-muted: #8d9591;
+  --sidebar-active: #1d2321;
 
   --success: #0ca30c;
   --success-soft: #0f2a12;
@@ -136,12 +172,12 @@
   --info-soft: #132338;
   --info-ink: #9cc4f3;
 
-  --chart-1: #3987e5;
-  --chart-2: #d95926;
-  --chart-3: #199e70;
-  --chart-4: #c98500;
-  --chart-grid: #2a2f37;
-  --chart-axis: #c3c2b7;
+  --chart-1: #4a7cc4;
+  --chart-2: #c24a3d;
+  --chart-3: #1ea585;
+  --chart-4: #b58d1e;
+  --chart-grid: #29302d;
+  --chart-axis: #a7afab;
   --chart-neutral: #8a96a8;
 
   /* On dark, the least severe step sits closest to the surface. */
@@ -151,8 +187,8 @@
   --aging-3: #6da7ec;
   --aging-4: #9ec5f4;
 
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
-  --shadow-pop: 0 16px 40px -8px rgb(0 0 0 / 0.6);
+  --shadow-card: 0 1px 0 rgb(0 0 0 / 0.35);
+  --shadow-pop: 0 18px 44px -12px rgb(0 0 0 / 0.65);
   color-scheme: dark;
 }
 
@@ -164,7 +200,14 @@ body,
 
 body {
   @apply bg-canvas font-sans text-ink antialiased;
-  font-feature-settings: 'cv11', 'ss01';
+}
+
+/* Display type: page titles, big figures and hero headlines, set tight like modern product type. */
+h1,
+.font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  letter-spacing: -0.025em;
 }
 
 /* Thin, theme-aware scrollbars (tables scroll internally). */
@@ -285,11 +328,11 @@ body {
 }
 
 .mascot-flap-left {
-  animation: mascot-flap-left 0.42s ease-in-out infinite;
+  animation: mascot-flap-left 0.3s ease-in-out infinite;
 }
 
 .mascot-flap-right {
-  animation: mascot-flap-right 0.42s ease-in-out infinite;
+  animation: mascot-flap-right 0.3s ease-in-out infinite;
 }
 
 @keyframes table-progress {
@@ -467,4 +510,26 @@ body {
 }
 :is(input, select, textarea):user-invalid:focus {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 22%, transparent);
+}
+
+/* Gold underline swash behind a key word (headlines, greetings). */
+.marker {
+  background-image: linear-gradient(
+    transparent 78%,
+    color-mix(in srgb, var(--accent) 45%, transparent) 78%,
+    color-mix(in srgb, var(--accent) 45%, transparent) 92%,
+    transparent 92%
+  );
+  padding-inline: 0.12em;
+  margin-inline: -0.12em;
+  box-decoration-break: clone;
+}
+
+[data-theme='dark'] .marker {
+  background-image: linear-gradient(
+    transparent 78%,
+    color-mix(in srgb, var(--accent) 35%, transparent) 78%,
+    color-mix(in srgb, var(--accent) 35%, transparent) 92%,
+    transparent 92%
+  );
 }

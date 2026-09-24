@@ -33,7 +33,7 @@ export const uiEs = {
       required: 'El campo {field} es obligatorio, por favor complétalo.',
       invalid: 'El valor de {field} es incorrecto, por favor verifícalo.',
       generic: 'Hay datos incorrectos en el formulario, por favor verifícalos.',
-      more: 'Y {count} campo(s) más.',
+      more: 'Y {count|# campo más|# campos más}.',
     },
   },
   activity: {
@@ -261,7 +261,7 @@ export const uiEn: UiMessages = {
       required: 'The {field} field is required, please fill it in.',
       invalid: 'The value of {field} is not valid, please check it.',
       generic: 'Some values in the form are not valid, please check them.',
-      more: 'And {count} more field(s).',
+      more: 'And {count|# more field|# more fields}.',
     },
   },
   activity: {

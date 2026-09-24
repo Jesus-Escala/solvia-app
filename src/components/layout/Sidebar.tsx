@@ -4,7 +4,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { cx, Logo } from '@/ui';
 import { NAV_ITEMS } from './navItems';
 
-/** Desktop sidebar (dark gradient, collapsible to icons). Phones use <BottomNav> instead. */
+/** Desktop sidebar (paper tone, collapsible to icons). Phones use <BottomNav> instead. */
 export function Sidebar({ collapsed }: { collapsed: boolean }) {
   const { t } = useI18n();
   const { data: me } = useMe();
@@ -14,7 +14,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
       className={cx(
         'hidden shrink-0 transition-[width] duration-200 lg:block',
         collapsed ? 'w-[76px]' : 'w-64',
-        'bg-[linear-gradient(165deg,#0b1720_0%,#0f2530_58%,#0d2b2a_100%)] shadow-[4px_0_24px_rgb(0_0_0/0.18),inset_-1px_0_0_rgb(255_255_255/0.05)]',
+        'border-r border-line bg-sidebar',
       )}
     >
       <div className="flex h-full flex-col">
@@ -22,13 +22,13 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
           className={cx('flex h-16 shrink-0 items-center', collapsed ? 'justify-center' : 'px-5')}
         >
           <NavLink to="/" aria-label="Solvia">
-            <Logo collapsed={collapsed} tone="light" />
+            <Logo collapsed={collapsed} />
           </NavLink>
         </div>
 
         <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-2" aria-label={t('nav.section')}>
           {!collapsed && (
-            <p className="px-3 pt-2 pb-2 text-[10px] font-semibold tracking-[0.12em] text-white/35 uppercase">
+            <p className="px-3 pt-2 pb-2 text-[10px] font-semibold tracking-[0.14em] text-sidebar-muted uppercase">
               {t('nav.section')}
             </p>
           )}
@@ -44,8 +44,8 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
                       'group relative flex items-center gap-3 rounded-lg py-2.5 text-sm font-medium transition-all duration-200',
                       collapsed ? 'justify-center px-0' : 'px-3',
                       isActive
-                        ? 'bg-gradient-to-r from-white/[0.14] to-white/[0.04] text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.06)]'
-                        : 'text-[#aeb9c6] hover:translate-x-0.5 hover:bg-white/[0.08] hover:text-white',
+                        ? 'bg-sidebar-active text-sidebar-ink shadow-card ring-1 ring-line'
+                        : 'text-sidebar-muted hover:translate-x-0.5 hover:bg-sidebar-active/60 hover:text-sidebar-ink',
                     )
                   }
                 >
@@ -53,14 +53,14 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
                     <>
                       {isActive && (
                         <span
-                          className="absolute top-2 bottom-2 left-0 w-[3px] rounded-r-full bg-[#2bb3a3]"
+                          className="absolute top-2 bottom-2 left-0 w-[3px] rounded-r-full bg-primary"
                           aria-hidden="true"
                         />
                       )}
                       <span
                         className={cx(
                           '[&>svg]:h-[18px] [&>svg]:w-[18px]',
-                          isActive && 'text-[#5fd3c5]',
+                          isActive && 'text-primary',
                         )}
                       >
                         {item.icon}
@@ -76,12 +76,14 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
 
         <div
           className={cx(
-            'shrink-0 border-t border-white/[0.07] py-4 text-xs text-white/40',
+            'shrink-0 border-t border-line py-4 text-xs text-sidebar-muted',
             collapsed ? 'px-2 text-center' : 'px-5',
           )}
         >
           {!collapsed && me?.tenant && (
-            <p className="mb-1 truncate font-medium text-white/70">{me.tenant.name}</p>
+            <p className="mb-1 truncate font-display text-sm font-medium text-sidebar-ink">
+              {me.tenant.name}
+            </p>
           )}
           <p>{collapsed ? '©' : t('nav.footer', { year: new Date().getFullYear() })}</p>
         </div>

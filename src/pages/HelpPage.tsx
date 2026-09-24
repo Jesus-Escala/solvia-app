@@ -75,19 +75,25 @@ export function HelpPage() {
           className="help-blob absolute -bottom-20 left-1/3 -z-10 h-48 w-48 rounded-full bg-amber-300/25 blur-3xl [animation-delay:-6s]"
         />
         <div className="flex flex-col gap-6 md:flex-row md:items-center">
-          {/* Soli flies ahead (tilted forward, bobbing) with speed lines trailing behind */}
-          <div className="relative mx-auto shrink-0 px-6 md:mx-0" aria-hidden="true">
-            <div className="absolute top-1/2 left-0 flex -translate-y-1/2 flex-col gap-2">
-              {[0, 1, 2].map((line) => (
-                <span
-                  key={line}
-                  className="help-trail block h-1 rounded-full bg-primary/40"
-                  style={{ width: 26 - line * 6, animationDelay: `${line * 180}ms` }}
-                />
-              ))}
-            </div>
-            <div className="help-fly">
-              <Mascot size={112} mood="fly" />
+          {/* Soli flies a figure-eight: banks into the turns, shrinks on the far pass (depth) and
+              leaves a trail of golden sparks along the same path */}
+          <div className="relative mx-auto h-[170px] w-[220px] shrink-0 md:mx-0" aria-hidden="true">
+            {[0.42, 0.3, 0.18].map((delay, index) => (
+              <span
+                key={delay}
+                className="help-fly-path help-spark absolute top-0 left-0 rounded-full bg-accent"
+                style={{
+                  width: 8 - index * 2,
+                  height: 8 - index * 2,
+                  animationDelay: `-${delay}s`,
+                  opacity: 0.35 + index * 0.2,
+                }}
+              />
+            ))}
+            <div className="help-fly-path absolute top-0 left-0">
+              <div className="help-bank">
+                <Mascot size={92} mood="fly" />
+              </div>
             </div>
           </div>
           <div className="min-w-0 flex-1 space-y-4">
@@ -96,7 +102,7 @@ export function HelpPage() {
                 <Sparkles className="h-3.5 w-3.5" />
                 {t('help.tourTitle')}
               </p>
-              <h2 className="mt-1 text-xl font-bold tracking-tight text-balance">
+              <h2 className="mt-1 font-display text-2xl leading-snug font-semibold text-balance">
                 {t('help.helloHint')}
               </h2>
               <p className="mt-1 max-w-xl text-sm text-muted">{t('help.tourDescription')}</p>

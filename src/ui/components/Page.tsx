@@ -48,9 +48,17 @@ export function PageHeader({
   return (
     <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        {eyebrow && <div className="mb-1 text-xs font-medium text-muted">{eyebrow}</div>}
-        <h1 className="text-xl font-semibold tracking-tight text-ink sm:text-2xl">{title}</h1>
-        {description && <div className="mt-1 text-sm text-muted">{description}</div>}
+        {eyebrow && (
+          <div className="mb-1.5 text-[11px] font-semibold tracking-[0.14em] text-accent-ink uppercase">
+            {eyebrow}
+          </div>
+        )}
+        <h1 className="text-[1.75rem] leading-tight font-semibold text-ink sm:text-[2.1rem]">
+          {title}
+        </h1>
+        {description && (
+          <div className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted">{description}</div>
+        )}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>

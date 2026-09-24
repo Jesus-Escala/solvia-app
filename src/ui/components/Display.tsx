@@ -79,7 +79,7 @@ export function Card({
       {(title || actions) && (
         <header className="flex flex-wrap items-start justify-between gap-3 px-5 pt-4 pb-3">
           <div className="min-w-0">
-            {title && <h2 className="text-sm font-semibold text-ink">{title}</h2>}
+            {title && <h2 className="font-display text-[17px] font-semibold text-ink">{title}</h2>}
             {subtitle && <p className="mt-0.5 text-xs text-muted">{subtitle}</p>}
           </div>
           {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -185,7 +185,7 @@ export function Stat({
       <dt id={id} className="text-xs text-muted">
         {label}
       </dt>
-      <dd aria-labelledby={id} className="mt-0.5 text-lg font-semibold tabular-nums">
+      <dd aria-labelledby={id} className="mt-0.5 font-display text-xl font-semibold tabular-nums">
         {value}
       </dd>
       {hint && <p className="text-xs text-subtle">{hint}</p>}

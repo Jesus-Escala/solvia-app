@@ -241,9 +241,7 @@ export function CustomerDetailPage() {
             <Avatar name={customer.name} size="lg" />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="truncate text-xl font-semibold tracking-tight sm:text-2xl">
-                  {customer.name}
-                </h1>
+                <h1 className="truncate text-2xl font-semibold sm:text-[2rem]">{customer.name}</h1>
                 <RiskBadge risk={customer.risk} />
               </div>
               <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">

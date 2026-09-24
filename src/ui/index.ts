@@ -38,6 +38,7 @@ export {
   type ToastApi,
 } from './components/Overlays';
 export { Page, PageHeader } from './components/Page';
+export { PaperBackdrop } from './components/PaperBackdrop';
 export { PasswordChecklist } from './components/PasswordChecklist';
 export { meetsPasswordPolicy, PASSWORD_RULES } from './components/passwordRules';
 export { PhoneInput } from './components/PhoneInput';
