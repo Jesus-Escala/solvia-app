@@ -451,6 +451,9 @@ export const es = {
     newReceivable: 'Nueva deuda',
     viewStatement: 'Ver estado de cuenta',
     sendStatement: 'Enviar por WhatsApp',
+    statementChat: 'Abrimos WhatsApp con el mensaje listo',
+    statementChatHint:
+      'El envío automático aún no está configurado: revisa el chat y presiona enviar.',
     statementSent: 'Estado de cuenta enviado a {phone}.',
     statementFailed: 'El estado de cuenta se generó, pero no se pudo enviar.',
     notes: 'Notas',

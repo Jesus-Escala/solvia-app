@@ -111,7 +111,11 @@ export function CustomerDetailPage() {
   const sendStatementNow = async () => {
     try {
       const result = await sendStatement.mutateAsync(customer.id);
-      if (result.notification.status === 'sent')
+      // No WhatsApp provider configured: open the chat with the message ready to send.
+      if (result.whatsappUrl) {
+        window.open(result.whatsappUrl, '_blank', 'noopener');
+        toast.info(t('customerDetail.statementChat'), t('customerDetail.statementChatHint'));
+      } else if (result.notification.status === 'sent')
         toast.success(t('customerDetail.statementSent', { phone: customer.phone }));
       else toast.warning(t('customerDetail.statementFailed'));
     } catch (err) {

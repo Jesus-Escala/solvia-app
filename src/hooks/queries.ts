@@ -216,7 +216,7 @@ export function useSendStatement() {
   const invalidate = useInvalidateCollections();
   return useMutation({
     mutationFn: (customerId: string) =>
-      api.post<{ statementUrl: string; notification: Notification }>(
+      api.post<{ statementUrl: string; notification: Notification; whatsappUrl?: string }>(
         `/customers/${customerId}/statement/send`,
       ),
     onSuccess: invalidate,

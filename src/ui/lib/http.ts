@@ -105,7 +105,11 @@ export function createApiClient({
 
   async function request<T>(path: string, options: RequestOptions = {}, retry = true): Promise<T> {
     const { method = 'GET', body, query, blob = false, auth = true } = options;
-    const headers: Record<string, string> = {};
+    // The interface language (set on <html lang> by the I18nProvider): the API writes statements
+    // and WhatsApp messages in it.
+    const headers: Record<string, string> = {
+      'Accept-Language': document.documentElement.lang || navigator.language,
+    };
     const token = tokens.getAccessToken();
     if (auth && token) headers.Authorization = `Bearer ${token}`;
 

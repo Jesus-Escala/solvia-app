@@ -446,6 +446,8 @@ export const en: Messages = {
     newReceivable: 'New receivable',
     viewStatement: 'View statement',
     sendStatement: 'Send via WhatsApp',
+    statementChat: 'WhatsApp opened with the message ready',
+    statementChatHint: 'Automatic sending is not set up yet: review the chat and press send.',
     statementSent: 'Statement sent to {phone}.',
     statementFailed: 'The statement was generated but could not be delivered.',
     notes: 'Notes',
