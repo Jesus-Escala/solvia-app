@@ -37,6 +37,7 @@ export function Modal({
 
   // Parents usually stop rendering the modal's content as soon as it closes (e.g. `open && form`).
   // Keep the last open content so the exit animation doesn't show an empty dialog.
+  const pressedBackdrop = useRef(false);
   const lastContent = useRef({ title, description, children, footer });
   useEffect(() => {
     if (open) lastContent.current = { title, description, children, footer };
@@ -77,8 +78,15 @@ export function Modal({
         event.preventDefault();
         if (phase === 'open') onClose();
       }}
+      onPointerDown={(event) => {
+        pressedBackdrop.current = event.target === ref.current;
+      }}
       onClick={(event) => {
-        if (event.target === ref.current && phase === 'open') onClose();
+        // Only a press that starts *and* ends on the backdrop closes: dragging a text selection
+        // out of the dialog also fires a click on it, and must not dismiss the form.
+        const fromBackdrop = pressedBackdrop.current;
+        pressedBackdrop.current = false;
+        if (fromBackdrop && event.target === ref.current && phase === 'open') onClose();
       }}
       className={cx(
         'modal m-auto w-[calc(100%-2rem)] rounded-2xl border border-line bg-surface p-0 text-ink shadow-pop backdrop:bg-slate-950/50 backdrop:backdrop-blur-[2px]',

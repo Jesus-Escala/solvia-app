@@ -57,6 +57,9 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
   form, or `toast.apiError(err)` in a catch. `toast.success/error/info/warning(title, description?)`,
   `toast.loading()` + `toast.update(id, …)`. Field errors still render under each input; inline
   `<Alert>` is only for persistent states (a list that failed to load, informational notes).
+  Toasts carry a _kind_ label so users can tell origins apart: `validation` (interface rules —
+  native `required`/`min`/`max` are intercepted globally and toasted), `service` (4xx from the API),
+  `network`, `access` (401/403) and `system` (5xx or unexpected). `toast.apiError` classifies for you.
 - New backend endpoint or field → update `src/lib/types.ts` + a hook in `src/hooks/queries.ts`;
   new backend error code → add its text under `errors.codes` in `src/ui/i18n/messages.ts`.
 - Phones are stored as E.164 (`PhoneInput`, Peru default); money formatted with `fmt.money`.
