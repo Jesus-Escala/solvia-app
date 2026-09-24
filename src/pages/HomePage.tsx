@@ -12,6 +12,7 @@ import { Link } from 'react-router';
 import { Button, Card, cx, EmptyState, Mascot, Page, Skeleton } from '@/ui';
 import { useAuth } from '../auth/AuthContext';
 import { ModulesOffer } from '../components/modules/ModulesOffer';
+import { PlanLimitNotice } from '../components/plan/PlanUsage';
 import { addDaysIso, dueLabel, todayIso } from '../components/domain/dueLabel';
 import { useReceivableActions } from '../components/domain/useReceivableActions';
 import { useQuickActions } from '../components/quick/quickActionsContext';
@@ -253,6 +254,8 @@ export function HomePage() {
               linkLabel={t('home.paidLink')}
             />
           </div>
+
+          {isAdmin && <PlanLimitNotice />}
 
           {lowCount > 0 && (
             <Link

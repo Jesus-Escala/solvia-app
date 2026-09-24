@@ -20,6 +20,7 @@ import type {
   ProductUnit,
   PaymentLink,
   PaymentMethod,
+  PlanUsage,
   Receivable,
   ReceivableStatus,
   ReminderRules,
@@ -357,8 +358,11 @@ export function useSendReminder() {
   const invalidate = useInvalidateCollections();
   return useMutation({
     mutationFn: (receivableId: string) =>
-      // `whatsappUrl`: click-to-chat link, only when no real WhatsApp provider is configured.
-      api.post<Notification & { whatsappUrl?: string }>(`/receivables/${receivableId}/remind`),
+      // `whatsappUrl`: click-to-chat link to send it from the user's own WhatsApp (no real
+      // provider, or the month's automatic messages are used up: `limitReached`).
+      api.post<Notification & { whatsappUrl?: string; limitReached?: boolean }>(
+        `/receivables/${receivableId}/remind`,
+      ),
     onSuccess: invalidate,
   });
 }
@@ -675,6 +679,14 @@ export function useSaveTemplate() {
         ? api.post<MessageTemplate>(`/settings/templates/${type}/reset`)
         : api.put<MessageTemplate>(`/settings/templates/${type}`, { text }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.templates }),
+  });
+}
+
+/** Plan allowance and this month's use; refreshed whenever a screen that shows it mounts. */
+export function usePlanUsage() {
+  return useQuery({
+    queryKey: ['plan-usage'] as const,
+    queryFn: () => api.get<PlanUsage>('/settings/plan'),
   });
 }
 

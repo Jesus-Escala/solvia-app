@@ -1083,6 +1083,35 @@ export const en: Messages = {
       save: 'Save changes',
     },
   },
+  plan: {
+    title: 'Your plan this month',
+    plans: {
+      free: 'Free plan',
+      starter: 'Paid plan',
+      pro: 'Paid plan',
+    },
+    automatic: 'Automatic messages',
+    automaticHint: 'The ones Solvia sends by itself on WhatsApp. They reset every month.',
+    withPacks: 'Includes {extra} extra messages bought this month.',
+    users: 'Users',
+    customers: 'Customers',
+    usedOf: '{used} of {limit}',
+    unlimitedUsed: '{used} · unlimited',
+    manual: 'Reminders you send from your own WhatsApp are unlimited and do not count here.',
+    packs:
+      'Need more automatic messages? Ask the Solvia team for a pack of {size}; it adds to this month.',
+    limitReachedTitle: 'You used this month\u2019s automatic messages',
+    limitReachedBody:
+      'We opened WhatsApp so you can send it from your phone. You can ask for an extra pack.',
+    notice: {
+      automatic:
+        'You used all of this month\u2019s automatic messages: reminders are now sent from your WhatsApp.',
+      automaticLow: 'You have {left} automatic messages left this month.',
+      users: 'You reached the maximum number of users of your plan.',
+      customers: 'You reached the maximum number of customers of your plan.',
+      link: 'See my plan',
+    },
+  },
   modules: {
     offer: {
       title: 'Grow your business with Solvia',
@@ -1136,6 +1165,7 @@ export const en: Messages = {
     subtitle: 'Reminders, messages and workspace preferences.',
     adminOnly: 'Only an administrator can change this section.',
     tabs: {
+      plan: 'My plan',
       reminders: 'Reminders',
       templates: 'Templates',
       log: 'Send log',

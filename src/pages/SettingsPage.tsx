@@ -3,6 +3,7 @@ import {
   CalendarCheck2,
   CalendarClock,
   CheckCircle2,
+  Gauge,
   History,
   Languages,
   MessageSquareText,
@@ -50,8 +51,9 @@ import { useUrlState } from '@/ui';
 import { useI18n, type TranslationKey } from '../i18n/I18nProvider';
 import { UsersTab } from './UsersTab';
 import type { MessageTemplate, NotificationLogItem, ReminderRules } from '../lib/types';
+import { PlanUsageCard } from '../components/plan/PlanUsage';
 
-type TabKey = 'reminders' | 'templates' | 'log' | 'users' | 'preferences';
+type TabKey = 'reminders' | 'templates' | 'log' | 'users' | 'plan' | 'preferences';
 
 const PREVIEW_VALUES: Record<string, string> = {
   name: 'María Quispe',
@@ -608,6 +610,7 @@ export function SettingsPage() {
           ...(isAdmin
             ? [{ value: 'users' as const, label: t('settings.tabs.users'), icon: <Users /> }]
             : []),
+          { value: 'plan', label: t('settings.tabs.plan'), icon: <Gauge /> },
           { value: 'preferences', label: t('settings.tabs.preferences'), icon: <Languages /> },
         ]}
       />
@@ -615,6 +618,7 @@ export function SettingsPage() {
       {tab === 'templates' && <TemplatesTab />}
       {tab === 'log' && <LogTab />}
       {tab === 'users' && <UsersTab />}
+      {tab === 'plan' && <PlanUsageCard />}
       {tab === 'preferences' && <PreferencesTab />}
     </Page>
   );

@@ -197,6 +197,9 @@ export const uiEs = {
   errors: {
     generic: 'Algo salió mal. Inténtalo de nuevo.',
     codes: {
+      PLAN_CUSTOMER_LIMIT:
+        'Llegaste al máximo de clientes de tu plan. Suma módulos para tener más.',
+      PLAN_USER_LIMIT: 'Llegaste al máximo de usuarios del plan. Suma módulos para tener más.',
       NETWORK_ERROR: 'No se pudo conectar con el servidor. Revisa tu conexión.',
       UNAUTHORIZED: 'Tu sesión expiró. Vuelve a iniciar sesión.',
       FORBIDDEN: 'No tienes permiso para realizar esta acción.',
@@ -447,6 +450,10 @@ export const uiEn: UiMessages = {
   errors: {
     generic: 'Something went wrong. Please try again.',
     codes: {
+      PLAN_CUSTOMER_LIMIT:
+        'You reached the maximum number of customers of your plan. Add modules to get more.',
+      PLAN_USER_LIMIT:
+        'You reached the maximum number of users of the plan. Add modules to get more.',
       NETWORK_ERROR: 'Could not reach the server. Check your connection.',
       UNAUTHORIZED: 'Your session has expired. Please sign in again.',
       FORBIDDEN: 'You do not have permission to perform this action.',

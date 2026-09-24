@@ -33,9 +33,14 @@ export function useReceivableActions() {
     run(async () => {
       const notification = await remind.mutateAsync(receivable.id);
       if (notification.whatsappUrl) {
-        // No automatic sending configured: open WhatsApp with the message ready to send.
+        // No automatic sending (or the month's automatic messages ran out): open WhatsApp with
+        // the message ready to send from the user's own phone.
         window.open(notification.whatsappUrl, '_blank', 'noopener');
-        toast.info(t('receivables.reminderOpened', { name: receivable.customer?.name ?? '' }));
+        if (notification.limitReached) {
+          toast.warning(t('plan.limitReachedTitle'), t('plan.limitReachedBody'));
+        } else {
+          toast.info(t('receivables.reminderOpened', { name: receivable.customer?.name ?? '' }));
+        }
       } else if (notification.status === 'sent') {
         toast.success(t('receivables.reminderSent', { name: receivable.customer?.name ?? '' }));
       } else {

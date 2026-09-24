@@ -1087,6 +1087,36 @@ export const es = {
       save: 'Guardar cambios',
     },
   },
+  plan: {
+    title: 'Tu plan este mes',
+    plans: {
+      free: 'Plan Gratis',
+      starter: 'Plan de pago',
+      pro: 'Plan de pago',
+    },
+    automatic: 'Mensajes automáticos',
+    automaticHint: 'Los que Solvia envía sola por WhatsApp. Se reinician cada mes.',
+    withPacks: 'Incluye {extra} mensajes extra comprados este mes.',
+    users: 'Usuarios',
+    customers: 'Clientes',
+    usedOf: '{used} de {limit}',
+    unlimitedUsed: '{used} · ilimitado',
+    manual:
+      'Los recordatorios que envías desde tu propio WhatsApp son ilimitados y no cuentan aquí.',
+    packs:
+      '¿Necesitas más mensajes automáticos? Pide un paquete de {size} al equipo de Solvia y se suma a este mes.',
+    limitReachedTitle: 'Ya usaste los mensajes automáticos del mes',
+    limitReachedBody:
+      'Te abrimos WhatsApp para que lo envíes desde tu celular. Puedes pedir un paquete extra.',
+    notice: {
+      automatic:
+        'Ya usaste todos los mensajes automáticos de este mes: los recordatorios ahora se envían desde tu WhatsApp.',
+      automaticLow: 'Te quedan {left} mensajes automáticos este mes.',
+      users: 'Llegaste al máximo de usuarios de tu plan.',
+      customers: 'Llegaste al máximo de clientes de tu plan.',
+      link: 'Ver mi plan',
+    },
+  },
   modules: {
     offer: {
       title: 'Haz crecer tu negocio con Solvia',
@@ -1140,6 +1170,7 @@ export const es = {
     subtitle: 'Cuándo y qué mensajes de WhatsApp le llegan a tus clientes, y quién usa Solvia.',
     adminOnly: 'Solo un administrador puede modificar esta sección.',
     tabs: {
+      plan: 'Mi plan',
       reminders: 'Recordatorios',
       templates: 'Textos de los mensajes',
       log: 'Mensajes enviados',

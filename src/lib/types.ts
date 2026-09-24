@@ -559,3 +559,18 @@ export interface ReportTypes {
 }
 
 export type ReportId = keyof ReportTypes;
+
+// --- Plan usage (/settings/plan) ---------------------------------------------
+
+/** What the plan includes and what the business used this month (null limit = unlimited). */
+export interface PlanUsage {
+  plan: 'free' | 'starter' | 'pro';
+  modules: TenantModule[];
+  /** YYYY-MM */
+  month: string;
+  automaticMessages: { used: number; included: number; extra: number; limit: number; left: number };
+  users: { used: number; limit: number | null };
+  customers: { used: number; limit: number | null };
+  /** Messages in one extra pack. */
+  packSize: number;
+}

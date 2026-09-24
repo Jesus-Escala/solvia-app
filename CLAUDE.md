@@ -58,6 +58,10 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
   Enter freezes the text and resolves it in order, so fast scans are never lost), cash or
   credit, optional customer on cash. Stock shortages are traced (sale/line badges, "Sin stock"
   filter, `KardexModal`) when the inventory module is on.
+- **Plan limits**: `components/plan/PlanUsage.tsx` — `PlanUsageCard` (Settings > Mi plan: automatic
+  WhatsApp messages, users and customers of the month, from `GET /settings/plan`) and
+  `PlanLimitNotice` (Home, admins, when a limit is reached or messages are nearly used up). The
+  remind button toasts when the automatic messages ran out and opens the owner's WhatsApp.
 - **Selling the modules**: `components/modules/ModulesOffer.tsx` lists the modules the business
   lacks with their extra price (same reference prices as the landing and the backoffice) and a
   link to ask for them; shown on Home (admins) and on `ModuleOff`.
