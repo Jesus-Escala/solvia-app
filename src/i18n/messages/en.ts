@@ -535,7 +535,9 @@ export const en: Messages = {
     subtitle: 'Invoices and credits pending collection.',
     new: 'New receivable',
     searchPlaceholder: 'Search description or customer',
+    methodsCount: '{count} methods',
     columns: {
+      paymentMethod: 'Payment method',
       customer: 'Customer',
       description: 'Description',
       dueDate: 'Due date',

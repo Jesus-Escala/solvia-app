@@ -3,7 +3,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import type { Receivable } from '../../lib/types';
 import { cx, ProgressBar, type DataTableColumn } from '@/ui';
 import { StatusBadge } from './Badges';
-import { PaymentMethodMark } from './PaymentMethods';
+import { PaymentMethodLabel, PaymentMethodMark } from './PaymentMethods';
 import { dueLabel } from './dueLabel';
 
 /** Column definitions shared by the receivables page and the customer detail page. */
@@ -61,6 +61,7 @@ export function useReceivableColumns({ showCustomer = true } = {}): Array<
     },
     {
       id: 'outstanding',
+      sortable: true,
       header: t('receivables.columns.outstanding'),
       align: 'right',
       minWidth: 140,
@@ -92,24 +93,31 @@ export function useReceivableColumns({ showCustomer = true } = {}): Array<
       sortable: true,
       hideable: false,
       mobile: 'aside',
-      cell: (row) => (
-        <span className="inline-flex items-center gap-1.5">
-          <StatusBadge status={row.status} />
-          {/* How it was paid: the mark of each method used */}
-          {row.paymentMethods && row.paymentMethods.length > 0 && (
-            <span
-              className="inline-flex -space-x-1.5"
-              title={row.paymentMethods.map((method) => t(`methods.${method}`)).join(', ')}
-            >
-              {row.paymentMethods.map((method) => (
-                <span key={method} className="rounded-md ring-2 ring-surface">
-                  <PaymentMethodMark method={method} size="sm" />
-                </span>
-              ))}
+      cell: (row) => <StatusBadge status={row.status} />,
+    },
+    {
+      id: 'paymentMethods',
+      header: t('receivables.columns.paymentMethod'),
+      cell: (row) => {
+        const methods = row.paymentMethods ?? [];
+        if (methods.length === 0) return <span className="text-subtle">—</span>;
+        // One method: mark + name. Several (partial payments): the marks, most recent first.
+        return methods.length === 1 ? (
+          <PaymentMethodLabel method={methods[0]!} />
+        ) : (
+          <span
+            className="inline-flex items-center gap-1"
+            title={methods.map((method) => t(`methods.${method}`)).join(' · ')}
+          >
+            {methods.map((method) => (
+              <PaymentMethodMark key={method} method={method} size="sm" />
+            ))}
+            <span className="ml-0.5 text-xs text-muted">
+              {t('receivables.methodsCount', { count: methods.length })}
             </span>
-          )}
-        </span>
-      ),
+          </span>
+        );
+      },
     },
     {
       id: 'issueDate',

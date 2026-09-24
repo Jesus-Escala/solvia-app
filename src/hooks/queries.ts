@@ -169,7 +169,7 @@ export interface CustomerListParams {
   risk?: RiskLevel;
   page: number;
   pageSize?: number;
-  sortBy?: 'name' | 'createdAt' | 'outstanding' | 'risk';
+  sortBy?: 'name' | 'phone' | 'createdAt' | 'outstanding' | 'risk' | 'open' | 'overdue';
   sortDir?: SortDir;
 }
 
@@ -235,7 +235,14 @@ export interface ReceivableListParams {
   page: number;
   pageSize?: number;
   sortBy?:
-    'dueDate' | 'issueDate' | 'totalAmount' | 'description' | 'status' | 'customer' | 'createdAt';
+    | 'dueDate'
+    | 'issueDate'
+    | 'totalAmount'
+    | 'outstanding'
+    | 'description'
+    | 'status'
+    | 'customer'
+    | 'createdAt';
   sortDir?: SortDir;
 }
 

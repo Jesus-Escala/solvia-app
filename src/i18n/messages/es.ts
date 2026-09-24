@@ -542,7 +542,9 @@ export const es = {
     subtitle: 'Facturas y créditos pendientes de cobro.',
     new: 'Nueva deuda',
     searchPlaceholder: 'Buscar por descripción o cliente',
+    methodsCount: '{count} métodos',
     columns: {
+      paymentMethod: 'Método de pago',
       customer: 'Cliente',
       description: 'Descripción',
       dueDate: 'Vencimiento',

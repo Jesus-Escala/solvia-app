@@ -96,6 +96,7 @@ export function CustomersPage() {
     },
     {
       id: 'phone',
+      sortable: true,
       header: t('customers.columns.phone'),
       mobile: 'subtitle',
       cell: (row) => <span className="tabular-nums">{formatPhone(row.phone)}</span>,
@@ -109,12 +110,14 @@ export function CustomersPage() {
     },
     {
       id: 'open',
+      sortable: true,
       header: t('customers.columns.open'),
       align: 'right',
       cell: (row) => row.summary.openReceivables,
     },
     {
       id: 'overdue',
+      sortable: true,
       header: t('customers.columns.overdue'),
       align: 'right',
       cell: (row) =>
