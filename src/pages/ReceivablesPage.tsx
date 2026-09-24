@@ -21,9 +21,9 @@ import { useUrlState } from '@/ui';
 import { useI18n } from '../i18n/I18nProvider';
 import type { ReceivableStatus, SortDir } from '../lib/types';
 
-// `open` (the default) = everything still owed: pending, partially paid or late.
+// `` (the default) = all; `open` = everything still owed: pending, partially paid or late.
 const DEFAULTS = {
-  status: 'open',
+  status: '',
   search: '',
   dueFrom: '',
   dueTo: '',
@@ -61,9 +61,8 @@ export function ReceivablesPage() {
   };
   const query = useReceivables(params);
   const counts = summary.data?.byStatus;
-  const filtered = state.status !== 'open' || Boolean(state.search) || Boolean(dueRange);
-  const clearFilters = () =>
-    update({ status: 'open', search: '', dueFrom: '', dueTo: '', page: '1' });
+  const filtered = Boolean(state.status) || Boolean(state.search) || Boolean(dueRange);
+  const clearFilters = () => update({ status: '', search: '', dueFrom: '', dueTo: '', page: '1' });
 
   return (
     <Page fill>
@@ -88,6 +87,7 @@ export function ReceivablesPage() {
               value={state.status}
               onChange={(status) => update({ status, page: '1' })}
               options={[
+                { value: '', label: t('common.all'), icon: <Layers /> },
                 {
                   value: 'open',
                   label: t('receivables.filters.open'),
@@ -102,7 +102,6 @@ export function ReceivablesPage() {
                   icon: <StatusIcon status={status} />,
                   count: counts?.[status].count,
                 })),
-                { value: '', label: t('common.all'), icon: <Layers /> },
               ]}
             />
             <DueDateFilter

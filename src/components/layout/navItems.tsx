@@ -1,6 +1,7 @@
 import {
   BarChart3,
   CircleHelp,
+  FileSpreadsheet,
   Home,
   Package,
   ReceiptText,
@@ -34,7 +35,7 @@ export interface NavSection {
 /**
  * The whole navigation, grouped by area of the business: Comercial (selling, customers),
  * Cuentas por cobrar (what is owed), Inventario (products, purchases, suppliers) and Números
- * (reports). Settings and help go at the bottom.
+ * (dashboard charts and tabular reports). Settings and help go at the bottom.
  * Items of a module the business does not have are left out (see `visibleSections`).
  */
 export const NAV_SECTIONS: NavSection[] = [
@@ -60,7 +61,10 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     title: 'nav.groups.numbers',
-    items: [{ to: '/reports', label: 'nav.reports', icon: <BarChart3 /> }],
+    items: [
+      { to: '/dashboard', label: 'nav.dashboard', icon: <BarChart3 /> },
+      { to: '/reports', label: 'nav.reports', icon: <FileSpreadsheet /> },
+    ],
   },
 ];
 

@@ -10,7 +10,7 @@ export const TOUR_STEPS = [
   { id: 'navigation', route: '/', target: 'nav' },
   { id: 'rowActions', route: '/receivables', target: 'receivables-table' },
   { id: 'customersTable', route: '/customers', target: 'customers-table' },
-  { id: 'kpis', route: '/reports?view=collection', target: 'period' },
+  { id: 'kpis', route: '/dashboard?view=collection', target: 'period' },
   { id: 'reminderRules', route: '/settings', target: 'reminder-rules' },
   { id: 'help', route: null, target: 'help' },
 ] as const;

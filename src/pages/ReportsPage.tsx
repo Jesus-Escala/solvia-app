@@ -1,0 +1,666 @@
+import { AlertTriangle, Boxes, Download, HandCoins, ShoppingBag, UserRound } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { Navigate, useLocation } from 'react-router';
+import {
+  Alert,
+  Badge,
+  Button,
+  cx,
+  DataTable,
+  downloadCsv,
+  KpiCard,
+  KpiRow,
+  Page,
+  PageHeader,
+  useErrorText,
+  useUrlState,
+  type DataTableColumn,
+} from '@/ui';
+import { isValidRange, presetRange, type PeriodRange } from '../components/dashboard/period';
+import { PeriodPicker } from '../components/dashboard/PeriodPicker';
+import { useReport } from '../hooks/queries';
+import { useModules } from '../hooks/useModules';
+import { useI18n, type TranslationKey } from '../i18n/I18nProvider';
+import type {
+  CollectionsByCustomerRow,
+  ReportId,
+  ReportTypes,
+  SalesByCustomerRow,
+  SalesByProductRow,
+  ShortageReportRow,
+  StockReportRow,
+  StockStatus,
+} from '../lib/types';
+
+type Modules = ReturnType<typeof useModules>;
+
+interface ReportDef {
+  id: ReportId;
+  icon: ReactNode;
+  /** Business module the report needs (the collections report is always there). */
+  module: 'sales' | 'catalog' | null;
+  /** The stock report is a snapshot of today: no date range. */
+  dated: boolean;
+}
+
+/** The reports, in the order and groups the page shows them. */
+const GROUPS: Array<{ title: TranslationKey; reports: ReportDef[] }> = [
+  {
+    title: 'reports.groups.sales',
+    reports: [
+      { id: 'sales-by-customer', icon: <UserRound />, module: 'sales', dated: true },
+      { id: 'sales-by-product', icon: <ShoppingBag />, module: 'sales', dated: true },
+    ],
+  },
+  {
+    title: 'reports.groups.collections',
+    reports: [{ id: 'collections-by-customer', icon: <HandCoins />, module: null, dated: true }],
+  },
+  {
+    title: 'reports.groups.inventory',
+    reports: [
+      { id: 'stock', icon: <Boxes />, module: 'catalog', dated: false },
+      { id: 'shortages', icon: <AlertTriangle />, module: 'sales', dated: true },
+    ],
+  },
+];
+
+const DASHBOARD_VIEWS = ['collection', 'portfolio', 'projection', 'summary'];
+const DEFAULTS = { report: '', from: '', to: '' };
+
+function availableGroups(modules: Modules) {
+  return GROUPS.map((group) => ({
+    ...group,
+    reports: group.reports.filter((report) => !report.module || modules[report.module]),
+  })).filter((group) => group.reports.length > 0);
+}
+
+/** Report chooser: small labelled groups of buttons, all visible at once (they wrap on phones). */
+function ReportChooser({
+  groups,
+  value,
+  onChange,
+}: {
+  groups: ReturnType<typeof availableGroups>;
+  value: ReportId;
+  onChange: (report: ReportId) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <div
+      className="flex flex-wrap gap-x-6 gap-y-2.5"
+      role="radiogroup"
+      aria-label={t('reports.choose')}
+    >
+      {groups.map((group) => (
+        <div key={group.title} className="min-w-0">
+          <div className="mb-1.5 text-[11px] font-semibold tracking-wide text-subtle uppercase">
+            {t(group.title)}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {group.reports.map((report) => {
+              const active = report.id === value;
+              return (
+                <button
+                  key={report.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => onChange(report.id)}
+                  className={cx(
+                    'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition sm:px-3 sm:py-1.5 sm:text-sm [&>svg]:h-3.5 [&>svg]:w-3.5 sm:[&>svg]:h-4 sm:[&>svg]:w-4',
+                    active
+                      ? 'border-primary bg-primary text-on-primary shadow-sm shadow-primary/30'
+                      : 'border-line bg-surface text-muted hover:border-line-strong hover:text-ink',
+                  )}
+                >
+                  {report.icon}
+                  {t(`reports.names.${report.id}`)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Reports: plain tables to answer "who bought / paid how much", "what sold", "what stock do I
+ * have" and "when did I sell without stock", for any date range, downloadable for Excel.
+ * The charts live in the dashboard.
+ */
+export function ReportsPage() {
+  const location = useLocation();
+  const { t } = useI18n();
+  const modules = useModules();
+  const [state, update] = useUrlState(DEFAULTS);
+
+  // Old links to the dashboard (/reports?view=…) keep working.
+  const view = new URLSearchParams(location.search).get('view');
+  if (view && DASHBOARD_VIEWS.includes(view)) {
+    return <Navigate to={`/dashboard${location.search}`} replace />;
+  }
+
+  const groups = availableGroups(modules);
+  const all = groups.flatMap((group) => group.reports);
+  const current = all.find((report) => report.id === state.report) ?? all[0]!;
+
+  const urlRange = { from: state.from, to: state.to };
+  const range: PeriodRange = isValidRange(urlRange) ? urlRange : presetRange('thisMonth');
+
+  return (
+    <Page fill>
+      <PageHeader title={t('reports.title')} description={t('reports.subtitle')} />
+      {!modules.loading && (
+        <>
+          <ReportChooser
+            groups={groups}
+            value={current.id}
+            onChange={(report) => update({ report })}
+          />
+          <ReportView
+            key={current.id}
+            report={current}
+            range={range}
+            onRangeChange={(value) => update({ from: value.from, to: value.to })}
+          />
+        </>
+      )}
+    </Page>
+  );
+}
+
+function ReportView({
+  report,
+  range,
+  onRangeChange,
+}: {
+  report: ReportDef;
+  range: PeriodRange;
+  onRangeChange: (range: PeriodRange) => void;
+}) {
+  const { t } = useI18n();
+  const errors = useErrorText();
+  const query = useReport(report.id, report.dated ? range : null);
+  const table = useReportTable(report.id, query.data);
+  const fileName = `solvia-${report.id}${report.dated ? `-${range.from}-${range.to}` : ''}`;
+
+  return (
+    <>
+      <p className="-mt-1 text-sm text-muted">{t(`reports.hints.${report.id}`)}</p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        {report.dated ? (
+          <PeriodPicker
+            range={range}
+            granularity={null}
+            onRangeChange={onRangeChange}
+            onGranularityChange={null}
+          />
+        ) : (
+          <span />
+        )}
+        <Button
+          variant="secondary"
+          icon={<Download className="h-4 w-4" />}
+          disabled={!query.data || query.data.rows.length === 0}
+          onClick={() => downloadCsv(fileName, table.csvHeader, table.csvRows)}
+        >
+          {t('reports.download')}
+        </Button>
+      </div>
+      <KpiRow>
+        {table.kpis.map((kpi) => (
+          <KpiCard key={kpi.label} {...kpi} loading={query.isLoading} />
+        ))}
+      </KpiRow>
+      <DataTable
+        caption={t(`reports.names.${report.id}`)}
+        columnsStorageKey={`report-${report.id}`}
+        columns={table.columns}
+        rows={table.rows}
+        rowKey={table.rowKey}
+        loading={query.isLoading}
+        fetching={query.isFetching && !query.isLoading}
+        error={query.error ? <Alert tone="danger">{errors.message(query.error)}</Alert> : undefined}
+        empty={{ title: t('reports.empty'), description: t(`reports.emptyHints.${report.id}`) }}
+      />
+    </>
+  );
+}
+
+interface ReportTable {
+  columns: Array<DataTableColumn<never>>;
+  rows: never[] | undefined;
+  rowKey: (row: never) => string;
+  kpis: Array<{
+    label: string;
+    value: string;
+    tone?: 'default' | 'danger' | 'success' | 'warning';
+  }>;
+  csvHeader: string[];
+  csvRows: Array<Array<string | number | null>>;
+}
+
+/** Columns, headline figures and CSV of each report. */
+function useReportTable<R extends ReportId>(
+  report: R,
+  data: ReportTypes[R] | undefined,
+): ReportTable {
+  const { t, fmt } = useI18n();
+  const money = (value: number | null) => (value === null ? '—' : fmt.money(value));
+  const qty = (value: number) => fmt.number(value);
+  const walkIn = t('sales.walkIn');
+  const unit = (value: string) => t(`products.unitsShort.${value}` as TranslationKey);
+
+  const build = <Row,>(
+    rows: Row[] | undefined,
+    rowKey: (row: Row) => string,
+    columns: Array<DataTableColumn<Row> & { csv: (row: Row) => string | number | null }>,
+    kpis: ReportTable['kpis'],
+  ): ReportTable => ({
+    columns: columns as unknown as Array<DataTableColumn<never>>,
+    rows: rows as never[] | undefined,
+    rowKey: rowKey as (row: never) => string,
+    kpis,
+    csvHeader: columns.map((column) => column.header),
+    csvRows: (rows ?? []).map((row) => columns.map((column) => column.csv(row))),
+  });
+
+  switch (report) {
+    case 'sales-by-customer': {
+      const d = data as ReportTypes['sales-by-customer'] | undefined;
+      return build<SalesByCustomerRow>(
+        d?.rows,
+        (row) => row.customerId ?? 'walk-in',
+        [
+          {
+            id: 'customer',
+            header: t('reports.columns.customer'),
+            mobile: 'title',
+            minWidth: 180,
+            cell: (row) => row.name ?? <span className="text-muted">{walkIn}</span>,
+            sortValue: (row) => row.name ?? walkIn,
+            csv: (row) => row.name ?? walkIn,
+          },
+          {
+            id: 'total',
+            header: t('reports.columns.sold'),
+            align: 'right',
+            mobile: 'aside',
+            cell: (row) => <span className="font-semibold tabular-nums">{money(row.total)}</span>,
+            sortValue: (row) => row.total,
+            csv: (row) => row.total,
+          },
+          {
+            id: 'sales',
+            header: t('reports.columns.sales'),
+            align: 'right',
+            cell: (row) => qty(row.sales),
+            sortValue: (row) => row.sales,
+            csv: (row) => row.sales,
+          },
+          {
+            id: 'cash',
+            header: t('reports.columns.cash'),
+            align: 'right',
+            cell: (row) => money(row.cash),
+            sortValue: (row) => row.cash,
+            csv: (row) => row.cash,
+          },
+          {
+            id: 'credit',
+            header: t('reports.columns.credit'),
+            align: 'right',
+            cell: (row) => money(row.credit),
+            sortValue: (row) => row.credit,
+            csv: (row) => row.credit,
+          },
+          {
+            id: 'last',
+            header: t('reports.columns.lastSale'),
+            cell: (row) => fmt.date(row.lastSale),
+            sortValue: (row) => row.lastSale,
+            csv: (row) => row.lastSale,
+          },
+        ],
+        [
+          { label: t('reports.kpis.sold'), value: money(d?.totals.total ?? 0) },
+          { label: t('reports.kpis.sales'), value: qty(d?.totals.sales ?? 0) },
+          { label: t('reports.columns.cash'), value: money(d?.totals.cash ?? 0), tone: 'success' },
+          {
+            label: t('reports.columns.credit'),
+            value: money(d?.totals.credit ?? 0),
+            tone: 'warning',
+          },
+        ],
+      );
+    }
+    case 'collections-by-customer': {
+      const d = data as ReportTypes['collections-by-customer'] | undefined;
+      const method = (
+        key: 'yape' | 'plin' | 'cash' | 'bankTransfer',
+        label: TranslationKey,
+      ): DataTableColumn<CollectionsByCustomerRow> & {
+        csv: (row: CollectionsByCustomerRow) => number;
+      } => ({
+        id: key,
+        header: t(label),
+        align: 'right',
+        cell: (row) => (row[key] ? money(row[key]) : <span className="text-subtle">—</span>),
+        sortValue: (row) => row[key],
+        csv: (row) => row[key],
+      });
+      return build<CollectionsByCustomerRow>(
+        d?.rows,
+        (row) => row.customerId,
+        [
+          {
+            id: 'customer',
+            header: t('reports.columns.customer'),
+            mobile: 'title',
+            minWidth: 180,
+            cell: (row) => row.name,
+            sortValue: (row) => row.name,
+            csv: (row) => row.name,
+          },
+          {
+            id: 'amount',
+            header: t('reports.columns.collected'),
+            align: 'right',
+            mobile: 'aside',
+            cell: (row) => <span className="font-semibold tabular-nums">{money(row.amount)}</span>,
+            sortValue: (row) => row.amount,
+            csv: (row) => row.amount,
+          },
+          {
+            id: 'payments',
+            header: t('reports.columns.payments'),
+            align: 'right',
+            cell: (row) => qty(row.payments),
+            sortValue: (row) => row.payments,
+            csv: (row) => row.payments,
+          },
+          method('yape', 'methods.yape'),
+          method('plin', 'methods.plin'),
+          method('cash', 'methods.cash'),
+          method('bankTransfer', 'methods.bank_transfer'),
+          {
+            id: 'last',
+            header: t('reports.columns.lastPayment'),
+            cell: (row) => fmt.date(row.lastPayment),
+            sortValue: (row) => row.lastPayment,
+            csv: (row) => row.lastPayment,
+          },
+        ],
+        [
+          {
+            label: t('reports.kpis.collected'),
+            value: money(d?.totals.amount ?? 0),
+            tone: 'success',
+          },
+          { label: t('reports.kpis.payments'), value: qty(d?.totals.payments ?? 0) },
+          { label: t('reports.kpis.customers'), value: qty(d?.rows.length ?? 0) },
+        ],
+      );
+    }
+    case 'sales-by-product': {
+      const d = data as ReportTypes['sales-by-product'] | undefined;
+      return build<SalesByProductRow>(
+        d?.rows,
+        (row) => row.productId,
+        [
+          {
+            id: 'product',
+            header: t('reports.columns.product'),
+            mobile: 'title',
+            minWidth: 200,
+            cell: (row) => row.name,
+            sortValue: (row) => row.name,
+            csv: (row) => row.name,
+          },
+          {
+            id: 'revenue',
+            header: t('reports.columns.sold'),
+            align: 'right',
+            mobile: 'aside',
+            cell: (row) => <span className="font-semibold tabular-nums">{money(row.revenue)}</span>,
+            sortValue: (row) => row.revenue,
+            csv: (row) => row.revenue,
+          },
+          {
+            id: 'quantity',
+            header: t('reports.columns.quantity'),
+            align: 'right',
+            cell: (row) => `${qty(row.quantity)} ${unit(row.unit)}`,
+            sortValue: (row) => row.quantity,
+            csv: (row) => row.quantity,
+          },
+          {
+            id: 'cost',
+            header: t('reports.columns.cost'),
+            align: 'right',
+            cell: (row) => money(row.cost),
+            sortValue: (row) => row.cost,
+            csv: (row) => row.cost,
+          },
+          {
+            id: 'profit',
+            header: t('reports.columns.profit'),
+            align: 'right',
+            cell: (row) => (
+              <span
+                className={cx(
+                  'tabular-nums',
+                  row.profit !== null && row.profit < 0 && 'text-danger-ink',
+                )}
+              >
+                {money(row.profit)}
+              </span>
+            ),
+            sortValue: (row) => row.profit,
+            csv: (row) => row.profit,
+          },
+          {
+            id: 'sales',
+            header: t('reports.columns.inSales'),
+            align: 'right',
+            cell: (row) => qty(row.sales),
+            sortValue: (row) => row.sales,
+            csv: (row) => row.sales,
+          },
+        ],
+        [
+          { label: t('reports.kpis.sold'), value: money(d?.totals.revenue ?? 0) },
+          { label: t('reports.kpis.cost'), value: money(d?.totals.cost ?? 0) },
+          { label: t('reports.kpis.profit'), value: money(d?.totals.profit ?? 0), tone: 'success' },
+        ],
+      );
+    }
+    case 'stock': {
+      const d = data as ReportTypes['stock'] | undefined;
+      const tones: Record<StockStatus, 'danger' | 'warning' | 'success'> = {
+        out: 'danger',
+        low: 'warning',
+        ok: 'success',
+      };
+      return build<StockReportRow>(
+        d?.rows,
+        (row) => row.productId,
+        [
+          {
+            id: 'product',
+            header: t('reports.columns.product'),
+            mobile: 'title',
+            minWidth: 200,
+            cell: (row) => (
+              <span>
+                {row.name}
+                {row.code && <span className="ml-1.5 text-xs text-subtle">{row.code}</span>}
+              </span>
+            ),
+            sortValue: (row) => row.name,
+            csv: (row) => row.name,
+          },
+          {
+            id: 'status',
+            header: t('reports.columns.status'),
+            mobile: 'subtitle',
+            cell: (row) => (
+              <Badge tone={tones[row.status]} dot>
+                {t(`reports.stockStatus.${row.status}`)}
+              </Badge>
+            ),
+            // Out of stock first when sorting ascending.
+            sortValue: (row) => ({ out: 0, low: 1, ok: 2 })[row.status],
+            csv: (row) => t(`reports.stockStatus.${row.status}`),
+          },
+          {
+            id: 'stock',
+            header: t('reports.columns.stock'),
+            align: 'right',
+            mobile: 'aside',
+            cell: (row) => (
+              <span
+                className={cx('font-semibold tabular-nums', row.stock < 0 && 'text-danger-ink')}
+              >
+                {qty(row.stock)} {unit(row.unit)}
+              </span>
+            ),
+            sortValue: (row) => row.stock,
+            csv: (row) => row.stock,
+          },
+          {
+            id: 'minStock',
+            header: t('reports.columns.minStock'),
+            align: 'right',
+            cell: (row) => (row.minStock === null ? '—' : qty(row.minStock)),
+            sortValue: (row) => row.minStock,
+            csv: (row) => row.minStock,
+          },
+          {
+            id: 'cost',
+            header: t('reports.columns.unitCost'),
+            align: 'right',
+            cell: (row) => money(row.cost),
+            sortValue: (row) => row.cost,
+            csv: (row) => row.cost,
+          },
+          {
+            id: 'value',
+            header: t('reports.columns.value'),
+            align: 'right',
+            cell: (row) => money(row.value),
+            sortValue: (row) => row.value,
+            csv: (row) => row.value,
+          },
+          {
+            id: 'retail',
+            header: t('reports.columns.retail'),
+            align: 'right',
+            cell: (row) => money(row.retail),
+            sortValue: (row) => row.retail,
+            csv: (row) => row.retail,
+          },
+        ],
+        [
+          { label: t('reports.kpis.value'), value: money(d?.totals.value ?? 0) },
+          { label: t('reports.kpis.retail'), value: money(d?.totals.retail ?? 0), tone: 'success' },
+          { label: t('reports.kpis.out'), value: qty(d?.totals.out ?? 0), tone: 'danger' },
+          { label: t('reports.kpis.low'), value: qty(d?.totals.low ?? 0), tone: 'warning' },
+        ],
+      );
+    }
+    case 'shortages': {
+      const d = data as ReportTypes['shortages'] | undefined;
+      return build<ShortageReportRow>(
+        d?.rows,
+        (row) => row.movementId,
+        [
+          {
+            id: 'at',
+            header: t('reports.columns.when'),
+            mobile: 'subtitle',
+            minWidth: 150,
+            cell: (row) => fmt.dateTime(row.at),
+            sortValue: (row) => row.at,
+            csv: (row) => row.at,
+          },
+          {
+            id: 'product',
+            header: t('reports.columns.product'),
+            mobile: 'title',
+            minWidth: 180,
+            cell: (row) => row.product,
+            sortValue: (row) => row.product,
+            csv: (row) => row.product,
+          },
+          {
+            id: 'shortage',
+            header: t('reports.columns.missing'),
+            align: 'right',
+            mobile: 'aside',
+            cell: (row) => (
+              <span className="font-semibold text-danger-ink tabular-nums">
+                {qty(row.shortage)}
+              </span>
+            ),
+            sortValue: (row) => row.shortage,
+            csv: (row) => row.shortage,
+          },
+          {
+            id: 'quantity',
+            header: t('reports.columns.soldUnits'),
+            align: 'right',
+            cell: (row) => qty(row.quantity),
+            sortValue: (row) => row.quantity,
+            csv: (row) => row.quantity,
+          },
+          {
+            id: 'balance',
+            header: t('reports.columns.balanceAfter'),
+            align: 'right',
+            cell: (row) =>
+              row.balanceAfter === null ? (
+                '—'
+              ) : (
+                <span className={cx('tabular-nums', row.balanceAfter < 0 && 'text-danger-ink')}>
+                  {qty(row.balanceAfter)}
+                </span>
+              ),
+            sortValue: (row) => row.balanceAfter,
+            csv: (row) => row.balanceAfter,
+          },
+          {
+            id: 'sale',
+            header: t('reports.columns.sale'),
+            cell: (row) => (
+              <span className="inline-flex items-center gap-1.5">
+                {t('sales.number', { number: row.sale.number })}
+                {row.sale.status === 'voided' && (
+                  <Badge tone="neutral">{t('reports.voided')}</Badge>
+                )}
+              </span>
+            ),
+            sortValue: (row) => row.sale.number,
+            csv: (row) =>
+              `#${row.sale.number}${row.sale.status === 'voided' ? ` (${t('reports.voided')})` : ''}`,
+          },
+          {
+            id: 'customer',
+            header: t('reports.columns.customer'),
+            cell: (row) => row.customer ?? <span className="text-muted">{walkIn}</span>,
+            sortValue: (row) => row.customer ?? walkIn,
+            csv: (row) => row.customer ?? walkIn,
+          },
+        ],
+        [
+          { label: t('reports.kpis.lines'), value: qty(d?.totals.lines ?? 0), tone: 'warning' },
+          { label: t('reports.kpis.units'), value: qty(d?.totals.units ?? 0), tone: 'danger' },
+        ],
+      );
+    }
+  }
+  throw new Error(`Unknown report ${report as string}`);
+}

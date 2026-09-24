@@ -23,6 +23,9 @@ import type {
   Receivable,
   ReceivableStatus,
   ReminderRules,
+  ReportId,
+  ReportPeriod,
+  ReportTypes,
   Sale,
   SaleDocType,
   ReminderRunSummary,
@@ -687,6 +690,18 @@ export function useNotifications(params: {
   return useQuery({
     queryKey: queryKeys.notifications(params),
     queryFn: () => api.get<Paginated<NotificationLogItem>>('/notifications', { ...params }),
+    placeholderData: keepPreviousData,
+  });
+}
+
+// --- Tabular reports -------------------------------------------------------------
+
+/** One tabular report; the stock report ignores the period (it is a snapshot of today). */
+export function useReport<R extends ReportId>(report: R, period: ReportPeriod | null) {
+  return useQuery({
+    queryKey: ['reports', report, period] as const,
+    queryFn: ({ signal }) =>
+      api.get<ReportTypes[R]>(`/reports/${report}`, { ...period }, { signal }),
     placeholderData: keepPreviousData,
   });
 }

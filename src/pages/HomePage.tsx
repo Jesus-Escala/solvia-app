@@ -239,7 +239,7 @@ export function HomePage() {
                   ? t('home.owedLate', { amount: fmt.money(totals.overdue) })
                   : t('home.owedCount', { count: openCount })
               }
-              to="/receivables"
+              to="/receivables?status=open"
               linkLabel={t('home.owedLink')}
             />
             <Figure
@@ -248,7 +248,7 @@ export function HomePage() {
               loading={!month.data}
               tone="success"
               hint={t('home.paidMonthCount', { count: month.data?.kpis.payments.value ?? 0 })}
-              to="/reports?view=collection"
+              to="/dashboard?view=collection"
               linkLabel={t('home.paidLink')}
             />
           </div>
@@ -330,7 +330,7 @@ export function HomePage() {
             )}
             {more > 0 && (
               <Link
-                to="/receivables"
+                to="/receivables?status=open"
                 className="flex items-center justify-center gap-1 border-t border-line px-5 py-3 text-sm font-semibold text-primary-ink hover:bg-surface-2"
               >
                 {t('home.today.more', { count: more })}

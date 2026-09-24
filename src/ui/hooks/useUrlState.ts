@@ -25,7 +25,10 @@ export function useUrlState<T extends Record<string, string>>(defaults: T) {
         (current) => {
           const next = new URLSearchParams(current);
           for (const [key, value] of Object.entries(changes)) {
-            if (value === undefined || value === '' || value === defaults[key]) next.delete(key);
+            // Only the default is left out of the URL: an empty value that is not the default
+            // (e.g. "Todos" where the default filter is another one) must stay, or it would
+            // fall back to the default.
+            if (value === undefined || value === defaults[key]) next.delete(key);
             else next.set(key, value);
           }
           if (!('page' in changes)) next.delete('page');

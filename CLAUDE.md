@@ -33,8 +33,11 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
   deben", "Me pagó"), no accounting jargon, the everyday actions one tap away.
 - `src/pages/` — routes: `HomePage` at `/` (three big actions, what you are owed / were paid this
   month, and who to collect from now with "Me pagó" + "WhatsApp"), Customers, CustomerDetail,
-  Receivables ("Me deben", open debts by default), Settings + UsersTab, Help, AuthPages
-  (login/register/change-password) and `src/pages/dashboard/` at `/reports`: three views
+  Receivables ("Me deben"; "Todos" by default, links use `?status=open`), Settings + UsersTab, Help,
+  AuthPages (login/register/change-password), `ReportsPage` at `/reports` (tabular reports: sales and
+  payments by customer, sales by product, stock value, sold without stock; date range, CSV download,
+  `?report=`, each report gated by module) and `src/pages/dashboard/` at `/dashboard` (old
+  `/reports?view=` links redirect there): three views
   (`?view=collection|portfolio|projection`), each with one purpose and opening with a
   one-sentence `Answer` (`parts.tsx`; bold parts marked ⟦ ⟧ in `dashboard.answers.*`). The collection view
   has a filter row (method, customer, weekday; `?method=&customer=&weekday=`) under the period.
@@ -78,6 +81,7 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
   shape in `en.ts` (TypeScript enforces it). Kit strings live in `src/ui/i18n/messages.ts`.
 - Styling with the semantic tokens (`bg-surface`, `text-muted`, `border-line`, `bg-primary`,
   status colors…) so light/dark themes work; no hardcoded hex colors in pages.
+- Filters with "Todos" (`SegmentedControl`): "Todos" goes first and is the default.
 - Tables: `<Page fill>` + `<DataTable>` (content-sized, scrolls inside, never the page). Dialogs:
   `<Modal>`; confirmations: `useFeedback().confirm`; notifications: `useFeedback().toast`.
   Errors from forms/actions are **toasts, not inline alerts**: `useErrorToast(mutation.error)` in the

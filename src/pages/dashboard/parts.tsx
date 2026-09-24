@@ -30,10 +30,10 @@ export function DashboardHeader({
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <h1 className="text-[1.75rem] leading-tight font-semibold sm:text-[2.1rem]">
-          {t('reports.title')}
+          {t('dashboard.title')}
         </h1>
         <p className="mt-1 text-sm text-muted">
-          {t('reports.subtitle', { business: me?.tenant.name ?? '' })}
+          {t('dashboard.subtitle', { business: me?.tenant.name ?? '' })}
         </p>
       </div>
       <div className="inline-flex items-center gap-1 self-start rounded-full border border-line bg-surface py-1 pr-1 pl-3 text-xs text-muted shadow-card sm:self-auto">

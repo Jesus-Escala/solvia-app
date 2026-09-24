@@ -108,9 +108,10 @@ export function PeriodPicker({
   previous,
 }: {
   range: PeriodRange;
-  granularity: Granularity;
+  /** null: no day / week / month switch (e.g. tabular reports). */
+  granularity: Granularity | null;
   onRangeChange: (range: PeriodRange) => void;
-  onGranularityChange: (granularity: Granularity) => void;
+  onGranularityChange: ((granularity: Granularity) => void) | null;
   /** Comparison period returned by the API, shown as "vs …". */
   previous?: PeriodRange;
 }) {
@@ -198,7 +199,7 @@ export function PeriodPicker({
       </div>
 
       <div className="flex items-center justify-between gap-3 sm:contents">
-        {granularities.length > 1 && (
+        {granularity && onGranularityChange && granularities.length > 1 && (
           <SegmentedControl
             label={t('dashboard.period.granularity')}
             value={granularities.includes(granularity) ? granularity : granularities[0]!}

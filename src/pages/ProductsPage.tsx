@@ -4,6 +4,7 @@ import {
   ArchiveRestore,
   ClipboardCheck,
   History,
+  Layers,
   Package,
   PackagePlus,
   Pencil,
@@ -45,7 +46,7 @@ import type { Product, SortDir } from '../lib/types';
 
 const DEFAULTS = {
   search: '',
-  status: 'active',
+  status: 'all',
   page: '1',
   pageSize: '20',
   sortBy: '',
@@ -95,7 +96,7 @@ function ProductsList() {
     sortBy: (state.sortBy || null) as ProductListParams['sortBy'],
     sortDir: (state.sortDir || null) as SortDir | null,
   });
-  const filtered = Boolean(state.search) || state.status !== 'active';
+  const filtered = Boolean(state.search) || state.status !== 'all';
 
   // Archived products stay for history but are hidden from pickers.
   const toggleArchived = async (product: Product) => {
@@ -245,12 +246,12 @@ function ProductsList() {
               value={state.status}
               onChange={(status) => update({ status, page: '1' })}
               options={[
+                { value: 'all', label: t('common.all'), icon: <Layers /> },
                 { value: 'active', label: t('products.filters.active'), icon: <Package /> },
                 ...(modules.inventory
                   ? [{ value: 'low', label: t('products.filters.low'), icon: <AlertTriangle /> }]
                   : []),
                 { value: 'archived', label: t('products.filters.archived'), icon: <Archive /> },
-                { value: 'all', label: t('common.all') },
               ]}
             />
           </>

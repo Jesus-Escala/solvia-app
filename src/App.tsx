@@ -8,6 +8,7 @@ import { ChangePasswordPage, LoginPage, RegisterPage } from './pages/AuthPages';
 import { CustomerDetailPage } from './pages/CustomerDetailPage';
 import { CustomersPage } from './pages/CustomersPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
+import { ReportsPage } from './pages/ReportsPage';
 import { HelpPage } from './pages/HelpPage';
 import { HomePage } from './pages/HomePage';
 import { ProductsPage } from './pages/ProductsPage';
@@ -46,7 +47,8 @@ export function App() {
         <Route path="change-password" element={<ChangePasswordPage />} />
         <Route element={<AppShell />}>
           <Route index element={<HomePage />} />
-          <Route path="reports" element={<DashboardPage />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="reports" element={<ReportsPage />} />
           <Route path="customers" element={<CustomersPage />} />
           <Route path="customers/:id" element={<CustomerDetailPage />} />
           <Route path="receivables" element={<ReceivablesPage />} />

@@ -456,3 +456,106 @@ export interface AmountCount {
   amount: number;
   count: number;
 }
+
+// --- Tabular reports (/reports/*) -------------------------------------------
+
+export interface ReportPeriod {
+  from: string;
+  to: string;
+}
+
+export interface SalesByCustomerRow {
+  /** null: sales without a customer (walk-in). */
+  customerId: string | null;
+  name: string | null;
+  sales: number;
+  total: number;
+  cash: number;
+  credit: number;
+  lastSale: string;
+}
+
+export interface CollectionsByCustomerRow {
+  customerId: string;
+  name: string;
+  payments: number;
+  amount: number;
+  yape: number;
+  plin: number;
+  cash: number;
+  bankTransfer: number;
+  lastPayment: string;
+}
+
+export interface SalesByProductRow {
+  productId: string;
+  name: string;
+  unit: ProductUnit;
+  quantity: number;
+  sales: number;
+  revenue: number;
+  /** Estimated with the product's current cost; null when it has none. */
+  cost: number | null;
+  profit: number | null;
+}
+
+export type StockStatus = 'out' | 'low' | 'ok';
+
+export interface StockReportRow {
+  productId: string;
+  name: string;
+  code: string | null;
+  unit: ProductUnit;
+  stock: number;
+  minStock: number | null;
+  cost: number | null;
+  price: number;
+  value: number | null;
+  retail: number;
+  status: StockStatus;
+}
+
+export interface ShortageReportRow {
+  movementId: string;
+  /** When the line left stock (ISO timestamp). */
+  at: string;
+  sale: { id: string; number: number; date: string; status: Sale['status'] };
+  customer: string | null;
+  productId: string;
+  product: string;
+  quantity: number;
+  shortage: number;
+  balanceAfter: number | null;
+}
+
+export interface Report<Row, Totals> {
+  period?: ReportPeriod;
+  rows: Row[];
+  totals: Totals;
+}
+
+export interface ReportTypes {
+  'sales-by-customer': Report<
+    SalesByCustomerRow,
+    { sales: number; total: number; cash: number; credit: number }
+  >;
+  'collections-by-customer': Report<
+    CollectionsByCustomerRow,
+    {
+      payments: number;
+      amount: number;
+      yape: number;
+      plin: number;
+      cash: number;
+      bankTransfer: number;
+    }
+  >;
+  'sales-by-product': Report<SalesByProductRow, { revenue: number; cost: number; profit: number }>;
+  stock: Report<
+    StockReportRow,
+    { products: number; value: number; retail: number; out: number; low: number }
+  >;
+  shortages: Report<ShortageReportRow, { lines: number; units: number }>;
+}
+
+export type ReportId = keyof ReportTypes;

@@ -34,7 +34,7 @@ const METHODS: PaymentMethod[] = ['yape', 'plin', 'cash', 'bank_transfer'];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * Reports, split into three views with a single purpose each: what you collected (any period vs
+ * Dashboard (charts), split into three views with a single purpose each: what you collected (any period vs
  * the previous one), what you are owed and its risk, and what you expect to collect. Each view
  * opens with one plain sentence answering its question. "Today" lives on the Home page.
  */
