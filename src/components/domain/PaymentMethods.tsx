@@ -5,18 +5,15 @@ import type { PaymentMethod } from '../../lib/types';
 
 const METHODS: PaymentMethod[] = ['yape', 'plin', 'cash', 'bank_transfer'];
 
-/** Wallet apps get their brand colour and initial; cash and transfers a matching icon. */
+/**
+ * Wallet apps use their official app icons (public/brands: Yape from Wikimedia Commons,
+ * CC BY-SA 4.0 by BCP; Plin from plin.pe); cash and transfers a matching icon.
+ */
 const MARKS: Record<PaymentMethod, { className: string; content: React.ReactNode }> = {
-  yape: {
-    className: 'bg-[#742284] text-white',
-    content: <span className="font-extrabold italic">Y</span>,
-  },
-  plin: {
-    className: 'bg-linear-to-br from-[#00c9e0] to-[#2f6bf2] text-white',
-    content: <span className="font-extrabold">p</span>,
-  },
-  cash: { className: 'bg-success-soft text-success', content: <Banknote /> },
-  bank_transfer: { className: 'bg-info-soft text-info', content: <Landmark /> },
+  yape: { className: 'overflow-hidden', content: <img src="/brands/yape.png" alt="" /> },
+  plin: { className: 'overflow-hidden', content: <img src="/brands/plin.png" alt="" /> },
+  cash: { className: 'bg-success-soft text-success shadow-sm', content: <Banknote /> },
+  bank_transfer: { className: 'bg-info-soft text-info shadow-sm', content: <Landmark /> },
 };
 
 /** Small square badge that identifies a payment method at a glance. */
@@ -32,7 +29,7 @@ export function PaymentMethodMark({
     <span
       aria-hidden="true"
       className={cx(
-        'inline-flex shrink-0 items-center justify-center leading-none shadow-sm',
+        'inline-flex shrink-0 items-center justify-center leading-none [&>img]:h-full [&>img]:w-full [&>img]:object-cover',
         size === 'sm'
           ? 'h-5 w-5 rounded-md text-[11px] [&>svg]:h-3 [&>svg]:w-3'
           : 'h-9 w-9 rounded-xl text-lg [&>svg]:h-[18px] [&>svg]:w-[18px]',
