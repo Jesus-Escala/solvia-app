@@ -26,7 +26,7 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
 - `src/ui/` — **this app's copy of the Solvia UI kit**, imported as `@/ui` (never deep paths):
   components (Button, DataTable, Modal, Popover/menus, toasts + `confirm`, Form controls,
   PhoneInput, PasswordChecklist, TeamUsers, TemporaryPasswordDialog, KpiCard, Page…), brand
-  (Logo, Soli `Mascot`), theme, i18n core, charts, API client factory, PWA install, `styles.css`
+  (Logo, Bowl `Mascot`), theme, i18n core, charts, API client factory, PWA install, `styles.css`
   (design tokens + motion). The same kit is copied in solvia-admin (and a subset in
   solvia-landing): when you fix a kit file, apply the same change there.
 - `src/pages/` — routes (Customers, CustomerDetail, Receivables, Settings + UsersTab, Help,
@@ -68,7 +68,7 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
 
 ## Brand assets
 
-Soli's face lives in `src/ui/brand/Mascot.tsx` (`MascotFace`); the logo mark, avatar and mascot
+Bowl's face lives in `src/ui/brand/Mascot.tsx` (`MascotFace`); the logo mark, avatar and mascot
 all use it. After changing it run `npm run favicon && npm run icons` (writes public/favicon.svg
 and the PWA PNGs), copy `public/favicon.svg` to solvia-admin (then `npm run icons` there) and
 solvia-landing, and mirror the face in the PDF header (solvia-backend statement.service.ts).

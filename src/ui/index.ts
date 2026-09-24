@@ -1,5 +1,5 @@
 /**
- * UI kit of this app: components, brand (logo + Soli), theme, i18n
+ * UI kit of this app: components, brand (logo + Bowl), theme, i18n
  * core, charts and the API client. Import from '@/ui' only (never deep paths).
  */
 

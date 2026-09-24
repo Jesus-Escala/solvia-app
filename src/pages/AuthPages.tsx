@@ -165,11 +165,11 @@ function AuthLayout({
               <div
                 className={cx('flex flex-col items-center text-center', compact ? 'mb-4' : 'mb-5')}
               >
-                {/* Soli perches on the top edge of the card */}
+                {/* Bowl perches on the top edge of the card */}
                 <Mascot
                   size={compact ? 76 : 92}
                   mood={mood}
-                  title="Soli"
+                  title="Bowl"
                   className={cx(
                     'absolute left-1/2 -translate-x-1/2 drop-shadow-md',
                     compact ? '-top-[61px]' : '-top-[74px]',

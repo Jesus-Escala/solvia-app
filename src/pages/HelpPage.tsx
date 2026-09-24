@@ -64,7 +64,7 @@ export function HelpPage() {
     <Page>
       <PageHeader title={t('help.title')} description={t('help.subtitle')} />
 
-      {/* Hero: Soli greets, the tour starts from here and the search filters everything below */}
+      {/* Hero: Bowl greets, the tour starts from here and the search filters everything below */}
       <section className="relative isolate overflow-hidden rounded-3xl border border-line bg-[linear-gradient(135deg,var(--primary-soft)_0%,var(--surface)_65%)] p-6 shadow-card sm:p-8">
         <div
           aria-hidden="true"
@@ -75,7 +75,7 @@ export function HelpPage() {
           className="help-blob absolute -bottom-20 left-1/3 -z-10 h-48 w-48 rounded-full bg-amber-300/25 blur-3xl [animation-delay:-6s]"
         />
         <div className="flex flex-col gap-6 md:flex-row md:items-center">
-          {/* Soli flies a figure-eight: banks into the turns, shrinks on the far pass (depth) and
+          {/* Bowl flies a figure-eight: banks into the turns, shrinks on the far pass (depth) and
               leaves a trail of golden sparks along the same path */}
           <div className="relative mx-auto h-[170px] w-[220px] shrink-0 md:mx-0" aria-hidden="true">
             {[0.42, 0.3, 0.18].map((delay, index) => (

@@ -20,7 +20,7 @@ It is a single-page app built with React 19, TypeScript, Vite 7, TailwindCSS 4, 
 - **Settings:** reminder rules, editable message templates (with placeholders and reset to default), the WhatsApp send log, preferences and, for admins only, **Users**.
   - **Users** is team management: add a user (admin or collector) with a generated temporary password, edit, deactivate or reactivate them, and reset their password. The temporary password is shown once, with copy and "send via WhatsApp" buttons. You can't change your own role or deactivate yourself, and the business always keeps at least one active admin.
 - **Roles:** `admin` and `collector`. The UI hides admin-only actions, and the API enforces them.
-- **Help and onboarding:** help center, guided tour (welcome modal on first sign-in) and the "Soli" assistant menu.
+- **Help and onboarding:** help center, guided tour (welcome modal on first sign-in) and the "Bowl" assistant menu.
 - **Across the app:** Spanish (default) and English, a light, dark or system theme, and a responsive layout (bottom navigation and bottom-sheet modals on phones). Reduced motion is respected.
 
 ## Requirements
@@ -97,7 +97,7 @@ The login URL included in the "send via WhatsApp" message for new users is the a
 
 ### The UI kit (`src/ui`)
 
-`src/ui` holds the Solvia design system for this app: components (`Button`, `DataTable`, `Modal`, `Field`, `PhoneInput`, `KpiCard`, `Page`, `TeamUsers`, `TemporaryPasswordDialog`, …), the brand (logo and Soli the owl), the theme, the i18n core and formatters, charts, the API client, `useUrlState`, the PWA helpers and `styles.css` (design tokens, light and dark themes, motion).
+`src/ui` holds the Solvia design system for this app: components (`Button`, `DataTable`, `Modal`, `Field`, `PhoneInput`, `KpiCard`, `Page`, `TeamUsers`, `TemporaryPasswordDialog`, …), the brand (logo and Bowl the owl), the theme, the i18n core and formatters, charts, the API client, `useUrlState`, the PWA helpers and `styles.css` (design tokens, light and dark themes, motion).
 
 - **Phone field:** `components/PhoneInput.tsx` + `components/phoneCountries.ts`.
   - It uses `libphonenumber-js/min` for calling codes, as-you-type formatting (`AsYouType`), validation (`isValidPhone`) and display (`formatPhone`).

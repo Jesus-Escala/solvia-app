@@ -1,6 +1,6 @@
 /**
  * Writes public/favicon.svg from the <LogoMark> component, so the favicon and PWA icons
- * (`npm run icons` builds the PNGs from it) always show the same Soli as the app.
+ * (`npm run icons` builds the PNGs from it) always show the same Bowl as the app.
  *
  *   npm run favicon && npm run icons
  */

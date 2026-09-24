@@ -1,5 +1,5 @@
 /**
- * Geometry of Soli's head in a 64x64 box for the logo mark (flat, reads well at small sizes).
+ * Geometry of Bowl's head in a 64x64 box for the logo mark (flat, reads well at small sizes).
  * The full-body mascot (Mascot.tsx) is a softer illustrated version that keeps these eye
  * positions and the coin. Friendly on purpose: rounded ear tufts, big sparkly eyes, brows
  * arched upward (never a V, which reads as angry), blush and a small rounded beak.

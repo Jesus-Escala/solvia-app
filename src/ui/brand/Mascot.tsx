@@ -12,7 +12,7 @@ import { OWL, OWL_COLORS } from './owlGeometry';
 export type MascotMood = 'default' | 'happy' | 'wave' | 'fly' | 'cover' | 'peek';
 
 /*
- * Illustrated Soli (viewBox 0 0 120 131): a big round head on a small round body, drawn with
+ * Illustrated Bowl (viewBox 0 0 120 131): a big round head on a small round body, drawn with
  * soft gradients instead of flat fills and outlines. The eyes sit where the logo's eyes land
  * when its 64x64 face is scaled 1.6x, so wing poses stay aligned with the logo proportions.
  */
@@ -235,8 +235,8 @@ function Head({ ids, happy, blink }: { ids: Ids; happy: boolean; blink: boolean 
 const HEAD_BOX = { x: 21.8, y: 20.6, width: 76.4, height: 66.8 };
 
 /**
- * Soli's illustrated head fitted into a square of `size` (in the parent SVG's units), centred
- * at (`cx`, `cy`). The logo mark and the avatar use it so every Soli has the same face.
+ * Bowl's illustrated head fitted into a square of `size` (in the parent SVG's units), centred
+ * at (`cx`, `cy`). The logo mark and the avatar use it so every Bowl has the same face.
  */
 export function MascotFace({
   size,
@@ -300,7 +300,7 @@ function Wing({
 }
 
 /**
- * "Soli", the Solvia owl: a soft, rounded illustration with the gold S/ coin on its belly.
+ * "Bowl", the Solvia owl: a soft, rounded illustration with the gold S/ coin on its belly.
  * Pure SVG, animated with CSS transitions (wings) and keyframes (blink, wave).
  *
  * `variant="avatar"`: just the head in a teal circle, for chat bubbles and the assistant button.

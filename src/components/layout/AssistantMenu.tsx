@@ -24,7 +24,7 @@ function Action({ icon, label, onClick }: { icon: ReactNode; label: string; onCl
 }
 
 /**
- * "Soli" assistant entry point in the top bar. Today it offers quick help (tour, help center,
+ * "Bowl" assistant entry point in the top bar. Today it offers quick help (tour, help center,
  * shortcuts); the panel is designed to host a chat conversation later.
  */
 export function AssistantMenu() {

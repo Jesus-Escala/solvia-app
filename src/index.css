@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 @import './ui/styles.css';
 
-/* Help center: Soli flies (bobbing, leaning forward, speed lines), the blobs drift and the tour
+/* Help center: Bowl flies (bobbing, leaning forward, speed lines), the blobs drift and the tour
    button shines. */
 /* Figure-eight flight (220x170 box). The path drives position; `help-bank` tilts into each turn
    and scales down on the far loop so it reads as depth. Same duration keeps both in sync. */

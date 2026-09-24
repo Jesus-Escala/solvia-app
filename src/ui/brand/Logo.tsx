@@ -3,7 +3,7 @@ import { cx } from '../components/cx';
 import { MascotFace } from './Mascot';
 import { OWL } from './owlGeometry';
 
-/** Solvia mark: Soli's face (the same as the mascot's) on a gradient tile, with a gold S/ coin. */
+/** Solvia mark: Bowl's face (the same as the mascot's) on a gradient tile, with a gold S/ coin. */
 export function LogoMark({ size = 32, className }: { size?: number; className?: string }) {
   const id = useId();
   const bg = `${id}-bg`;
