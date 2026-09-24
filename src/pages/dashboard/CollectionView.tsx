@@ -1,4 +1,13 @@
-import { FilePlus2, HandCoins, ReceiptText, Target, Timer, UserPlus } from 'lucide-react';
+import {
+  BarChart3,
+  FilePlus2,
+  HandCoins,
+  ReceiptText,
+  Table2,
+  Target,
+  Timer,
+  UserPlus,
+} from 'lucide-react';
 import { useState } from 'react';
 import {
   Alert,
@@ -209,8 +218,8 @@ export function CollectionView({
               value={view}
               onChange={setView}
               options={[
-                { value: 'chart', label: t('dashboard.analytics.chart') },
-                { value: 'table', label: t('dashboard.analytics.table') },
+                { value: 'chart', label: t('dashboard.analytics.chart'), icon: <BarChart3 /> },
+                { value: 'table', label: t('dashboard.analytics.table'), icon: <Table2 /> },
               ]}
             />
           }

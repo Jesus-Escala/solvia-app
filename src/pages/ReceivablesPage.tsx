@@ -1,4 +1,5 @@
-import { Plus } from 'lucide-react';
+import { Layers, Plus } from 'lucide-react';
+import { StatusIcon } from '../components/domain/Badges';
 import { useState } from 'react';
 import { ReceivableFormModal } from '../components/domain/ReceivableFormModal';
 import { useReceivableColumns } from '../components/domain/receivableColumns';
@@ -71,10 +72,11 @@ export function ReceivablesPage() {
               value={state.status}
               onChange={(status) => update({ status })}
               options={[
-                { value: '', label: t('common.all') },
+                { value: '', label: t('common.all'), icon: <Layers /> },
                 ...STATUSES.map((status) => ({
                   value: status,
                   label: t(`status.${status}`),
+                  icon: <StatusIcon status={status} />,
                   count: counts?.[status].count,
                 })),
               ]}

@@ -8,7 +8,7 @@ import {
   ShieldHalf,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/I18nProvider';
-import type { ReceivableStatus, RiskScore } from '../../lib/types';
+import type { ReceivableStatus, RiskLevel, RiskScore } from '../../lib/types';
 import { Badge, type BadgeTone } from '@/ui';
 
 const STATUS: Record<ReceivableStatus, { tone: BadgeTone; icon: React.ReactNode }> = {
@@ -17,6 +17,22 @@ const STATUS: Record<ReceivableStatus, { tone: BadgeTone; icon: React.ReactNode 
   paid: { tone: 'success', icon: <CheckCircle2 /> },
   overdue: { tone: 'danger', icon: <AlertTriangle /> },
 };
+
+/** The status icon alone, e.g. inside a filter pill. */
+export function StatusIcon({ status }: { status: ReceivableStatus }) {
+  return STATUS[status].icon;
+}
+
+/** Coloured dot for a risk level, e.g. inside a filter pill. */
+export function RiskDot({ risk }: { risk: RiskLevel }) {
+  const colors = { low: 'bg-success', medium: 'bg-warning', high: 'bg-danger' };
+  return (
+    <span
+      aria-hidden="true"
+      className={`h-2 w-2 rounded-full ring-2 ring-white/70 ${colors[risk]}`}
+    />
+  );
+}
 
 export function StatusBadge({ status }: { status: ReceivableStatus }) {
   const { t } = useI18n();

@@ -1,4 +1,12 @@
-import { CalendarClock, CalendarDays, CalendarRange, Undo2 } from 'lucide-react';
+import {
+  BarChart3,
+  Calendar,
+  CalendarClock,
+  CalendarDays,
+  CalendarRange,
+  Table2,
+  Undo2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
@@ -40,8 +48,8 @@ function CashFlowCard() {
             value={groupBy}
             onChange={setGroupBy}
             options={[
-              { value: 'week', label: t('dashboard.cashFlow.weekly') },
-              { value: 'month', label: t('dashboard.cashFlow.monthly') },
+              { value: 'week', label: t('dashboard.cashFlow.weekly'), icon: <CalendarDays /> },
+              { value: 'month', label: t('dashboard.cashFlow.monthly'), icon: <Calendar /> },
             ]}
           />
           <SegmentedControl
@@ -49,8 +57,8 @@ function CashFlowCard() {
             value={view}
             onChange={setView}
             options={[
-              { value: 'chart', label: t('dashboard.cashFlow.chart') },
-              { value: 'table', label: t('dashboard.cashFlow.table') },
+              { value: 'chart', label: t('dashboard.cashFlow.chart'), icon: <BarChart3 /> },
+              { value: 'table', label: t('dashboard.cashFlow.table'), icon: <Table2 /> },
             ]}
           />
         </>

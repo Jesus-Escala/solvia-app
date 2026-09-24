@@ -2,21 +2,12 @@ import { FileCheck2, Paperclip, X } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
 import { useRegisterPayment } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
-import {
-  useErrorText,
-  Button,
-  Field,
-  Modal,
-  ProgressBar,
-  SegmentedControl,
-  useFeedback,
-  useErrorToast,
-} from '@/ui';
+import { useErrorText, Button, Field, Modal, ProgressBar, useFeedback, useErrorToast } from '@/ui';
 import type { PaymentMethod, Receivable } from '../../lib/types';
 import { todayIso } from './dueLabel';
+import { PaymentMethodPicker } from './PaymentMethods';
 
 const MAX_PROOF_MB = 5;
-const METHODS: PaymentMethod[] = ['yape', 'plin', 'cash', 'bank_transfer'];
 
 export function PaymentFormModal({
   open,
@@ -146,13 +137,7 @@ function PaymentForm({ receivable, onClose }: { receivable: Receivable; onClose:
 
       <div>
         <p className="label">{t('payment.method')}</p>
-        <SegmentedControl
-          label={t('payment.method')}
-          size="md"
-          value={method}
-          onChange={setMethod}
-          options={METHODS.map((value) => ({ value, label: t(`methods.${value}`) }))}
-        />
+        <PaymentMethodPicker label={t('payment.method')} value={method} onChange={setMethod} />
       </div>
 
       <div>

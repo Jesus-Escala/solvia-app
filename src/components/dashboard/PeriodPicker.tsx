@@ -1,4 +1,12 @@
-import { CalendarRange, Check, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Calendar,
+  CalendarDays,
+  CalendarRange,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Button, cx, IconButton, Popover, SegmentedControl } from '@/ui';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -14,6 +22,12 @@ import {
   type Granularity,
   type PeriodRange,
 } from './period';
+
+const GRANULARITY_ICONS: Record<Granularity, React.ReactNode> = {
+  day: <CalendarDays />,
+  week: <CalendarRange />,
+  month: <Calendar />,
+};
 
 /** Moves a range one step back/forward: by calendar months when it spans whole months. */
 function shiftRange(range: PeriodRange, direction: -1 | 1): PeriodRange {
@@ -192,6 +206,7 @@ export function PeriodPicker({
             options={granularities.map((value) => ({
               value,
               label: t(`dashboard.period.granularities.${value}`),
+              icon: GRANULARITY_ICONS[value],
             }))}
           />
         )}

@@ -19,6 +19,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
 import { RiskBadge } from '../components/domain/Badges';
+import { PaymentMethodLabel } from '../components/domain/PaymentMethods';
 import { CustomerFormModal } from '../components/domain/CustomerFormModal';
 import { useReceivableColumns } from '../components/domain/receivableColumns';
 import { ReceivableFormModal } from '../components/domain/ReceivableFormModal';
@@ -157,7 +158,7 @@ export function CustomerDetailPage() {
     {
       id: 'method',
       header: t('customerDetail.payments.method'),
-      cell: (row) => <Badge>{t(`methods.${row.method}`)}</Badge>,
+      cell: (row) => <PaymentMethodLabel method={row.method} />,
     },
     {
       id: 'proof',

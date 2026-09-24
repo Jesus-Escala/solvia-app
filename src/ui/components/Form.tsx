@@ -83,16 +83,20 @@ export function SegmentedControl<T extends string>({
             className={cx(
               'inline-flex items-center gap-1.5 rounded-full font-semibold whitespace-nowrap transition',
               size === 'sm' ? 'px-3 py-1 text-xs' : 'px-4 py-1.5 text-sm',
-              active ? 'bg-surface text-ink shadow-sm' : 'text-muted hover:text-ink',
+              active
+                ? 'bg-primary text-on-primary shadow-sm shadow-primary/30'
+                : 'text-muted hover:bg-surface-3/60 hover:text-ink',
             )}
           >
-            {option.icon && <span className="[&>svg]:h-3.5 [&>svg]:w-3.5">{option.icon}</span>}
+            {option.icon && (
+              <span className="flex items-center [&>svg]:h-3.5 [&>svg]:w-3.5">{option.icon}</span>
+            )}
             {option.label}
             {option.count !== undefined && (
               <span
                 className={cx(
                   'rounded-full px-1.5 text-[10px] tabular-nums',
-                  active ? 'bg-surface-3' : 'bg-surface-3/60',
+                  active ? 'bg-white/20' : 'bg-surface-3',
                 )}
               >
                 {option.count}

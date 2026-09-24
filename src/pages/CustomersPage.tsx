@@ -1,8 +1,8 @@
-import { Eye, MoreHorizontal, Pencil, Trash2, UserPlus } from 'lucide-react';
+import { Eye, MoreHorizontal, Pencil, Trash2, UserPlus, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
-import { RiskBadge } from '../components/domain/Badges';
+import { RiskBadge, RiskDot } from '../components/domain/Badges';
 import { CustomerFormModal } from '../components/domain/CustomerFormModal';
 import {
   Alert,
@@ -174,10 +174,10 @@ export function CustomersPage() {
               value={state.risk}
               onChange={(risk) => update({ risk })}
               options={[
-                { value: '', label: t('common.all') },
-                { value: 'low', label: t('risk.low') },
-                { value: 'medium', label: t('risk.medium') },
-                { value: 'high', label: t('risk.high') },
+                { value: '', label: t('common.all'), icon: <Users /> },
+                { value: 'low', label: t('risk.low'), icon: <RiskDot risk="low" /> },
+                { value: 'medium', label: t('risk.medium'), icon: <RiskDot risk="medium" /> },
+                { value: 'high', label: t('risk.high'), icon: <RiskDot risk="high" /> },
               ]}
             />
           </>
