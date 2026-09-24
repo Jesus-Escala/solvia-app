@@ -125,6 +125,7 @@ export function ReceivablesPage() {
         fetching={query.isFetching && !query.isLoading}
         error={query.error ? <Alert tone="danger">{errors.message(query.error)}</Alert> : undefined}
         rowActions={actions.render}
+        {...actions.shortcuts}
         sort={state.sortBy ? { id: state.sortBy, dir: state.sortDir as SortDir } : undefined}
         onSortChange={(sort) =>
           // No sort (third click): back to the page's default order.

@@ -1,4 +1,4 @@
-import { ArrowLeft, HandCoins, Plus, ReceiptText, UserPlus } from 'lucide-react';
+import { ArrowLeft, HandCoins, Plus, ReceiptText, ShoppingCart, UserPlus } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { Button, cx, EmptyState, Modal, Popover, Skeleton } from '@/ui';
@@ -10,6 +10,8 @@ import { CustomerPicker, type PickedCustomer } from '../domain/CustomerPicker';
 import { dueLabel } from '../domain/dueLabel';
 import { PaymentForm } from '../domain/PaymentFormModal';
 import { ReceivableFormModal } from '../domain/ReceivableFormModal';
+import { SaleFormModal } from '../domain/SaleFormModal';
+import { useModules } from '../../hooks/useModules';
 import {
   QuickActionsContext,
   useQuickActions,
@@ -32,6 +34,7 @@ export function QuickActionsProvider({ children }: { children: ReactNode }) {
   return (
     <QuickActionsContext.Provider value={value}>
       {children}
+      <SaleFormModal open={state?.action === 'sale'} customer={state?.customer} onClose={close} />
       <ReceivableFormModal
         open={state?.action === 'receivable'}
         customer={state?.customer}
@@ -172,7 +175,18 @@ function QuickPayment({ preset, onClose }: { preset?: PickedCustomer; onClose: (
 export function QuickAddMenu({ variant = 'button' }: { variant?: 'button' | 'fab' }) {
   const { t } = useI18n();
   const { open } = useQuickActions();
+  const modules = useModules();
   const items: Array<{ action: QuickAction; icon: ReactNode; label: string; hint: string }> = [
+    ...(modules.sales
+      ? [
+          {
+            action: 'sale' as const,
+            icon: <ShoppingCart />,
+            label: t('quick.sale'),
+            hint: t('quick.saleHint'),
+          },
+        ]
+      : []),
     {
       action: 'receivable',
       icon: <ReceiptText />,

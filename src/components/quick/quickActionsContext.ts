@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { PickedCustomer } from '../domain/CustomerPicker';
 
-export type QuickAction = 'receivable' | 'payment' | 'customer';
+export type QuickAction = 'sale' | 'receivable' | 'payment' | 'customer';
 
 export interface QuickActionsValue {
   /** Opens one of the everyday forms from anywhere, optionally for a given customer. */

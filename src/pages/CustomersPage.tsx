@@ -193,6 +193,8 @@ export function CustomersPage() {
         fetching={query.isFetching && !query.isLoading}
         error={query.error ? <Alert tone="danger">{errors.message(query.error)}</Alert> : undefined}
         onRowClick={(row) => navigate(`/customers/${row.id}`)}
+        onRowEdit={(row) => setEditing(row)}
+        {...(isAdmin && { onRowDelete: (row: CustomerListItem) => void deleteCustomer(row) })}
         sort={state.sortBy ? { id: state.sortBy, dir: state.sortDir as SortDir } : undefined}
         onSortChange={(sort) =>
           // No sort (third click): back to the page's default order.

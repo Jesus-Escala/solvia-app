@@ -50,7 +50,16 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
 - **Modules** (enabled per business from solvia-admin, `me.tenant.modules`): `useModules()` →
   `{ sales, inventory, catalog }`. Nav items with `module` only show when enabled; a module page
   renders `ModuleOff` otherwise. Catalog: `ProductsPage` (`/products`) + `ProductFormModal`.
-  Next: sales (quick sale, cash or credit → receivable with items), then purchases and stock.
+  Sales (`SalesPage`, `SaleFormModal`): add products with `ProductPicker` (search or barcode;
+  Enter freezes the text and resolves it in order, so fast scans are never lost), cash or
+  credit, optional customer on cash. Stock shortages are traced (sale/line badges, "Sin stock"
+  filter, `KardexModal`) when the inventory module is on.
+- **Pickers** use the light `/products/lookup` and `/customers/lookup` (cached 30 s, previous
+  request cancelled via AbortSignal, Enter waits for fresh results — `useSearchBox.ts`).
+- **Tables**: `onRowEdit` (right-click / long press) and `onRowDelete` (double-click, the page
+  confirms) shortcuts on `DataTable`; single click waits 260 ms when a delete shortcut exists.
+- Code style: absent values are `null`, not `undefined`; omit optional props with a conditional
+  spread instead of passing `undefined`.
 - `src/lib/api.ts` (client, session in `solvia.*` localStorage), `src/lib/types.ts` (**must mirror
   the backend responses**), `src/lib/config.ts` (URLs from env).
 - `src/auth/` — AuthContext (login, Google, change password), RequireAuth (forces

@@ -150,5 +150,13 @@ export function useReceivableActions() {
     </>
   );
 
-  return { render, modals };
+  return {
+    render,
+    modals,
+    /** Table shortcuts: right-click edits, double-click deletes (admins, with confirmation). */
+    shortcuts: {
+      onRowEdit: (receivable: Receivable) => setEditing(receivable),
+      ...(isAdmin && { onRowDelete: (receivable: Receivable) => deleteReceivable(receivable) }),
+    },
+  };
 }

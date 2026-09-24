@@ -1,4 +1,12 @@
-import { Archive, ArchiveRestore, Package, PackagePlus, Pencil, Trash2 } from 'lucide-react';
+import {
+  Archive,
+  ArchiveRestore,
+  History,
+  Package,
+  PackagePlus,
+  Pencil,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import {
@@ -20,6 +28,7 @@ import {
   type DataTableColumn,
 } from '@/ui';
 import { useAuth } from '../auth/AuthContext';
+import { KardexModal } from '../components/domain/KardexModal';
 import { ProductFormModal } from '../components/domain/ProductFormModal';
 import {
   useDeleteProduct,
@@ -62,22 +71,24 @@ export function ProductsPage() {
 
 function ProductsList() {
   const { t, fmt } = useI18n();
+  const modules = useModules();
   const errors = useErrorText();
   const { isAdmin } = useAuth();
   const { toast, confirm } = useFeedback();
   const [state, update] = useUrlState(DEFAULTS);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [kardex, setKardex] = useState<Product | null>(null);
   const remove = useDeleteProduct();
   const setActive = useSetProductActive();
 
   const query = useProducts({
-    search: state.search || undefined,
+    search: state.search || null,
     status: state.status as ProductListParams['status'],
     page: Number(state.page) || 1,
     pageSize: Number(state.pageSize) || 20,
-    sortBy: (state.sortBy || undefined) as ProductListParams['sortBy'],
-    sortDir: (state.sortDir || undefined) as SortDir | undefined,
+    sortBy: (state.sortBy || null) as ProductListParams['sortBy'],
+    sortDir: (state.sortDir || null) as SortDir | null,
   });
   const filtered = Boolean(state.search) || state.status !== 'active';
 
@@ -165,6 +176,28 @@ function ProductsList() {
           </span>
         ),
     },
+    ...(modules.inventory
+      ? [
+          {
+            id: 'stock',
+            header: t('products.columns.stock'),
+            align: 'right' as const,
+            sortValue: (row: Product) => (row.trackStock ? row.stock : null),
+            cell: (row: Product) =>
+              !row.trackStock ? (
+                <span className="text-subtle">{t('products.noStock')}</span>
+              ) : (
+                <span
+                  className={
+                    row.stock <= (row.minStock ?? 0) ? 'font-semibold text-warning-ink' : ''
+                  }
+                >
+                  {fmt.number(row.stock)}
+                </span>
+              ),
+          },
+        ]
+      : []),
     {
       id: 'minStock',
       header: t('products.columns.minStock'),
@@ -219,9 +252,13 @@ function ProductsList() {
         rowKey={(row) => row.id}
         loading={query.isLoading}
         fetching={query.isFetching && !query.isLoading}
-        error={query.error ? <Alert tone="danger">{errors.message(query.error)}</Alert> : undefined}
+        {...(query.error && {
+          error: <Alert tone="danger">{errors.message(query.error)}</Alert>,
+        })}
         onRowClick={(row) => setEditing(row)}
-        sort={state.sortBy ? { id: state.sortBy, dir: state.sortDir as SortDir } : undefined}
+        onRowEdit={(row) => setEditing(row)}
+        {...(isAdmin && { onRowDelete: (row: Product) => void deleteProduct(row) })}
+        {...(state.sortBy && { sort: { id: state.sortBy, dir: state.sortDir as SortDir } })}
         onSortChange={(sort) =>
           update({ sortBy: sort?.id ?? '', sortDir: sort?.dir ?? '', page: '1' })
         }
@@ -238,6 +275,12 @@ function ProductsList() {
                 close={close}
                 items={[
                   { label: t('common.edit'), icon: <Pencil />, onSelect: () => setEditing(row) },
+                  {
+                    label: t('kardex.open'),
+                    icon: <History />,
+                    onSelect: () => setKardex(row),
+                    hidden: !modules.inventory || !row.trackStock,
+                  },
                   {
                     label: row.active ? t('products.archive') : t('products.restore'),
                     icon: row.active ? <Archive /> : <ArchiveRestore />,
@@ -267,17 +310,20 @@ function ProductsList() {
           description: filtered
             ? t('products.emptyFilteredDescription')
             : t('products.emptyDescription'),
-          action: !filtered ? (
-            <Button icon={<PackagePlus className="h-4 w-4" />} onClick={() => setCreating(true)}>
-              {t('products.new')}
-            </Button>
-          ) : undefined,
+          ...(!filtered && {
+            action: (
+              <Button icon={<PackagePlus className="h-4 w-4" />} onClick={() => setCreating(true)}>
+                {t('products.new')}
+              </Button>
+            ),
+          }),
         }}
       />
       <ProductFormModal open={creating} onClose={() => setCreating(false)} />
+      <KardexModal product={kardex} onClose={() => setKardex(null)} />
       <ProductFormModal
         open={editing !== null}
-        product={editing ?? undefined}
+        {...(editing !== null && { product: editing })}
         onClose={() => setEditing(null)}
       />
     </Page>

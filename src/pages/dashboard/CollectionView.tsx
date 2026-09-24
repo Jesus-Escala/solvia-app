@@ -131,7 +131,11 @@ function FilterBar({
         <div className="min-w-0">
           <span className="label">{t('dashboard.filters.customer')}</span>
           <CustomerPicker
-            value={filters.customerId ? { id: filters.customerId, name: customerName } : null}
+            value={
+              filters.customerId
+                ? { id: filters.customerId, name: customerName, phone: null, outstanding: null }
+                : null
+            }
             onChange={(customer) => onChange({ customerId: customer?.id ?? null })}
           />
         </div>

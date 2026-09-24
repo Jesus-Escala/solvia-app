@@ -1,4 +1,13 @@
-import { BarChart3, CircleHelp, Home, Package, ReceiptText, Settings, Users } from 'lucide-react';
+import {
+  BarChart3,
+  CircleHelp,
+  Home,
+  Package,
+  ReceiptText,
+  Settings,
+  ShoppingCart,
+  Users,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { TranslationKey } from '../../i18n/I18nProvider';
 
@@ -14,9 +23,10 @@ export const NAV_ITEMS: Array<{
   end?: boolean;
   mobile?: boolean;
   /** Only shown when the business has this module (see `useModules`). */
-  module?: 'catalog';
+  module?: 'catalog' | 'sales';
 }> = [
   { to: '/', label: 'nav.home', icon: <Home />, end: true, mobile: true },
+  { to: '/sales', label: 'nav.sales', icon: <ShoppingCart />, module: 'sales' },
   { to: '/receivables', label: 'nav.receivables', icon: <ReceiptText />, mobile: true },
   { to: '/customers', label: 'nav.customers', icon: <Users />, mobile: true },
   { to: '/products', label: 'nav.products', icon: <Package />, module: 'catalog' },

@@ -31,6 +31,8 @@ interface RequestOptions {
   /** Return the raw response body as a Blob (e.g. PDFs). */
   blob?: boolean;
   auth?: boolean;
+  /** Cancels the request (e.g. a search superseded by the next keystroke). */
+  signal?: AbortSignal;
 }
 
 /** Where a client keeps its session tokens (each app uses its own storage keys). */
@@ -104,7 +106,7 @@ export function createApiClient({
   }
 
   async function request<T>(path: string, options: RequestOptions = {}, retry = true): Promise<T> {
-    const { method = 'GET', body, query, blob = false, auth = true } = options;
+    const { method = 'GET', body, query, blob = false, auth = true, signal } = options;
     // The interface language (set on <html lang> by the I18nProvider): the API writes statements
     // and WhatsApp messages in it.
     const headers: Record<string, string> = {
@@ -123,8 +125,10 @@ export function createApiClient({
 
     let response: Response;
     try {
-      response = await fetch(buildUrl(path, query), { method, headers, body: payload });
-    } catch {
+      response = await fetch(buildUrl(path, query), { method, headers, body: payload, signal });
+    } catch (error) {
+      // A cancelled request is not a network problem: let the caller (TanStack Query) see it.
+      if (signal?.aborted) throw error;
       throw new ApiError(0, 'NETWORK_ERROR', 'Could not reach the server. Check your connection.');
     }
 
@@ -145,7 +149,8 @@ export function createApiClient({
   }
 
   return {
-    get: <T>(path: string, query?: Query) => request<T>(path, { query }),
+    get: <T>(path: string, query?: Query, options?: { signal?: AbortSignal }) =>
+      request<T>(path, { query, signal: options?.signal }),
     post: <T>(path: string, body?: unknown) => request<T>(path, { method: 'POST', body }),
     put: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PUT', body }),
     patch: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PATCH', body }),

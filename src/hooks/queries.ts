@@ -6,6 +6,7 @@ import type {
   Customer,
   CustomerDetail,
   CustomerListItem,
+  CustomerOption,
   DashboardSummary,
   Me,
   MessageTemplate,
@@ -15,15 +16,19 @@ import type {
   Paginated,
   Payment,
   Product,
+  ProductOption,
   ProductUnit,
   PaymentLink,
   PaymentMethod,
   Receivable,
   ReceivableStatus,
   ReminderRules,
+  Sale,
+  SaleDocType,
   ReminderRunSummary,
   RiskLevel,
   SortDir,
+  StockMovement,
   TemplateType,
   AuthConfig,
   AnalyticsGranularity,
@@ -354,12 +359,12 @@ export function useSendReminder() {
 // --- Product catalog (sales / inventory modules) ---------------------------
 
 export interface ProductListParams {
-  search?: string;
-  status?: 'active' | 'archived' | 'all';
+  search?: string | null;
+  status?: 'active' | 'archived' | 'all' | null;
   page: number;
-  pageSize?: number;
-  sortBy?: 'name' | 'code' | 'price' | 'cost' | 'createdAt';
-  sortDir?: SortDir;
+  pageSize?: number | null;
+  sortBy?: 'name' | 'code' | 'price' | 'cost' | 'createdAt' | null;
+  sortDir?: SortDir | null;
 }
 
 export function useProducts(params: ProductListParams, enabled = true) {
@@ -368,6 +373,34 @@ export function useProducts(params: ProductListParams, enabled = true) {
     queryFn: () => api.get<Paginated<Product>>('/products', { ...params }),
     placeholderData: keepPreviousData,
     enabled,
+  });
+}
+
+/**
+ * Picker searches: a light endpoint, cached for a while (the same text typed again answers at
+ * once), the previous request cancelled when the text changes, and the last results kept on
+ * screen while the next ones load (`isPlaceholderData` tells them apart).
+ */
+const LOOKUP_STALE_MS = 30_000;
+
+export const productLookupQuery = (search: string) => ({
+  queryKey: ['products', 'lookup', search] as const,
+  queryFn: ({ signal }: { signal: AbortSignal }) =>
+    api.get<{ data: ProductOption[] }>('/products/lookup', { search }, { signal }),
+  staleTime: LOOKUP_STALE_MS,
+});
+
+export function useProductLookup(search: string) {
+  return useQuery({ ...productLookupQuery(search), placeholderData: keepPreviousData });
+}
+
+export function useCustomerLookup(search: string) {
+  return useQuery({
+    queryKey: ['customers', 'lookup', search] as const,
+    queryFn: ({ signal }) =>
+      api.get<{ data: CustomerOption[] }>('/customers/lookup', { search }, { signal }),
+    staleTime: LOOKUP_STALE_MS,
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -391,6 +424,17 @@ export function useSaveProduct(id?: string) {
   });
 }
 
+/** Kardex of a product: its stock movements, newest first. */
+export function useProductMovements(id: string | null, page = 1) {
+  return useQuery({
+    queryKey: ['products', 'movements', id, page] as const,
+    queryFn: () =>
+      api.get<Paginated<StockMovement>>(`/products/${id}/movements`, { page, pageSize: 20 }),
+    enabled: id !== null,
+    placeholderData: keepPreviousData,
+  });
+}
+
 /** Archives (`active: false`) or restores a product. */
 export function useSetProductActive() {
   const queryClient = useQueryClient();
@@ -406,6 +450,69 @@ export function useDeleteProduct() {
   return useMutation({
     mutationFn: (id: string) => api.delete(`/products/${id}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
+  });
+}
+
+// --- Sales (sales module) ------------------------------------------------------
+
+export interface SaleListParams {
+  search?: string | null;
+  paymentType?: 'cash' | 'credit' | null;
+  status?: 'completed' | 'voided' | null;
+  /** Only sales that sold counted products beyond their stock. */
+  shortage?: boolean | null;
+  from?: string | null;
+  to?: string | null;
+  page: number;
+  pageSize?: number | null;
+}
+
+export function useSales(params: SaleListParams) {
+  return useQuery({
+    queryKey: ['sales', params] as const,
+    queryFn: () => api.get<Paginated<Sale>>('/sales', { ...params }),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export interface SaleInput {
+  paymentType: 'cash' | 'credit';
+  method?: PaymentMethod;
+  customerId?: string;
+  dueDate?: string;
+  docType?: SaleDocType;
+  docNumber?: string | null;
+  items: Array<{ productId: string; quantity: number; unitPrice?: number }>;
+}
+
+/** A sale touches stock (products) and, on credit, receivables and the dashboard. */
+function useInvalidateSales() {
+  const queryClient = useQueryClient();
+  const invalidateCollections = useInvalidateCollections();
+  return () => {
+    void queryClient.invalidateQueries({ queryKey: ['sales'] });
+    void queryClient.invalidateQueries({ queryKey: ['products'] });
+    return invalidateCollections();
+  };
+}
+
+export function useCreateSale() {
+  const invalidate = useInvalidateSales();
+  return useMutation({
+    mutationFn: (input: SaleInput) =>
+      api.post<{ sale: Sale; lowStock: Array<{ productId: string; name: string; stock: number }> }>(
+        '/sales',
+        input,
+      ),
+    onSuccess: invalidate,
+  });
+}
+
+export function useVoidSale() {
+  const invalidate = useInvalidateSales();
+  return useMutation({
+    mutationFn: (id: string) => api.post<Sale>(`/sales/${id}/void`, {}),
+    onSuccess: invalidate,
   });
 }
 

@@ -6,6 +6,7 @@ import {
   LogOut,
   MonitorDown,
   Package,
+  ShoppingCart,
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
@@ -125,6 +126,12 @@ export function Topbar({
                 <MenuItems
                   close={close}
                   items={[
+                    {
+                      label: t('nav.sales'),
+                      icon: <ShoppingCart />,
+                      onSelect: () => navigate('/sales'),
+                      hidden: !modules.sales,
+                    },
                     {
                       label: t('nav.products'),
                       icon: <Package />,

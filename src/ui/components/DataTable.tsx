@@ -1,5 +1,13 @@
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Columns3 } from 'lucide-react';
-import { useMemo, useState, type HTMLAttributes, type ReactNode } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type HTMLAttributes,
+  type MouseEvent,
+  type ReactNode,
+} from 'react';
 import { useMinimumLoading } from '../hooks/useMinimumLoading';
 import { useUiI18n } from '../i18n/context';
 import { IconButton } from './Button';
@@ -56,6 +64,10 @@ export interface DataTableProps<T> extends Omit<HTMLAttributes<HTMLElement>, 'ch
   error?: ReactNode;
   empty?: { title: string; description?: string; action?: ReactNode };
   onRowClick?: (row: T) => void;
+  /** Shortcut: right-click on a row (long press on phones) opens its edit form. */
+  onRowEdit?: (row: T) => void;
+  /** Shortcut: double-click on a row deletes it (the page must ask for confirmation). */
+  onRowDelete?: (row: T) => void;
   rowActions?: (row: T) => ReactNode;
   sort?: DataTableSort;
   /**
@@ -117,6 +129,8 @@ export function DataTable<T>({
   error,
   empty,
   onRowClick,
+  onRowEdit,
+  onRowDelete,
   rowActions,
   sort: controlledSort,
   onSortChange,
@@ -132,6 +146,51 @@ export function DataTable<T>({
   ...rest
 }: DataTableProps<T>) {
   const { t, fmt } = useUiI18n();
+  // With a double-click shortcut, a single click waits a moment so it can tell them apart.
+  const clickTimer = useRef<number | null>(null);
+  const cancelClick = () => {
+    if (clickTimer.current !== null) window.clearTimeout(clickTimer.current);
+    clickTimer.current = null;
+  };
+  useEffect(() => cancelClick, []);
+  /** Clicks on links, buttons or inputs inside a cell keep their own meaning. */
+  const fromControl = (event: MouseEvent) =>
+    (event.target as HTMLElement).closest('a, button, input, select, textarea, label') !== null;
+  /** Row mouse handlers; a handler the table does not need is left out (not set to empty). */
+  const rowHandlers = (row: T) => ({
+    ...(onRowClick && {
+      onClick: (event: MouseEvent) => {
+        if (fromControl(event)) return;
+        if (!onRowDelete) return onRowClick(row);
+        if (event.detail > 1) return;
+        cancelClick();
+        clickTimer.current = window.setTimeout(() => onRowClick(row), 260);
+      },
+    }),
+    ...(onRowDelete && {
+      onDoubleClick: (event: MouseEvent) => {
+        if (fromControl(event)) return;
+        cancelClick();
+        window.getSelection()?.removeAllRanges();
+        onRowDelete(row);
+      },
+    }),
+    ...(onRowEdit && {
+      onContextMenu: (event: MouseEvent) => {
+        if (fromControl(event)) return;
+        event.preventDefault();
+        onRowEdit(row);
+      },
+    }),
+  });
+  const shortcutsHint =
+    onRowEdit && onRowDelete
+      ? t('table.shortcutsBoth')
+      : onRowEdit
+        ? t('table.shortcutsEdit')
+        : onRowDelete
+          ? t('table.shortcutsDelete')
+          : null;
   const [hidden, setHidden] = useState(() =>
     readHidden(columnsStorageKey, columns as Array<DataTableColumn<unknown>>),
   );
@@ -406,7 +465,7 @@ export function DataTable<T>({
               sortedRows?.map((row) => (
                 <tr
                   key={rowKey(row)}
-                  onClick={onRowClick ? () => onRowClick(row) : undefined}
+                  {...rowHandlers(row)}
                   onKeyDown={
                     onRowClick
                       ? (event) => {
@@ -418,7 +477,7 @@ export function DataTable<T>({
                   tabIndex={onRowClick ? 0 : undefined}
                   className={cx(
                     'group transition-colors even:bg-surface-2/60 hover:bg-primary-soft/40 focus-visible:bg-primary-soft/50 focus-visible:outline-none',
-                    onRowClick && 'cursor-pointer',
+                    (onRowClick || onRowEdit || onRowDelete) && 'cursor-pointer select-none',
                     rowClassName?.(row),
                   )}
                 >
@@ -471,7 +530,12 @@ export function DataTable<T>({
                   'rounded-xl border border-line bg-surface p-4 shadow-xs transition',
                   onRowClick && 'cursor-pointer active:scale-[0.99] active:bg-surface-2',
                 )}
-                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                {...(onRowClick && {
+                  onClick: (event: MouseEvent) => {
+                    if (!fromControl(event)) onRowClick(row);
+                  },
+                })}
+                {...(onRowEdit && { onContextMenu: rowHandlers(row).onContextMenu })}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -531,6 +595,9 @@ export function DataTable<T>({
               to: fmt.number(lastRow),
               total: fmt.number(pagination.total),
             })}
+            {shortcutsHint && (
+              <span className="ml-3 hidden text-subtle md:inline">{shortcutsHint}</span>
+            )}
           </span>
           <div className="flex items-center gap-3">
             {pagination.onPageSizeChange && (

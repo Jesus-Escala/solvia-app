@@ -1,4 +1,11 @@
-import { BarChart3, ChevronRight, HandCoins, ReceiptText, UserPlus } from 'lucide-react';
+import {
+  BarChart3,
+  ChevronRight,
+  HandCoins,
+  ReceiptText,
+  ShoppingCart,
+  UserPlus,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { Button, Card, cx, EmptyState, Mascot, Page, Skeleton } from '@/ui';
@@ -7,6 +14,7 @@ import { addDaysIso, dueLabel, todayIso } from '../components/domain/dueLabel';
 import { useReceivableActions } from '../components/domain/useReceivableActions';
 import { useQuickActions } from '../components/quick/quickActionsContext';
 import { useDashboardAnalytics, useDashboardSummary, useReceivables } from '../hooks/queries';
+import { useModules } from '../hooks/useModules';
 import { useI18n } from '../i18n/I18nProvider';
 import { presetRange } from '../components/dashboard/period';
 
@@ -107,6 +115,7 @@ export function HomePage() {
   const { t, fmt } = useI18n();
   const { user } = useAuth();
   const quick = useQuickActions();
+  const modules = useModules();
   const actions = useReceivableActions();
   const summary = useDashboardSummary();
   const month = useDashboardAnalytics({ ...presetRange('thisMonth'), granularity: 'day' });
@@ -143,9 +152,24 @@ export function HomePage() {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3" data-tour="home-actions">
+      <div
+        className={cx(
+          'grid gap-3',
+          modules.sales ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-3',
+        )}
+        data-tour="home-actions"
+      >
+        {modules.sales && (
+          <ActionTile
+            primary
+            icon={<ShoppingCart />}
+            label={t('quick.sale')}
+            hint={t('quick.saleHint')}
+            onClick={() => quick.open('sale')}
+          />
+        )}
         <ActionTile
-          primary
+          primary={!modules.sales}
           icon={<ReceiptText />}
           label={t('quick.receivable')}
           hint={t('quick.receivableHint')}

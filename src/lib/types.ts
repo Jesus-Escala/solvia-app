@@ -67,6 +67,8 @@ export interface Product {
   price: number;
   cost: number | null;
   trackStock: boolean;
+  /** Current stock (sales take it out; can be negative). */
+  stock: number;
   minStock: number | null;
   active: boolean;
   createdAt: string;
@@ -250,6 +252,68 @@ export interface DebtConcentration {
     class: ConcentrationClass;
   }>;
   generatedAt: string;
+}
+
+export interface StockMovement {
+  id: string;
+  type: 'sale' | 'sale_void' | 'purchase' | 'adjustment';
+  /** Signed: negative left, positive entered. */
+  quantity: number;
+  /** Stock the product was left with (null for movements recorded before it existed). */
+  balanceAfter: number | null;
+  /** Part that left without stock to cover it. */
+  shortage: number;
+  sale: { id: string; number: number } | null;
+  note: string | null;
+  createdAt: string;
+}
+
+/** What a product picker needs (from `GET /products/lookup`). */
+export type ProductOption = Pick<
+  Product,
+  'id' | 'name' | 'code' | 'unit' | 'price' | 'trackStock' | 'stock' | 'minStock'
+>;
+
+/** What a customer picker needs (from `GET /customers/lookup`). */
+export interface CustomerOption {
+  id: string;
+  name: string;
+  phone: string;
+  outstanding: number;
+}
+
+export type SalePaymentType = 'cash' | 'credit';
+export type SaleDocType = 'none' | 'sale_note' | 'receipt' | 'invoice';
+
+export interface SaleItem {
+  id: string;
+  productId: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+  /** Quantity sold beyond the stock available at that moment. */
+  shortage: number;
+}
+
+export interface Sale {
+  id: string;
+  number: number;
+  date: string;
+  customer: { id: string; name: string; phone: string } | null;
+  paymentType: SalePaymentType;
+  method: PaymentMethod | null;
+  docType: SaleDocType;
+  docNumber: string | null;
+  total: number;
+  status: 'completed' | 'voided';
+  createdAt: string;
+  voidedAt: string | null;
+  items: SaleItem[];
+  summary: string;
+  /** Some counted product was sold beyond its stock. */
+  hasShortage: boolean;
+  receivable: { id: string; status: ReceivableStatus; outstanding: number } | null;
 }
 
 export interface MessageTemplate {

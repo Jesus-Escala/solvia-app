@@ -1,68 +1,18 @@
 import { Check, Search, UserPlus, X } from 'lucide-react';
-import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { cx } from '@/ui';
-import { useCustomers } from '../../hooks/queries';
+import { cx, Spinner } from '@/ui';
+import { useCustomerLookup } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
+import { useFloatingPosition } from './useFloatingPosition';
+import { useDebouncedValue, usePendingEnter } from './useSearchBox';
 
 export interface PickedCustomer {
   id: string;
   name: string;
-  phone?: string;
-  outstanding?: number;
-}
-
-/** Preferred height of the list; it opens upwards when there is not enough room below. */
-const LIST_HEIGHT = 288;
-
-/**
- * Where the floating list goes: under the input (or above it when the viewport has no room),
- * in viewport coordinates. Recomputed on scroll and resize so it follows the input.
- */
-function useFloatingPosition(anchor: HTMLElement | null, open: boolean) {
-  const [position, setPosition] = useState<{
-    top: number;
-    left: number;
-    width: number;
-    maxHeight: number;
-  } | null>(null);
-
-  useLayoutEffect(() => {
-    if (!open || !anchor) return;
-    let frame = 0;
-    const update = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const rect = anchor.getBoundingClientRect();
-        const below = window.innerHeight - rect.bottom - 12;
-        const above = rect.top - 12;
-        const up = below < Math.min(LIST_HEIGHT, 200) && above > below;
-        const maxHeight = Math.min(LIST_HEIGHT, up ? above : below);
-        setPosition({
-          top: up ? rect.top - 4 - maxHeight : rect.bottom + 4,
-          left: rect.left,
-          width: rect.width,
-          maxHeight,
-        });
-      });
-    };
-    update();
-    // Follow the input when the page scrolls or resizes, and when an animation moves it (e.g. the
-    // modal's entrance: measuring mid-animation would leave the list out of place).
-    window.addEventListener('resize', update);
-    window.addEventListener('scroll', update, true);
-    document.addEventListener('animationend', update, true);
-    document.addEventListener('transitionend', update, true);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener('resize', update);
-      window.removeEventListener('scroll', update, true);
-      document.removeEventListener('animationend', update, true);
-      document.removeEventListener('transitionend', update, true);
-    };
-  }, [anchor, open]);
-
-  return open ? position : null;
+  phone: string | null;
+  /** What the customer owes; null when not known (e.g. a customer created on the spot). */
+  outstanding: number | null;
 }
 
 /**
@@ -70,7 +20,9 @@ function useFloatingPosition(anchor: HTMLElement | null, open: boolean) {
  * or, with `onCreate`, choose "Nuevo cliente «…»" to create one on the spot.
  *
  * The list floats over everything (fixed position): inside a modal it is rendered in the
- * <dialog> itself, so neither the modal body's scroll nor its edges cut it.
+ * <dialog> itself, so neither the modal body's scroll nor its edges cut it. It asks the light
+ * `/customers/lookup` (balance computed in SQL, cached, previous request cancelled), and Enter
+ * waits for the results of what is typed.
  */
 export function CustomerPicker({
   id,
@@ -93,15 +45,10 @@ export function CustomerPicker({
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
-  const [debounced, setDebounced] = useState('');
+  const debounced = useDebouncedValue(search.trim());
   const box = useRef<HTMLDivElement>(null);
   const list = useRef<HTMLUListElement>(null);
   const [anchor, setAnchor] = useState<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setDebounced(search.trim()), 200);
-    return () => window.clearTimeout(timer);
-  }, [search]);
 
   // Close when clicking outside.
   useEffect(() => {
@@ -114,18 +61,23 @@ export function CustomerPicker({
     return () => document.removeEventListener('pointerdown', onPointer);
   }, [open]);
 
-  const customers = useCustomers({
-    page: 1,
-    pageSize: 8,
-    search: debounced || undefined,
-    // Without a search, the ones who owe the most first: usually who you are looking for.
-    sortBy: debounced ? 'name' : 'outstanding',
-    sortDir: debounced ? 'asc' : 'desc',
-  });
+  // Without a search the API lists the ones who owe the most first: usually who you look for.
+  const customers = useCustomerLookup(debounced);
   const matches = customers.data?.data ?? [];
+  const results = customers.data?.data ?? null;
+  const fresh = !customers.isPlaceholderData && debounced === search.trim() && results !== null;
   const canCreate = Boolean(onCreate && search.trim().length >= 2);
   const options = matches.length + (canCreate ? 1 : 0);
   const position = useFloatingPosition(anchor, open);
+
+  const pending = usePendingEnter({
+    fresh,
+    results,
+    onEnter: (results) => {
+      if (results.length > 0 || canCreate)
+        pick(Math.min(active, results.length + (canCreate ? 0 : -1)));
+    },
+  });
 
   const pick = (index: number) => {
     const match = matches[index];
@@ -134,12 +86,14 @@ export function CustomerPicker({
         id: match.id,
         name: match.name,
         phone: match.phone,
-        outstanding: match.summary.totalOutstanding,
+        outstanding: match.outstanding,
       });
+      pending.cancel();
       setSearch('');
       setOpen(false);
     } else if (canCreate) {
       onCreate?.(search.trim());
+      pending.cancel();
       setSearch('');
       setOpen(false);
     }
@@ -153,7 +107,7 @@ export function CustomerPicker({
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate font-medium">{value.name}</span>
-          {value.outstanding !== undefined && value.outstanding > 0 && (
+          {value.outstanding !== null && value.outstanding > 0 && (
             <span className="block text-xs text-muted">
               {t('picker.owes', { amount: fmt.money(value.outstanding) })}
             </span>
@@ -184,7 +138,7 @@ export function CustomerPicker({
       <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-subtle" />
       <input
         id={id}
-        className="input pl-9"
+        className="input pr-9 pl-9"
         role="combobox"
         aria-expanded={open}
         aria-controls={listId}
@@ -210,14 +164,22 @@ export function CustomerPicker({
           } else if (event.key === 'ArrowUp') {
             event.preventDefault();
             setActive((index) => Math.max(index - 1, 0));
-          } else if (event.key === 'Enter' && open && options > 0) {
+          } else if (event.key === 'Enter' && open) {
             event.preventDefault();
-            pick(active);
-          } else if (event.key === 'Escape') {
+            pending.enter();
+          } else if (event.key === 'Escape' && open) {
+            // Close only the list, not the modal around it.
+            event.preventDefault();
+            event.stopPropagation();
             setOpen(false);
           }
         }}
       />
+      {!fresh && search.trim() !== '' && (
+        <span className="absolute top-1/2 right-3 -translate-y-1/2 text-subtle">
+          <Spinner className="h-4 w-4" />
+        </span>
+      )}
       {open &&
         anchor &&
         createPortal(
@@ -251,9 +213,9 @@ export function CustomerPicker({
                   {customer.name.charAt(0).toUpperCase()}
                 </span>
                 <span className="min-w-0 flex-1 truncate font-medium">{customer.name}</span>
-                {customer.summary.totalOutstanding > 0 ? (
+                {customer.outstanding > 0 ? (
                   <span className="shrink-0 text-xs text-muted tabular-nums">
-                    {t('picker.owes', { amount: fmt.money(customer.summary.totalOutstanding) })}
+                    {t('picker.owes', { amount: fmt.money(customer.outstanding) })}
                   </span>
                 ) : (
                   <Check className="h-3.5 w-3.5 shrink-0 text-success" aria-hidden="true" />
@@ -278,7 +240,7 @@ export function CustomerPicker({
                 {t('picker.create', { name: search.trim() })}
               </li>
             )}
-            {!customers.isLoading && options === 0 && (
+            {fresh && options === 0 && (
               <li className="px-3 py-3 text-sm text-muted">
                 {search.trim() ? t('picker.noResults') : t('picker.typeToSearch')}
               </li>

@@ -442,7 +442,12 @@ export function CustomerDetailPage() {
       <CustomerFormModal open={editing} customer={customer} onClose={() => setEditing(false)} />
       <ReceivableFormModal
         open={addingReceivable}
-        customer={{ id: customer.id, name: customer.name }}
+        customer={{
+          id: customer.id,
+          name: customer.name,
+          phone: customer.phone,
+          outstanding: customer.summary.totalOutstanding,
+        }}
         onClose={() => setAddingReceivable(false)}
       />
     </Page>

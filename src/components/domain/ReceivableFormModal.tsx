@@ -1,19 +1,10 @@
-import { CalendarDays } from 'lucide-react';
 import { useId, useState, type FormEvent } from 'react';
 import { useSaveCustomer, useSaveReceivable } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
-import {
-  Button,
-  cx,
-  Field,
-  Modal,
-  PhoneInput,
-  useErrorText,
-  useErrorToast,
-  useFeedback,
-} from '@/ui';
+import { Button, Field, Modal, PhoneInput, useErrorText, useErrorToast, useFeedback } from '@/ui';
 import type { Receivable } from '../../lib/types';
 import { CustomerPicker, type PickedCustomer } from './CustomerPicker';
+import { DueDateField } from './DueDateField';
 import { addDaysIso, todayIso } from './dueLabel';
 
 interface Props {
@@ -24,16 +15,13 @@ interface Props {
   receivable?: Receivable;
 }
 
-/** "When will they pay?" shortcuts, in days from the day of the sale. */
-const DUE_SHORTCUTS = [7, 15, 30] as const;
-
 export function ReceivableFormModal({ open, onClose, customer, receivable }: Props) {
   const { t } = useI18n();
   return (
     <Modal
       open={open}
       title={receivable ? t('receivables.form.titleEdit') : t('receivables.form.titleNew')}
-      description={receivable ? undefined : t('receivables.form.intro')}
+      {...(!receivable && { description: t('receivables.form.intro') })}
       onClose={onClose}
       closeLabel={t('common.close')}
     >
@@ -47,7 +35,7 @@ export function ReceivableFormModal({ open, onClose, customer, receivable }: Pro
  * what they took (optional) and when they pay (shortcuts). The sale date defaults to today.
  */
 function ReceivableForm({ onClose, customer: preset, receivable }: Omit<Props, 'open'>) {
-  const { t, fmt } = useI18n();
+  const { t } = useI18n();
   const errors = useErrorText();
   const { toast } = useFeedback();
   const save = useSaveReceivable(receivable?.id);
@@ -58,7 +46,14 @@ function ReceivableForm({ onClose, customer: preset, receivable }: Omit<Props, '
 
   const [customer, setCustomer] = useState<PickedCustomer | null>(
     preset ??
-      (receivable ? { id: receivable.customerId, name: receivable.customer?.name ?? '' } : null),
+      (receivable
+        ? {
+            id: receivable.customerId,
+            name: receivable.customer?.name ?? '',
+            phone: receivable.customer?.phone ?? null,
+            outstanding: null,
+          }
+        : null),
   );
   // A customer created from this form (name typed in the search box).
   const [newCustomer, setNewCustomer] = useState<{ name: string; phone: string } | null>(null);
@@ -66,7 +61,6 @@ function ReceivableForm({ onClose, customer: preset, receivable }: Omit<Props, '
   const [description, setDescription] = useState(receivable?.description ?? '');
   const [issueDate, setIssueDate] = useState(receivable?.issueDate ?? today);
   const [dueDate, setDueDate] = useState(receivable?.dueDate ?? addDaysIso(today, 7));
-  const [customDue, setCustomDue] = useState(editing);
   const [changeIssue, setChangeIssue] = useState(editing);
 
   const submit = async (event: FormEvent) => {
@@ -78,7 +72,7 @@ function ReceivableForm({ onClose, customer: preset, receivable }: Omit<Props, '
         phone: newCustomer.phone,
       });
       customerId = created.id;
-      setCustomer({ id: created.id, name: created.name });
+      setCustomer({ id: created.id, name: created.name, phone: created.phone, outstanding: 0 });
       setNewCustomer(null);
     }
     if (!customerId) {
@@ -99,7 +93,7 @@ function ReceivableForm({ onClose, customer: preset, receivable }: Omit<Props, '
   useErrorToast(save.error ?? saveCustomer.error);
 
   return (
-    <form onSubmit={(event) => void submit(event).catch(() => undefined)} className="space-y-5">
+    <form onSubmit={(event) => void submit(event).catch(() => null)} className="space-y-5">
       <Field label={t('receivables.form.customer')} error={errors.field(save.error, 'customerId')}>
         {(id) =>
           newCustomer ? (
@@ -194,65 +188,13 @@ function ReceivableForm({ onClose, customer: preset, receivable }: Omit<Props, '
 
       <Field label={t('receivables.form.dueDate')} error={errors.field(save.error, 'dueDate')}>
         {(id) => (
-          <div className="space-y-2">
-            <div
-              className="flex flex-wrap gap-2"
-              role="group"
-              aria-label={t('receivables.form.dueDate')}
-            >
-              {DUE_SHORTCUTS.map((days) => {
-                const date = addDaysIso(issueDate, days);
-                const selected = !customDue && dueDate === date;
-                return (
-                  <button
-                    key={days}
-                    type="button"
-                    aria-pressed={selected}
-                    onClick={() => {
-                      setCustomDue(false);
-                      setDueDate(date);
-                    }}
-                    className={cx(
-                      'rounded-full border px-3.5 py-1.5 text-sm font-medium transition',
-                      selected
-                        ? 'border-primary bg-primary text-on-primary'
-                        : 'border-line bg-surface hover:border-primary/50',
-                    )}
-                  >
-                    {t(`receivables.form.in${days}`)}
-                  </button>
-                );
-              })}
-              <button
-                type="button"
-                aria-pressed={customDue}
-                onClick={() => setCustomDue(true)}
-                className={cx(
-                  'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition',
-                  customDue
-                    ? 'border-primary bg-primary text-on-primary'
-                    : 'border-line bg-surface hover:border-primary/50',
-                )}
-              >
-                <CalendarDays className="h-3.5 w-3.5" />
-                {t('receivables.form.otherDate')}
-              </button>
-            </div>
-            {customDue && (
-              <input
-                id={id}
-                className="input"
-                type="date"
-                required
-                min={issueDate}
-                value={dueDate}
-                onChange={(event) => setDueDate(event.target.value)}
-              />
-            )}
-            <p className="text-xs text-muted">
-              {t('receivables.form.paysOn', { date: fmt.date(dueDate) })}
-            </p>
-          </div>
+          <DueDateField
+            id={id}
+            from={issueDate}
+            value={dueDate}
+            onChange={setDueDate}
+            initialCustom={editing}
+          />
         )}
       </Field>
 

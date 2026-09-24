@@ -20,7 +20,7 @@ export function ProductFormModal({
     <Modal
       open={open}
       title={product ? t('products.form.titleEdit') : t('products.form.titleNew')}
-      description={product ? undefined : t('products.form.intro')}
+      {...(!product && { description: t('products.form.intro') })}
       onClose={onClose}
       closeLabel={t('common.close')}
     >
@@ -79,10 +79,9 @@ function ProductForm({ product, onClose }: { product?: Product; onClose: () => v
     price: product ? String(product.price) : '',
     unit: product?.unit ?? ('unit' as ProductUnit),
     code: product?.code ?? '',
-    cost: product?.cost === null || product?.cost === undefined ? '' : String(product.cost),
+    cost: (product?.cost ?? null) === null ? '' : String(product?.cost),
     trackStock: product?.trackStock ?? true,
-    minStock:
-      product?.minStock === null || product?.minStock === undefined ? '' : String(product.minStock),
+    minStock: (product?.minStock ?? null) === null ? '' : String(product?.minStock),
   });
   const update = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
@@ -109,7 +108,7 @@ function ProductForm({ product, onClose }: { product?: Product; onClose: () => v
   useErrorToast(save.error);
 
   return (
-    <form onSubmit={(event) => void submit(event).catch(() => undefined)} className="space-y-4">
+    <form onSubmit={(event) => void submit(event).catch(() => null)} className="space-y-4">
       <Field label={t('products.form.name')} error={errors.field(save.error, 'name')}>
         {(id) => (
           <input
