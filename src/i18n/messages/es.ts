@@ -1088,10 +1088,29 @@ export const es = {
     },
   },
   modules: {
+    offer: {
+      title: 'Haz crecer tu negocio con Solvia',
+      subtitle: 'Suma estos módulos a tu plan. Te los activamos en el día.',
+      price: '+{amount} al mes',
+      cta: 'Quiero sumarlo',
+      note: 'Pago adicional a tu plan. Puedes quitarlo cuando quieras.',
+      sales: {
+        name: 'Ventas',
+        a: 'Registra ventas en segundos, al contado o fiadas',
+        b: 'Escanea el código de barras de tus productos',
+        c: 'Reportes de ventas por cliente y producto',
+      },
+      inventory: {
+        name: 'Inventario',
+        a: 'Tu stock se actualiza solo con cada venta y compra',
+        b: 'Compras y proveedores en un solo lugar',
+        c: 'Te avisa lo que se está acabando',
+      },
+    },
     off: {
       title: 'Esta sección no está activa',
       description:
-        'Tu negocio aún no tiene activado este módulo. Escríbele al equipo de Solvia si quieres usarlo.',
+        'Tu negocio aún no tiene activado este módulo. Puedes sumarlo a tu plan cuando quieras.',
     },
   },
   payment: {

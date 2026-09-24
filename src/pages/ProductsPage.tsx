@@ -34,6 +34,7 @@ import { useAuth } from '../auth/AuthContext';
 import { AdjustStockModal } from '../components/domain/AdjustStockModal';
 import { KardexModal } from '../components/domain/KardexModal';
 import { ProductFormModal } from '../components/domain/ProductFormModal';
+import { ModulesOffer } from '../components/modules/ModulesOffer';
 import {
   useDeleteProduct,
   useProducts,
@@ -63,6 +64,7 @@ export function ModuleOff() {
         title={t('modules.off.title')}
         description={t('modules.off.description')}
       />
+      <ModulesOffer className="mx-auto w-full max-w-3xl" />
     </Page>
   );
 }

@@ -1085,10 +1085,29 @@ export const en: Messages = {
     },
   },
   modules: {
+    offer: {
+      title: 'Grow your business with Solvia',
+      subtitle: 'Add these modules to your plan. We turn them on the same day.',
+      price: '+{amount} a month',
+      cta: 'I want it',
+      note: 'An extra charge on your plan. You can remove it whenever you want.',
+      sales: {
+        name: 'Sales',
+        a: 'Record sales in seconds, cash or on credit',
+        b: 'Scan your products’ barcodes',
+        c: 'Sales reports by customer and product',
+      },
+      inventory: {
+        name: 'Inventory',
+        a: 'Your stock updates itself with every sale and purchase',
+        b: 'Purchases and suppliers in one place',
+        c: 'It tells you what is running low',
+      },
+    },
     off: {
       title: 'This section is not active',
       description:
-        'Your business does not have this module yet. Write to the Solvia team if you want to use it.',
+        'Your business does not have this module yet. You can add it to your plan whenever you want.',
     },
   },
   payment: {
