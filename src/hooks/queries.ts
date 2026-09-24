@@ -14,6 +14,8 @@ import type {
   NotificationLogItem,
   Paginated,
   Payment,
+  Product,
+  ProductUnit,
   PaymentLink,
   PaymentMethod,
   Receivable,
@@ -346,6 +348,64 @@ export function useSendReminder() {
       // `whatsappUrl`: click-to-chat link, only when no real WhatsApp provider is configured.
       api.post<Notification & { whatsappUrl?: string }>(`/receivables/${receivableId}/remind`),
     onSuccess: invalidate,
+  });
+}
+
+// --- Product catalog (sales / inventory modules) ---------------------------
+
+export interface ProductListParams {
+  search?: string;
+  status?: 'active' | 'archived' | 'all';
+  page: number;
+  pageSize?: number;
+  sortBy?: 'name' | 'code' | 'price' | 'cost' | 'createdAt';
+  sortDir?: SortDir;
+}
+
+export function useProducts(params: ProductListParams, enabled = true) {
+  return useQuery({
+    queryKey: ['products', params] as const,
+    queryFn: () => api.get<Paginated<Product>>('/products', { ...params }),
+    placeholderData: keepPreviousData,
+    enabled,
+  });
+}
+
+export interface ProductInput {
+  name: string;
+  code?: string | null;
+  unit?: ProductUnit;
+  price?: number;
+  cost?: number | null;
+  trackStock?: boolean;
+  minStock?: number | null;
+  active?: boolean;
+}
+
+export function useSaveProduct(id?: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: ProductInput) =>
+      id ? api.patch<Product>(`/products/${id}`, input) : api.post<Product>('/products', input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
+  });
+}
+
+/** Archives (`active: false`) or restores a product. */
+export function useSetProductActive() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, active }: { id: string; active: boolean }) =>
+      api.patch<Product>(`/products/${id}`, { active }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
+  });
+}
+
+export function useDeleteProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/products/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
   });
 }
 

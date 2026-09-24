@@ -2,11 +2,13 @@ import { NavLink } from 'react-router';
 import { useMe } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 import { cx, Logo } from '@/ui';
+import { useModules } from '../../hooks/useModules';
 import { NAV_ITEMS } from './navItems';
 
 /** Desktop sidebar (paper tone, collapsible to icons). Phones use <BottomNav> instead. */
 export function Sidebar({ collapsed }: { collapsed: boolean }) {
   const { t } = useI18n();
+  const modules = useModules();
   const { data: me } = useMe();
 
   return (
@@ -33,7 +35,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
             </p>
           )}
           <ul className="space-y-1" data-tour="nav">
-            {NAV_ITEMS.map((item) => (
+            {NAV_ITEMS.filter((item) => !item.module || modules[item.module]).map((item) => (
               <li key={item.to}>
                 <NavLink
                   to={item.to}

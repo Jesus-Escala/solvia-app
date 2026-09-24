@@ -46,11 +46,31 @@ export interface AuthResponse {
   tenant?: Tenant;
 }
 
+/** Optional modules enabled from the backoffice (the product catalog comes with any of them). */
+export type TenantModule = 'sales' | 'inventory';
+
 export interface Tenant {
   id: string;
   name: string;
   industry: string | null;
   plan: string;
+  modules: TenantModule[];
+}
+
+export type ProductUnit = 'unit' | 'kg' | 'liter' | 'box' | 'pack' | 'dozen' | 'meter';
+
+export interface Product {
+  id: string;
+  name: string;
+  code: string | null;
+  unit: ProductUnit;
+  price: number;
+  cost: number | null;
+  trackStock: boolean;
+  minStock: number | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Me extends SessionUser {

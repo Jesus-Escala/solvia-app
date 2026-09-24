@@ -47,6 +47,10 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
   search with "create on the spot"), `quick/` (the global "+ Anotar" menu and its forms:
   `useQuickActions().open('receivable' | 'payment' | 'customer')`), `charts/`, `auth/`.
 - `src/hooks/queries.ts` — every API call as a TanStack Query hook (query keys + invalidation).
+- **Modules** (enabled per business from solvia-admin, `me.tenant.modules`): `useModules()` →
+  `{ sales, inventory, catalog }`. Nav items with `module` only show when enabled; a module page
+  renders `ModuleOff` otherwise. Catalog: `ProductsPage` (`/products`) + `ProductFormModal`.
+  Next: sales (quick sale, cash or credit → receivable with items), then purchases and stock.
 - `src/lib/api.ts` (client, session in `solvia.*` localStorage), `src/lib/types.ts` (**must mirror
   the backend responses**), `src/lib/config.ts` (URLs from env).
 - `src/auth/` — AuthContext (login, Google, change password), RequireAuth (forces

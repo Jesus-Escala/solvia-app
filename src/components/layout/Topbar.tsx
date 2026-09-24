@@ -5,6 +5,7 @@ import {
   KeyRound,
   LogOut,
   MonitorDown,
+  Package,
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
@@ -12,6 +13,7 @@ import {
 import { NavLink, useNavigate } from 'react-router';
 import { useAuth } from '../../auth/AuthContext';
 import { useMe } from '../../hooks/queries';
+import { useModules } from '../../hooks/useModules';
 import { useI18n } from '../../i18n/I18nProvider';
 import {
   Avatar,
@@ -39,6 +41,7 @@ export function Topbar({
   const canInstall = useCanOfferInstall();
   const { data: me } = useMe();
   const navigate = useNavigate();
+  const modules = useModules();
 
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b border-line bg-surface/85 px-3 backdrop-blur-md sm:px-5">
@@ -122,6 +125,12 @@ export function Topbar({
                 <MenuItems
                   close={close}
                   items={[
+                    {
+                      label: t('nav.products'),
+                      icon: <Package />,
+                      onSelect: () => navigate('/products'),
+                      hidden: !modules.catalog,
+                    },
                     {
                       label: t('nav.settings'),
                       icon: <Settings />,
