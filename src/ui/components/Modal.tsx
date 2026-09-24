@@ -99,12 +99,14 @@ export function Modal({
       }}
       className={cx(
         // Centered card on every screen size (phones get a 12px margin on each side).
-        'modal m-auto w-[calc(100%-1.5rem)] rounded-2xl border border-line bg-surface p-0 text-ink shadow-pop backdrop:bg-slate-950/50 backdrop:backdrop-blur-[2px] sm:w-[calc(100%-2rem)]',
+        // One scroll only: the dialog itself never scrolls (the browser's default max-height would
+        // make it scroll along with the body); the body below is the only scrolling area.
+        'modal m-auto max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.5rem)] overflow-hidden rounded-2xl border border-line bg-surface p-0 text-ink shadow-pop backdrop:bg-slate-950/50 backdrop:backdrop-blur-[2px] sm:max-h-[calc(100dvh-2rem)] sm:w-[calc(100%-2rem)]',
         SIZES[size],
       )}
     >
       {phase !== 'closed' && (
-        <div className="flex max-h-[calc(100dvh-1.5rem)] flex-col sm:max-h-[calc(100dvh-2rem)]">
+        <div className="flex max-h-[calc(100dvh-1.5rem-2px)] flex-col sm:max-h-[calc(100dvh-2rem-2px)]">
           <header className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
             <div className="min-w-0">
               <h2 className="font-display text-xl font-semibold">{content.title}</h2>

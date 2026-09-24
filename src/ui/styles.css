@@ -436,6 +436,21 @@ h1,
   animation-delay: 200ms;
 }
 
+/* While a modal is open the page behind it does not scroll, so its scrollbar never shows next to
+   the modal's own. The gutter stays reserved so nothing shifts when the scrollbar hides. */
+/* App and admin: only <main> scrolls. */
+main.overflow-y-auto {
+  scrollbar-gutter: stable;
+}
+html:has(dialog.modal[open]) main.overflow-y-auto {
+  overflow: hidden;
+}
+/* Landing: the whole document scrolls. */
+html:has(dialog.modal[open]):not(:has(main.overflow-y-auto)) {
+  overflow: hidden;
+  scrollbar-gutter: stable;
+}
+
 /* Modal (native <dialog>): a centered card that pops in, on every screen size. */
 /* `backwards` (not `both`): once the entrance ends no transform stays applied, so fixed-position
    popovers inside the dialog are positioned against the viewport, not the dialog. */
