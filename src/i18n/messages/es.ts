@@ -1088,6 +1088,11 @@ export const es = {
     },
   },
   plan: {
+    pays: 'Pagas {amount} al mes · {billing}',
+    billing: {
+      monthly: 'pago mensual',
+      annual: 'pago anual',
+    },
     title: 'Tu plan este mes',
     plans: {
       free: 'Plan Gratis',

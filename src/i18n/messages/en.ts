@@ -1084,6 +1084,11 @@ export const en: Messages = {
     },
   },
   plan: {
+    pays: 'You pay {amount} a month · {billing}',
+    billing: {
+      monthly: 'billed monthly',
+      annual: 'billed yearly',
+    },
     title: 'Your plan this month',
     plans: {
       free: 'Free plan',

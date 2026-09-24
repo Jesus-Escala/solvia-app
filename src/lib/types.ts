@@ -573,4 +573,6 @@ export interface PlanUsage {
   customers: { used: number; limit: number | null };
   /** Messages in one extra pack. */
   packSize: number;
+  /** What the business pays per month (null on the free plan). */
+  price: { billing: 'monthly' | 'annual'; list: number; discount: number; perMonth: number } | null;
 }

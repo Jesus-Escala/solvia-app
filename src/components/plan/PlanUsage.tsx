@@ -61,7 +61,16 @@ export function PlanUsageCard() {
     <div className="space-y-4">
       <Card
         title={t('plan.title')}
-        subtitle={data ? t(`plan.plans.${data.plan}`) : undefined}
+        subtitle={
+          data
+            ? data.price
+              ? t('plan.pays', {
+                  amount: fmt.money(data.price.perMonth),
+                  billing: t(`plan.billing.${data.price.billing}`),
+                })
+              : t('plan.plans.free')
+            : undefined
+        }
         loading={usage.isFetching && !usage.isLoading}
       >
         {!data ? (
