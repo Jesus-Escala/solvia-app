@@ -24,6 +24,7 @@ import { AgingStrip } from '../../components/charts/AgingStrip';
 import { useGenerateMonthlyReport } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { DashboardSummary, MonthlyReport, ReceivableStatus, RiskLevel } from '../../lib/types';
+import { ConcentrationCard } from './ConcentrationCard';
 import { RISK_COLORS, STATUS_COLORS, tileMoney } from './metrics';
 
 function MonthlyReportCard({ report }: { report: MonthlyReport | null }) {
@@ -261,6 +262,8 @@ export function PortfolioView({
           }))}
         />
       </Card>
+
+      <ConcentrationCard />
 
       <div className="grid gap-4 lg:grid-cols-12">
         <Card

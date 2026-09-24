@@ -2,6 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { api } from '../lib/api';
 import type {
   CashFlow,
+  DebtConcentration,
   Customer,
   CustomerDetail,
   CustomerListItem,
@@ -152,6 +153,19 @@ export function useCashFlow(groupBy: 'week' | 'month', periods: number) {
     queryFn: () => api.get<CashFlow>('/dashboard/cash-flow', { groupBy, periods }),
     placeholderData: keepPreviousData,
   });
+}
+
+/** Every debtor the export can ask for (the API maximum). */
+export const ALL_DEBTORS = 5000;
+
+export const concentrationQuery = (limit: number) => ({
+  queryKey: [...queryKeys.dashboard, 'concentration', limit] as const,
+  queryFn: () => api.get<DebtConcentration>('/dashboard/concentration', { limit }),
+});
+
+/** Pareto / ABC of the debtors with the `limit` largest ones. */
+export function useDebtConcentration(limit = 20) {
+  return useQuery(concentrationQuery(limit));
 }
 
 export function useGenerateMonthlyReport() {

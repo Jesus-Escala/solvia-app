@@ -203,6 +203,35 @@ export interface CashFlow {
   totalOutstanding: number;
 }
 
+export type ConcentrationClass = 'A' | 'B' | 'C';
+
+/** `GET /dashboard/concentration`: Pareto / ABC of the debtors. Shares are 0–1. */
+export interface DebtConcentration {
+  currency: string;
+  thresholds: { A: number; B: number };
+  totals: { outstanding: number; debtors: number; customers: number };
+  classes: Array<{
+    key: ConcentrationClass;
+    debtors: number;
+    outstanding: number;
+    share: number;
+    debtorShare: number;
+  }>;
+  curve: Array<{ debtorShare: number; debtShare: number }>;
+  debtors: Array<{
+    rank: number;
+    customerId: string;
+    name: string;
+    outstanding: number;
+    overdue: number;
+    receivables: number;
+    share: number;
+    cumulativeShare: number;
+    class: ConcentrationClass;
+  }>;
+  generatedAt: string;
+}
+
 export interface MessageTemplate {
   type: TemplateType;
   text: string;
