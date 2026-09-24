@@ -247,6 +247,9 @@ h1,
 
 .auth-blob {
   animation: auth-blob 18s ease-in-out infinite;
+  /* Own GPU layer: the blur is rasterized once and only moved, not repainted every frame. */
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 /* Feature bubbles on the auth page: a slow, looping drift (duration/delay set inline). */
