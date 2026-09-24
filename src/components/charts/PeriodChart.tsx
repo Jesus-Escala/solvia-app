@@ -54,7 +54,8 @@ export function PeriodChart({
   const colors = useChartColors();
   const { t, fmt } = useI18n();
   const labels = useBucketLabels(granularity);
-  const [hidden, setHidden] = useState<Set<SeriesKey>>(new Set());
+  // "What was due" starts hidden: two bars read at a glance; its chip turns the line on.
+  const [hidden, setHidden] = useState<Set<SeriesKey>>(() => new Set(['due']));
 
   const SERIES: Array<{ key: SeriesKey; label: string; color: string }> = [
     { key: 'collected', label: t('dashboard.analytics.series.collected'), color: colors.series3 },

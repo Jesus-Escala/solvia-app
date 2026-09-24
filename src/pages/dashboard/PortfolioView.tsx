@@ -1,11 +1,4 @@
-import {
-  AlertTriangle,
-  FileBarChart2,
-  Landmark,
-  PieChart,
-  ShieldAlert,
-  Wallet,
-} from 'lucide-react';
+import { AlertTriangle, FileBarChart2, ShieldAlert, Wallet } from 'lucide-react';
 import { Link } from 'react-router';
 import {
   Button,
@@ -26,6 +19,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import type { DashboardSummary, MonthlyReport, ReceivableStatus, RiskLevel } from '../../lib/types';
 import { ConcentrationCard } from './ConcentrationCard';
 import { RISK_COLORS, STATUS_COLORS, tileMoney } from './metrics';
+import { Answer } from './parts';
 
 function MonthlyReportCard({ report }: { report: MonthlyReport | null }) {
   const { t, fmt } = useI18n();
@@ -35,7 +29,6 @@ function MonthlyReportCard({ report }: { report: MonthlyReport | null }) {
 
   return (
     <Card
-      className="lg:col-span-5"
       title={t('dashboard.report.title')}
       subtitle={
         report
@@ -109,61 +102,6 @@ function MonthlyReportCard({ report }: { report: MonthlyReport | null }) {
   );
 }
 
-/** Open receivables by status: how many, their total and what is still owed. */
-function StatusTable({ summary }: { summary: DashboardSummary }) {
-  const { t, fmt } = useI18n();
-  const statuses: ReceivableStatus[] = ['pending', 'partial', 'overdue', 'paid'];
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-xs sm:text-sm">
-        <thead className="text-[11px] tracking-wide text-muted uppercase">
-          <tr>
-            <th className="pb-2 text-left font-semibold">{t('receivables.columns.status')}</th>
-            <th className="pb-2 text-right font-semibold">
-              {t('dashboard.portfolio.table.count')}
-            </th>
-            <th className="pb-2 text-right font-semibold max-sm:hidden">
-              {t('dashboard.portfolio.table.total')}
-            </th>
-            <th className="pb-2 text-right font-semibold">
-              {t('receivables.columns.outstanding')}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {statuses.map((status) => {
-            const row = summary.byStatus[status];
-            return (
-              <tr key={status} className="border-t border-line">
-                <td className="py-2.5">
-                  <Link
-                    to={`/receivables?status=${status}`}
-                    className="inline-flex items-center gap-2 hover:underline"
-                  >
-                    <span
-                      className="h-2.5 w-2.5 rounded-full"
-                      style={{ background: STATUS_COLORS[status] }}
-                      aria-hidden="true"
-                    />
-                    {t(`status.${status}`)}
-                  </Link>
-                </td>
-                <td className="py-2.5 text-right tabular-nums">{fmt.number(row.count)}</td>
-                <td className="py-2.5 text-right tabular-nums max-sm:hidden">
-                  {fmt.money(row.totalAmount)}
-                </td>
-                <td className="py-2.5 text-right font-semibold tabular-nums">
-                  {fmt.money(row.outstandingAmount)}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 export function PortfolioView({
   summary,
   refreshing,
@@ -176,7 +114,7 @@ export function PortfolioView({
     return (
       <>
         <KpiRow>
-          {Array.from({ length: 5 }, (_, index) => (
+          {Array.from({ length: 3 }, (_, index) => (
             <KpiCard key={index} label="" value="" loading />
           ))}
         </KpiRow>
@@ -186,15 +124,18 @@ export function PortfolioView({
   }
   const { totals, byStatus, riskDistribution, topDebtors, aging } = summary;
   const openCount = byStatus.pending.count + byStatus.partial.count + byStatus.overdue.count;
-  // Concentration: share of the portfolio owed by the 5 largest debtors.
-  const top5 = topDebtors.slice(0, 5).reduce((sum, debtor) => sum + debtor.outstanding, 0);
-  const concentration = totals.outstanding > 0 ? top5 / totals.outstanding : 0;
   const rated = riskDistribution.low + riskDistribution.medium + riskDistribution.high;
-  const averageDebt = openCount > 0 ? totals.outstanding / openCount : 0;
   const over90 = aging.find((bucket) => bucket.key === 'days90plus');
 
   return (
     <>
+      <Answer
+        text={t(totals.overdue > 0 ? 'dashboard.answers.owedLate' : 'dashboard.answers.owed', {
+          amount: fmt.money(totals.outstanding),
+          overdue: fmt.money(totals.overdue),
+          count: openCount,
+        })}
+      />
       <KpiRow>
         <KpiCard
           fetching={refreshing}
@@ -225,23 +166,6 @@ export function PortfolioView({
           tone={(over90?.amount ?? 0) > 0 ? 'danger' : 'default'}
           hint={t('dashboard.aging.count', { count: over90?.count ?? 0 })}
           icon={<ShieldAlert />}
-        />
-        <KpiCard
-          fetching={refreshing}
-          label={t('dashboard.portfolio.concentration')}
-          value={fmt.percent(concentration)}
-          gauge={concentration}
-          tone={concentration > 0.5 ? 'warning' : 'default'}
-          hint={t('dashboard.portfolio.concentrationHint', { amount: fmt.money(top5) })}
-          icon={<PieChart />}
-        />
-        <KpiCard
-          fetching={refreshing}
-          label={t('dashboard.portfolio.averageDebt')}
-          value={tileMoney(fmt, averageDebt)}
-          valueTitle={fmt.money(averageDebt)}
-          hint={t('dashboard.portfolio.averageDebtHint')}
-          icon={<Landmark />}
         />
       </KpiRow>
 
@@ -340,17 +264,7 @@ export function PortfolioView({
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-12">
-        <Card
-          loading={refreshing}
-          className="lg:col-span-7"
-          title={t('dashboard.portfolio.table.title')}
-          subtitle={t('dashboard.portfolio.table.subtitle')}
-        >
-          <StatusTable summary={summary} />
-        </Card>
-        <MonthlyReportCard report={summary.latestMonthlyReport} />
-      </div>
+      <MonthlyReportCard report={summary.latestMonthlyReport} />
     </>
   );
 }

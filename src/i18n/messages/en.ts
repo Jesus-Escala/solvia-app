@@ -182,7 +182,7 @@ export const en: Messages = {
     medium: 'Medium risk',
     high: 'High risk',
     noHistory: 'No payment history yet',
-    details: 'On time: {rate} · Avg. late: {days} days · Overdue: {count}',
+    details: 'On time: {rate} · Avg. late: {days|# day|# days} · Overdue: {count}',
   },
   methods: {
     yape: 'Yape',
@@ -216,25 +216,26 @@ export const en: Messages = {
     statementUrl: 'Link to the PDF statement',
   },
   dashboard: {
+    answers: {
+      collected: 'From {from} to {to} you were paid ⟦{amount}⟧ in {count|# payment|# payments}.',
+      more: 'That is ⟦{percent} more⟧ than the same time before.',
+      less: 'That is ⟦{percent} less⟧ than the same time before.',
+      owed: 'Today you are owed ⟦{amount}⟧ in {count|# debt|# debts}, and nobody is late.',
+      owedLate: 'Today you are owed ⟦{amount}⟧. Of that, ⟦{overdue}⟧ is already late.',
+      coming: 'In the next 30 days you should be paid ⟦{amount}⟧.',
+      comingLate:
+        'In the next 30 days you should be paid ⟦{amount}⟧. You also have ⟦{overdue}⟧ late to collect.',
+    },
     tabs: {
       label: 'Dashboard views',
-      summary: 'Summary',
       collection: 'Collections',
       portfolio: 'Portfolio',
       projection: 'Projection',
       hints: {
-        summary: 'How you are doing today and what needs your attention.',
         collection: 'How much you collected in any period, compared with the previous one.',
         portfolio: 'What you are owed, how overdue it is and how risky.',
         projection: 'What you expect to collect in the coming days and weeks.',
       },
-    },
-    summary: {
-      collectedMonth: 'Collected this month',
-      rateMonth: 'Collection rate this month',
-      vsSamePeriod: 'vs last month',
-      trendTitle: 'Last 6 months',
-      trendSubtitle: 'Collected and issued per month, with what fell due.',
     },
     today: {
       title: 'For today',
@@ -315,8 +316,8 @@ export const en: Messages = {
     sections: {
       now: 'Right now',
       nowHint: 'How your portfolio looks today.',
-      period: 'Period performance',
-      periodHint: 'Pick a month, quarter, year or range and compare it with the previous period.',
+      period: 'Pick the dates',
+      periodHint: 'We compare them with the same time before.',
       portfolio: 'Your portfolio',
       portfolioHint: 'Status, aging, debtors and what you expect to collect.',
     },
@@ -395,7 +396,7 @@ export const en: Messages = {
         collectionRateHint: 'Of {amount} falling due in the period',
         collectionRateEmpty: 'Nothing fell due in the period',
         daysToPay: 'Average days to pay',
-        daysToPayValue: '{days} days',
+        daysToPayValue: '{days|# day|# days}',
         daysToPayHint: 'From issue date to payment',
         newCustomers: 'New customers',
         newCustomersHint: '{total} customers in total',
@@ -524,14 +525,6 @@ export const en: Messages = {
       noOverdue: 'No customers with overdue debt.',
       generatedAt: 'Generated on {date}',
     },
-    alerts: {
-      title: 'Overdue alerts',
-      subtitle: 'Oldest overdue receivables.',
-      viewAll: 'View all overdue',
-      empty: 'Nothing overdue',
-      emptyDescription: 'All receivables are within their due dates.',
-      daysOverdue: 'Days overdue',
-    },
   },
   customers: {
     title: 'Customers',
@@ -589,7 +582,7 @@ export const en: Messages = {
       onTime: 'Paid on time',
       onTimeHint: '{count|# receivable|# receivables} evaluated',
       avgLate: 'Average days late',
-      avgLateValue: '{days} days',
+      avgLateValue: '{days|# day|# days}',
       avgLateHint: '{count} overdue now',
     },
     tabs: {
@@ -655,10 +648,10 @@ export const en: Messages = {
       issueDate: 'Issued',
     },
     issued: 'Issued {date}',
-    dueIn: 'Due in {days} days',
+    dueIn: 'Due in {days|# day|# days}',
     dueTomorrow: 'Due tomorrow',
     dueToday: 'Due today',
-    overdueBy: 'Overdue by {days} days',
+    overdueBy: 'Overdue by {days|# day|# days}',
     paidPercent: '{percent} paid',
     actions: {
       pay: 'Paid me',
@@ -759,9 +752,9 @@ export const en: Messages = {
       runNow: 'Run now',
       runResult: 'Done: {sent} sent, {failed} failed, {evaluated} receivables checked.',
       timeline: 'How your rules play out',
-      timelineBefore: '{days} days before',
+      timelineBefore: '{days|# day|# days} before',
       timelineDue: 'Due date',
-      timelineOverdue: 'Every {days} days after',
+      timelineOverdue: 'Every {days|day|# days} after',
       timelineOff: 'Disabled',
     },
     templates: {

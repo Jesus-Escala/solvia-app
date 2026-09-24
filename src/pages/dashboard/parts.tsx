@@ -1,4 +1,5 @@
 import { Clock, RefreshCw } from 'lucide-react';
+import { Mascot } from '@/ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useMe } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -78,5 +79,32 @@ export function Section({
       </div>
       {children}
     </section>
+  );
+}
+
+/**
+ * The view's answer in one plain sentence, read before any chart (e.g. "Del 1 al 24 de set. te
+ * pagaron S/ 1,738.80…"). Parts wrapped in ⟦ ⟧ by the translation are shown in bold.
+ */
+export function Answer({ text, loading = false }: { text: string; loading?: boolean }) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-primary/20 bg-primary-soft/50 px-4 py-3 sm:px-5">
+      <Mascot size={40} mood="happy" className="hidden shrink-0 sm:block" />
+      {loading ? (
+        <span className="h-5 w-2/3 animate-pulse rounded bg-surface-3" />
+      ) : (
+        <p className="text-base leading-snug text-ink sm:text-lg">
+          {text.split(/⟦|⟧/).map((part, index) =>
+            index % 2 === 1 ? (
+              <strong key={index} className="font-display font-semibold text-primary-ink">
+                {part}
+              </strong>
+            ) : (
+              part
+            ),
+          )}
+        </p>
+      )}
+    </div>
   );
 }

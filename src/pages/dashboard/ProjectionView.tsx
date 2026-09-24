@@ -24,6 +24,7 @@ import { presetRange } from '../../components/dashboard/period';
 import { useCashFlow, useDashboardAnalytics, useReceivables } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 import { tileMoney } from './metrics';
+import { Answer } from './parts';
 import type { DashboardSummary, Receivable } from '../../lib/types';
 
 function CashFlowCard() {
@@ -177,6 +178,22 @@ export function ProjectionView({
 
   return (
     <>
+      <Answer
+        loading={!ready}
+        text={
+          ready
+            ? t(
+                summary.totals.overdue > 0
+                  ? 'dashboard.answers.comingLate'
+                  : 'dashboard.answers.coming',
+                {
+                  amount: fmt.money(snapshot.dueNext30Days?.amount ?? 0),
+                  overdue: fmt.money(summary.totals.overdue),
+                },
+              )
+            : ''
+        }
+      />
       {!ready ? (
         <KpiRow>
           {Array.from({ length: 4 }, (_, index) => (

@@ -34,12 +34,13 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
 - `src/pages/` — routes: `HomePage` at `/` (three big actions, what you are owed / were paid this
   month, and who to collect from now with "Me pagó" + "WhatsApp"), Customers, CustomerDetail,
   Receivables ("Me deben", open debts by default), Settings + UsersTab, Help, AuthPages
-  (login/register/change-password) and `src/pages/dashboard/` at `/reports`: four views
-  (`?view=summary|collection|portfolio|projection`), each with one purpose. The collection view
+  (login/register/change-password) and `src/pages/dashboard/` at `/reports`: three views
+  (`?view=collection|portfolio|projection`), each with one purpose and opening with a
+  one-sentence `Answer` (`parts.tsx`; bold parts marked ⟦ ⟧ in `dashboard.answers.*`). The collection view
   has a filter row (method, customer, weekday; `?method=&customer=&weekday=`) under the period.
   Collection uses `GET /dashboard/analytics` with the period picker (`?from=&to=&g=`,
   `src/components/dashboard/period.ts` + `PeriodPicker.tsx`); the other views use
-  `/dashboard/summary` and `/dashboard/cash-flow`. Shared helpers in `metrics.ts` (colors,
+  `/dashboard/summary`, `/dashboard/cash-flow` and `/dashboard/concentration`. Shared helpers in `metrics.ts` (colors,
   change vs previous period, compact money for tiles).
 - `src/components/` — `layout/` (AppShell, Sidebar, Topbar, BottomNav, AssistantMenu, PwaManager),
   `domain/` (forms/modals and columns for customers, receivables, payments; `CustomerPicker` =

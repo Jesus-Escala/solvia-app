@@ -1,5 +1,6 @@
 import { Check, Search, UserPlus, X } from 'lucide-react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { cx } from '@/ui';
 import { useCustomers } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -11,9 +12,59 @@ export interface PickedCustomer {
   outstanding?: number;
 }
 
+/** Preferred height of the list; it opens upwards when there is not enough room below. */
+const LIST_HEIGHT = 288;
+
+/**
+ * Where the floating list goes: under the input (or above it when the viewport has no room),
+ * in viewport coordinates. Recomputed on scroll and resize so it follows the input.
+ */
+function useFloatingPosition(anchor: HTMLElement | null, open: boolean) {
+  const [position, setPosition] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    maxHeight: number;
+  } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!open || !anchor) return;
+    let frame = 0;
+    const update = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const rect = anchor.getBoundingClientRect();
+        const below = window.innerHeight - rect.bottom - 12;
+        const above = rect.top - 12;
+        const up = below < Math.min(LIST_HEIGHT, 200) && above > below;
+        const maxHeight = Math.min(LIST_HEIGHT, up ? above : below);
+        setPosition({
+          top: up ? rect.top - 4 - maxHeight : rect.bottom + 4,
+          left: rect.left,
+          width: rect.width,
+          maxHeight,
+        });
+      });
+    };
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, true);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update, true);
+    };
+  }, [anchor, open]);
+
+  return open ? position : null;
+}
+
 /**
  * Customer search box for forms: type a few letters, pick from the matches (with what they owe)
  * or, with `onCreate`, choose "Nuevo cliente «…»" to create one on the spot.
+ *
+ * The list floats over everything (fixed position): inside a modal it is rendered in the
+ * <dialog> itself, so neither the modal body's scroll nor its edges cut it.
  */
 export function CustomerPicker({
   id,
@@ -38,6 +89,8 @@ export function CustomerPicker({
   const [active, setActive] = useState(0);
   const [debounced, setDebounced] = useState('');
   const box = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLUListElement>(null);
+  const [anchor, setAnchor] = useState<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebounced(search.trim()), 200);
@@ -48,7 +101,8 @@ export function CustomerPicker({
   useEffect(() => {
     if (!open) return;
     const onPointer = (event: PointerEvent) => {
-      if (!box.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (!box.current?.contains(target) && !list.current?.contains(target)) setOpen(false);
     };
     document.addEventListener('pointerdown', onPointer);
     return () => document.removeEventListener('pointerdown', onPointer);
@@ -65,6 +119,7 @@ export function CustomerPicker({
   const matches = customers.data?.data ?? [];
   const canCreate = Boolean(onCreate && search.trim().length >= 2);
   const options = matches.length + (canCreate ? 1 : 0);
+  const position = useFloatingPosition(anchor, open);
 
   const pick = (index: number) => {
     const match = matches[index];
@@ -113,7 +168,13 @@ export function CustomerPicker({
   }
 
   return (
-    <div ref={box} className="relative">
+    <div
+      ref={(element) => {
+        box.current = element;
+        setAnchor(element);
+      }}
+      className="relative"
+    >
       <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-subtle" />
       <input
         id={id}
@@ -149,63 +210,75 @@ export function CustomerPicker({
           }
         }}
       />
-      {open && (
-        <ul
-          id={listId}
-          role="listbox"
-          className="absolute inset-x-0 top-full z-40 mt-1 max-h-72 overflow-auto rounded-xl border border-line bg-surface p-1 shadow-pop"
-        >
-          {matches.map((customer, index) => (
-            <li
-              key={customer.id}
-              role="option"
-              aria-selected={index === active}
-              onPointerDown={(event) => event.preventDefault()}
-              onClick={() => pick(index)}
-              onMouseEnter={() => setActive(index)}
-              className={cx(
-                'flex cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 text-sm',
-                index === active && 'bg-surface-3',
-              )}
-            >
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-3 text-xs font-semibold text-muted">
-                {customer.name.charAt(0).toUpperCase()}
-              </span>
-              <span className="min-w-0 flex-1 truncate font-medium">{customer.name}</span>
-              {customer.summary.totalOutstanding > 0 ? (
-                <span className="shrink-0 text-xs text-muted tabular-nums">
-                  {t('picker.owes', { amount: fmt.money(customer.summary.totalOutstanding) })}
+      {open &&
+        anchor &&
+        createPortal(
+          <ul
+            ref={list}
+            id={listId}
+            role="listbox"
+            style={{
+              position: 'fixed',
+              top: position?.top ?? -9999,
+              left: position?.left ?? -9999,
+              width: position?.width,
+              maxHeight: position?.maxHeight,
+            }}
+            className="animate-fade-in z-50 overflow-auto rounded-xl border border-line bg-surface p-1 shadow-pop"
+          >
+            {matches.map((customer, index) => (
+              <li
+                key={customer.id}
+                role="option"
+                aria-selected={index === active}
+                onPointerDown={(event) => event.preventDefault()}
+                onClick={() => pick(index)}
+                onMouseEnter={() => setActive(index)}
+                className={cx(
+                  'flex cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 text-sm',
+                  index === active && 'bg-surface-3',
+                )}
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-3 text-xs font-semibold text-muted">
+                  {customer.name.charAt(0).toUpperCase()}
                 </span>
-              ) : (
-                <Check className="h-3.5 w-3.5 shrink-0 text-success" aria-hidden="true" />
-              )}
-            </li>
-          ))}
-          {canCreate && (
-            <li
-              role="option"
-              aria-selected={active === matches.length}
-              onPointerDown={(event) => event.preventDefault()}
-              onClick={() => pick(matches.length)}
-              onMouseEnter={() => setActive(matches.length)}
-              className={cx(
-                'flex cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-medium text-primary-ink',
-                active === matches.length && 'bg-primary-soft',
-              )}
-            >
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-soft">
-                <UserPlus className="h-3.5 w-3.5" />
-              </span>
-              {t('picker.create', { name: search.trim() })}
-            </li>
-          )}
-          {!customers.isLoading && options === 0 && (
-            <li className="px-3 py-3 text-sm text-muted">
-              {search.trim() ? t('picker.noResults') : t('picker.typeToSearch')}
-            </li>
-          )}
-        </ul>
-      )}
+                <span className="min-w-0 flex-1 truncate font-medium">{customer.name}</span>
+                {customer.summary.totalOutstanding > 0 ? (
+                  <span className="shrink-0 text-xs text-muted tabular-nums">
+                    {t('picker.owes', { amount: fmt.money(customer.summary.totalOutstanding) })}
+                  </span>
+                ) : (
+                  <Check className="h-3.5 w-3.5 shrink-0 text-success" aria-hidden="true" />
+                )}
+              </li>
+            ))}
+            {canCreate && (
+              <li
+                role="option"
+                aria-selected={active === matches.length}
+                onPointerDown={(event) => event.preventDefault()}
+                onClick={() => pick(matches.length)}
+                onMouseEnter={() => setActive(matches.length)}
+                className={cx(
+                  'flex cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-medium text-primary-ink',
+                  active === matches.length && 'bg-primary-soft',
+                )}
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-soft">
+                  <UserPlus className="h-3.5 w-3.5" />
+                </span>
+                {t('picker.create', { name: search.trim() })}
+              </li>
+            )}
+            {!customers.isLoading && options === 0 && (
+              <li className="px-3 py-3 text-sm text-muted">
+                {search.trim() ? t('picker.noResults') : t('picker.typeToSearch')}
+              </li>
+            )}
+          </ul>,
+          // A modal <dialog> lives in the browser's top layer: the list must be inside it.
+          anchor.closest('dialog') ?? document.body,
+        )}
     </div>
   );
 }

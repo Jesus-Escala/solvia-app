@@ -6,11 +6,9 @@ import {
   Undo2,
   HandCoins,
   MousePointerClick,
-  ReceiptText,
   Table2,
   Target,
   Timer,
-  UserPlus,
   X,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -43,7 +41,7 @@ import { useDashboardAnalytics } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { DashboardAnalytics, PaymentMethod } from '../../lib/types';
 import { change, METHOD_COLORS, pointsChange, tileMoney, formatPoints } from './metrics';
-import { Section } from './parts';
+import { Answer, Section } from './parts';
 
 /** Cross-filters of the collection view (null = not filtering by that dimension). */
 export interface CollectionFilters {
@@ -159,22 +157,21 @@ function PeriodKpis({
   filters: CollectionFilters;
 }) {
   const { t, fmt } = useI18n();
-  // Receivable KPIs ignore the payment-only filters; new customers ignore every filter.
+  // Receivable KPIs ignore the payment-only filters.
   const paymentOnly = !!(filters.method || filters.weekday);
-  const anyFilter = paymentOnly || !!filters.customerId;
   const notFiltered = t('dashboard.filters.notFiltered');
   // Receivable KPIs still follow the customer filter.
   const receivableNote = filters.customerId ? t('dashboard.filters.customerOnly') : notFiltered;
   if (loading || !analytics) {
     return (
       <KpiRow>
-        {Array.from({ length: 6 }, (_, index) => (
+        {Array.from({ length: 4 }, (_, index) => (
           <KpiCard key={index} label="" value="" loading />
         ))}
       </KpiRow>
     );
   }
-  const { kpis, snapshot } = analytics;
+  const { kpis } = analytics;
   const vs = t('dashboard.analytics.kpi.vsPrevious');
   const rate = kpis.collectionRate;
   // Rates compare in percentage points (62% → 70% = +8 pts), not as a relative change.
@@ -259,35 +256,6 @@ function PeriodKpis({
         hint={t('dashboard.analytics.kpi.daysToPayHint')}
         icon={<Timer />}
       />
-      <KpiCard
-        fetching={fetching}
-        label={t('dashboard.analytics.series.payments')}
-        info={t('dashboard.analytics.info.payments')}
-        value={fmt.number(kpis.payments.value ?? 0)}
-        delta={change(kpis.payments)}
-        formatPercent={fmt.percent}
-        hint={t('dashboard.analytics.kpi.collectedHint', {
-          count: fmt.number(kpis.payments.value ?? 0),
-          average: fmt.money(kpis.averagePayment.value ?? 0),
-        })}
-        icon={<ReceiptText />}
-      />
-      <KpiCard
-        fetching={fetching}
-        label={t('dashboard.analytics.kpi.newCustomers')}
-        info={t('dashboard.analytics.info.newCustomers')}
-        value={fmt.number(kpis.newCustomers.value ?? 0)}
-        delta={change(kpis.newCustomers)}
-        formatPercent={fmt.percent}
-        hint={
-          anyFilter
-            ? notFiltered
-            : t('dashboard.analytics.kpi.newCustomersHint', {
-                total: fmt.number(snapshot.customers),
-              })
-        }
-        icon={<UserPlus />}
-      />
     </KpiRow>
   );
 }
@@ -359,6 +327,26 @@ export function CollectionView({
     new Intl.DateTimeFormat(locale === 'es' ? 'es-PE' : 'en-US', { weekday: 'long' }).format(
       new Date(2024, 0, weekday),
     );
+  // The view's answer in one sentence: how much, how many payments and the change vs before.
+  const collectedMetric = data?.kpis.collected;
+  const delta = change(collectedMetric);
+  const answer = data
+    ? [
+        t('dashboard.answers.collected', {
+          from: fmt.shortDate(data.period.from),
+          to: fmt.shortDate(data.period.to),
+          amount: fmt.money(collectedMetric?.value ?? 0),
+          count: data.kpis.payments.value ?? 0,
+        }),
+        delta === null
+          ? ''
+          : t(delta >= 0 ? 'dashboard.answers.more' : 'dashboard.answers.less', {
+              percent: fmt.percent(Math.abs(delta)),
+            }),
+      ]
+        .filter(Boolean)
+        .join(' ')
+    : '';
   // Clicking the selected option again removes that filter.
   const toggle = <K extends keyof CollectionFilters>(key: K, value: CollectionFilters[K]) =>
     onFiltersChange({ [key]: filters[key] === value ? null : value });
@@ -383,6 +371,7 @@ export function CollectionView({
       }
     >
       {analytics.error && <Alert tone="danger">{errors.message(analytics.error)}</Alert>}
+      <Answer loading={!data} text={answer} />
       <FilterBar
         filters={filters}
         customerName={customerName}

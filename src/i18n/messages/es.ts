@@ -182,7 +182,8 @@ export const es = {
     medium: 'A veces se atrasa',
     high: 'Se atrasa mucho',
     noHistory: 'Todavía no hay pagos',
-    details: 'Paga a tiempo: {rate} · Se atrasa en promedio {days} días · Atrasadas: {count}',
+    details:
+      'Paga a tiempo: {rate} · Se atrasa en promedio {days|# día|# días} · Atrasadas: {count}',
   },
   methods: {
     yape: 'Yape',
@@ -219,25 +220,26 @@ export const es = {
     statementUrl: 'Enlace al PDF del resumen de deuda',
   },
   dashboard: {
+    answers: {
+      collected: 'Del {from} al {to} te pagaron ⟦{amount}⟧ en {count|# pago|# pagos}.',
+      more: 'Es ⟦{percent} más⟧ que en el mismo tiempo de antes.',
+      less: 'Es ⟦{percent} menos⟧ que en el mismo tiempo de antes.',
+      owed: 'Hoy te deben ⟦{amount}⟧ en {count|# deuda|# deudas}, y nadie está atrasado.',
+      owedLate: 'Hoy te deben ⟦{amount}⟧. De eso, ⟦{overdue}⟧ ya está atrasado.',
+      coming: 'En los próximos 30 días deberían pagarte ⟦{amount}⟧.',
+      comingLate:
+        'En los próximos 30 días deberían pagarte ⟦{amount}⟧. Además tienes ⟦{overdue}⟧ atrasado por cobrar.',
+    },
     tabs: {
       label: 'Reportes',
-      summary: 'Resumen',
       collection: 'Lo que cobraste',
       portfolio: 'Lo que te deben',
       projection: 'Lo que vas a cobrar',
       hints: {
-        summary: 'Cómo vas este mes.',
         collection: 'Cuánto te pagaron, cómo y quién, en el tiempo que elijas.',
         portfolio: 'Cuánto te deben, desde cuándo y quién te debe más.',
         projection: 'Cuánta plata debería entrar en los próximos días y semanas.',
       },
-    },
-    summary: {
-      collectedMonth: 'Cobrado este mes',
-      rateMonth: '% cobrado a tiempo este mes',
-      vsSamePeriod: 'comparado con el mes pasado',
-      trendTitle: 'Últimos 6 meses',
-      trendSubtitle: 'Lo que te pagaron y lo que fiaste cada mes, y lo que tocaba cobrar.',
     },
     today: {
       title: 'Para hoy',
@@ -319,8 +321,8 @@ export const es = {
     sections: {
       now: 'Estado actual',
       nowHint: 'Cómo están tus cuentas hoy.',
-      period: 'Lo que cobraste',
-      periodHint: 'Elige las fechas. Lo comparamos con el mismo tiempo de antes.',
+      period: 'Elige las fechas',
+      periodHint: 'Lo comparamos con el mismo tiempo de antes.',
       portfolio: 'Lo que te deben',
       portfolioHint: 'Desde cuándo te deben, quién y lo que vas a cobrar.',
     },
@@ -399,7 +401,7 @@ export const es = {
         collectionRateHint: 'De {amount} que te tenían que pagar',
         collectionRateEmpty: 'Nadie tenía que pagarte en estas fechas',
         daysToPay: 'Tardan en pagarte',
-        daysToPayValue: '{days} días',
+        daysToPayValue: '{days|# día|# días}',
         daysToPayHint: 'Desde que fías hasta que te pagan',
         newCustomers: 'Clientes nuevos',
         newCustomersHint: '{total} clientes en total',
@@ -528,14 +530,6 @@ export const es = {
       noOverdue: 'Nadie estaba atrasado.',
       generatedAt: 'Generado el {date}',
     },
-    alerts: {
-      title: 'Los más atrasados',
-      subtitle: 'Deudas que ya pasaron su fecha, de la más vieja a la más nueva.',
-      viewAll: 'Ver todas las atrasadas',
-      empty: 'Nadie atrasado',
-      emptyDescription: 'Todas las deudas están a tiempo.',
-      daysOverdue: 'Días de atraso',
-    },
   },
   customers: {
     title: 'Clientes',
@@ -593,7 +587,7 @@ export const es = {
       onTime: 'Paga a tiempo',
       onTimeHint: 'de {count|# deuda|# deudas}',
       avgLate: 'Se atrasa en promedio',
-      avgLateValue: '{days} días',
+      avgLateValue: '{days|# día|# días}',
       avgLateHint: '{count|# atrasada|# atrasadas} ahora',
     },
     tabs: {
@@ -658,10 +652,10 @@ export const es = {
       issueDate: 'Fiado el',
     },
     issued: 'Fiado el {date}',
-    dueIn: 'Paga en {days} días',
+    dueIn: 'Paga en {days|# día|# días}',
     dueTomorrow: 'Paga mañana',
     dueToday: 'Paga hoy',
-    overdueBy: 'Atrasada {days} días',
+    overdueBy: 'Atrasada {days|# día|# días}',
     paidPercent: '{percent} pagado',
     actions: {
       pay: 'Me pagó',
@@ -763,9 +757,9 @@ export const es = {
       runNow: 'Mandar recordatorios ahora',
       runResult: 'Listo: {sent} enviados, {failed} no llegaron, {evaluated} deudas revisadas.',
       timeline: 'Así se verá con tus reglas',
-      timelineBefore: '{days} días antes',
+      timelineBefore: '{days|# día|# días} antes',
       timelineDue: 'El día que debe pagar',
-      timelineOverdue: 'Cada {days} días después',
+      timelineOverdue: 'Cada {days|día|# días} después',
       timelineOff: 'Desactivado',
     },
     templates: {
