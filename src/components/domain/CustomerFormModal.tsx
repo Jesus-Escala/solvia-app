@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useSaveCustomer } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
-import { useErrorText, Alert, Button, Field, Modal, PhoneInput, useFeedback } from '@/ui';
+import { useErrorText, Button, Field, Modal, PhoneInput, useFeedback, useErrorToast } from '@/ui';
 import type { Customer } from '../../lib/types';
 
 interface Props {
@@ -52,11 +52,10 @@ function CustomerForm({ customer, onClose, onSaved }: Omit<Props, 'open'>) {
     onClose();
   };
 
+  useErrorToast(save.error);
+
   return (
     <form onSubmit={(event) => void submit(event).catch(() => undefined)} className="space-y-4">
-      {save.error && !errors.hasFieldErrors(save.error) && (
-        <Alert tone="danger">{errors.message(save.error)}</Alert>
-      )}
       <Field label={t('customers.form.name')} error={errors.field(save.error, 'name')}>
         {(id, describedBy) => (
           <input

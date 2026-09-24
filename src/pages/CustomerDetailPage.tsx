@@ -101,7 +101,7 @@ export function CustomerDetailPage() {
       window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (err) {
       tab?.close();
-      toast.error(errors.message(err));
+      toast.apiError(err);
     } finally {
       setOpening(false);
     }
@@ -114,7 +114,7 @@ export function CustomerDetailPage() {
         toast.success(t('customerDetail.statementSent', { phone: customer.phone }));
       else toast.warning(t('customerDetail.statementFailed'));
     } catch (err) {
-      toast.error(errors.message(err));
+      toast.apiError(err);
     }
   };
 
@@ -131,7 +131,7 @@ export function CustomerDetailPage() {
       toast.success(t('customers.deleted'));
       navigate('/customers', { replace: true });
     } catch (err) {
-      toast.error(errors.message(err));
+      toast.apiError(err);
     }
   };
 

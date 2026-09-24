@@ -4,6 +4,15 @@
  */
 
 export const uiEs = {
+  toast: {
+    region: 'Notificaciones',
+    close: 'Cerrar notificación',
+    errorTitle: 'No se pudo completar',
+    signInFailed: 'No pudimos iniciar sesión',
+    sendFailed: 'No se pudo enviar',
+    checkFields: 'Revisa los campos marcados',
+    checkFieldsHint: 'Corrige los datos resaltados e inténtalo de nuevo.',
+  },
   activity: {
     loading: 'Cargando…',
   },
@@ -200,6 +209,15 @@ export const uiEs = {
 };
 
 export const uiEn: UiMessages = {
+  toast: {
+    region: 'Notifications',
+    close: 'Dismiss notification',
+    errorTitle: 'Could not complete',
+    signInFailed: 'We could not sign you in',
+    sendFailed: 'Could not send',
+    checkFields: 'Check the highlighted fields',
+    checkFieldsHint: 'Fix the highlighted values and try again.',
+  },
   activity: {
     loading: 'Loading…',
   },

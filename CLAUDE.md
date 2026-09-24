@@ -53,6 +53,10 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
   status colors…) so light/dark themes work; no hardcoded hex colors in pages.
 - Tables: `<Page fill>` + `<DataTable>` (content-sized, scrolls inside, never the page). Dialogs:
   `<Modal>`; confirmations: `useFeedback().confirm`; notifications: `useFeedback().toast`.
+  Errors from forms/actions are **toasts, not inline alerts**: `useErrorToast(mutation.error)` in the
+  form, or `toast.apiError(err)` in a catch. `toast.success/error/info/warning(title, description?)`,
+  `toast.loading()` + `toast.update(id, …)`. Field errors still render under each input; inline
+  `<Alert>` is only for persistent states (a list that failed to load, informational notes).
 - New backend endpoint or field → update `src/lib/types.ts` + a hook in `src/hooks/queries.ts`;
   new backend error code → add its text under `errors.codes` in `src/ui/i18n/messages.ts`.
 - Phones are stored as E.164 (`PhoneInput`, Peru default); money formatted with `fmt.money`.

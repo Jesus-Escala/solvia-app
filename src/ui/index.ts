@@ -32,8 +32,10 @@ export {
   FeedbackProvider,
   MenuItems,
   Popover,
+  useErrorToast,
   useFeedback,
   type MenuItem,
+  type ToastApi,
 } from './components/Overlays';
 export { Page, PageHeader } from './components/Page';
 export { PasswordChecklist } from './components/PasswordChecklist';

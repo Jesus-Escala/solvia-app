@@ -15,12 +15,12 @@ import {
   Mascot,
   type MascotMood,
   Logo,
-  Alert,
   Button,
   cx,
   Field,
   PasswordInput,
   useErrorText,
+  useErrorToast,
 } from '@/ui';
 import { useI18n } from '../i18n/I18nProvider';
 
@@ -313,6 +313,7 @@ function GoogleCompletion({ flow }: { flow: GoogleFlow }) {
   const errors = useErrorText();
   const [businessName, setBusinessName] = useState('');
   const [industry, setIndustry] = useState('');
+  useErrorToast(flow.error);
   if (!flow.pending) return null;
   const { credential, profile } = flow.pending;
 
@@ -330,9 +331,6 @@ function GoogleCompletion({ flow }: { flow: GoogleFlow }) {
           {t('auth.googleCompleteSubtitle', { email: profile.email })}
         </p>
       </div>
-      {flow.error !== null && !errors.hasFieldErrors(flow.error) && (
-        <Alert tone="danger">{errors.message(flow.error)}</Alert>
-      )}
       <Field label={t('auth.businessName')} error={errors.field(flow.error, 'businessName')}>
         {(id) => (
           <input
@@ -365,11 +363,11 @@ function GoogleCompletion({ flow }: { flow: GoogleFlow }) {
 
 function GoogleSection({ flow }: { flow: GoogleFlow }) {
   const { t } = useI18n();
-  const errors = useErrorText();
+  useErrorToast(flow.error);
+
   return (
     <div className="mb-4 space-y-3">
       <GoogleSignInButton onCredential={(credential) => void flow.run(credential)} />
-      {flow.error !== null && <Alert tone="danger">{errors.message(flow.error)}</Alert>}
       <div className="flex items-center gap-3 text-[11px] font-medium tracking-wide text-subtle uppercase">
         <span className="h-px flex-1 bg-line" />
         {t('auth.orContinueWith')}
@@ -382,7 +380,6 @@ function GoogleSection({ flow }: { flow: GoogleFlow }) {
 export function LoginPage() {
   const { t } = useI18n();
   const config = useAuthConfig();
-  const errors = useErrorText();
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -408,6 +405,8 @@ export function LoginPage() {
     }
   };
 
+  useErrorToast(error, t('toast.signInFailed'));
+
   return (
     <AuthLayout
       mode="login"
@@ -421,7 +420,6 @@ export function LoginPage() {
         <>
           <GoogleSection flow={google} />
           <form onSubmit={(event) => void submit(event)} className="space-y-3.5">
-            {error !== null && <Alert tone="danger">{errors.message(error)}</Alert>}
             <Field label={t('auth.email')}>
               {(id) => (
                 <input
@@ -531,6 +529,8 @@ function RegisterForm() {
     }
   };
 
+  useErrorToast(error);
+
   return (
     <AuthLayout
       mode="register"
@@ -544,9 +544,6 @@ function RegisterForm() {
         <>
           <GoogleSection flow={google} />
           <form onSubmit={(event) => void submit(event)} className="space-y-2.5">
-            {error !== null && !errors.hasFieldErrors(error) && (
-              <Alert tone="danger">{errors.message(error)}</Alert>
-            )}
             <div className="space-y-2.5">
               <Field label={t('auth.businessName')} error={errors.field(error, 'businessName')}>
                 {(id) => (
@@ -682,6 +679,8 @@ export function ChangePasswordPage() {
     />
   );
 
+  useErrorToast(error);
+
   return (
     <AuthLayout
       mode="password"
@@ -690,9 +689,6 @@ export function ChangePasswordPage() {
       mood={password.mood}
     >
       <form onSubmit={(event) => void submit(event)} className="space-y-3">
-        {error !== null && !errors.hasFieldErrors(error) && (
-          <Alert tone="danger">{errors.message(error)}</Alert>
-        )}
         <Field
           label={forced ? t('auth.temporaryPassword') : t('auth.currentPassword')}
           error={errors.field(error, 'currentPassword')}

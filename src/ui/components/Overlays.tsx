@@ -11,8 +11,11 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { useErrorText } from '../i18n/useErrorText';
+import { useUiI18n } from '../i18n/context';
 import { Button } from './Button';
 import { cx } from './cx';
+import { Spinner } from './Feedback';
 import { Modal } from './Modal';
 
 // --- Popover / Menu -----------------------------------------------------------------
@@ -152,23 +155,55 @@ export function MenuItems({ items, close }: { items: MenuItem[]; close: () => vo
 
 // --- Toasts -------------------------------------------------------------------------
 
-type ToastTone = 'success' | 'error' | 'info' | 'warning';
-interface ToastItem {
-  id: number;
+type ToastTone = 'success' | 'error' | 'info' | 'warning' | 'loading';
+
+interface ToastContent {
   tone: ToastTone;
-  message: string;
+  title: string;
+  description?: string;
+}
+
+interface ToastItem extends ToastContent {
+  id: number;
+  /** Bumped when an identical toast is shown again: restarts its timer instead of stacking. */
+  version: number;
   /** Playing its exit animation; removed right after. */
   leaving?: boolean;
 }
 
-const TOAST_EXIT_MS = 180;
-
-const TOAST_ICONS: Record<ToastTone, ReactNode> = {
-  success: <CheckCircle2 className="h-5 w-5 text-success" />,
-  error: <XCircle className="h-5 w-5 text-danger" />,
-  info: <Info className="h-5 w-5 text-info" />,
-  warning: <AlertTriangle className="h-5 w-5 text-warning" />,
+const TOAST_EXIT_MS = 200;
+const TOAST_LIMIT = 4;
+const TOAST_DURATION: Record<ToastTone, number> = {
+  success: 4000,
+  info: 5000,
+  warning: 6000,
+  error: 7000,
+  loading: 0, // stays until updated or dismissed
 };
+
+const TOAST_STYLES: Record<ToastTone, { tile: string; bar: string; icon: ReactNode }> = {
+  success: { tile: 'bg-success-soft text-success', bar: 'bg-success', icon: <CheckCircle2 /> },
+  error: { tile: 'bg-danger-soft text-danger', bar: 'bg-danger', icon: <XCircle /> },
+  info: { tile: 'bg-info-soft text-info', bar: 'bg-info', icon: <Info /> },
+  warning: { tile: 'bg-warning-soft text-warning', bar: 'bg-warning', icon: <AlertTriangle /> },
+  loading: { tile: 'bg-primary-soft text-primary', bar: 'bg-primary', icon: <Spinner /> },
+};
+
+/** Shows a notification; `description` adds a second, quieter line. Returns the toast id. */
+type ToastFn = (title: string, description?: string) => number;
+
+export interface ToastApi {
+  success: ToastFn;
+  error: ToastFn;
+  info: ToastFn;
+  warning: ToastFn;
+  /** A toast with a spinner that stays open until `update()` turns it into a result. */
+  loading: ToastFn;
+  /** Shows a failed request: known API errors get a translated message, field errors a hint. */
+  apiError: (error: unknown, title?: string) => number;
+  update: (id: number, content: Partial<ToastContent>) => void;
+  dismiss: (id: number) => void;
+}
 
 interface ConfirmOptions {
   title: string;
@@ -179,19 +214,134 @@ interface ConfirmOptions {
 }
 
 interface FeedbackContextValue {
-  toast: Record<ToastTone, (message: string) => void>;
+  toast: ToastApi;
   confirm: (options: ConfirmOptions) => Promise<boolean>;
 }
 
 const FeedbackContext = createContext<FeedbackContextValue | null>(null);
 
+/** One notification: its own countdown, paused while hovered or focused. */
+function ToastCard({
+  item,
+  closeLabel,
+  onDismiss,
+}: {
+  item: ToastItem;
+  closeLabel: string;
+  onDismiss: (id: number) => void;
+}) {
+  const duration = TOAST_DURATION[item.tone];
+  const [paused, setPaused] = useState(false);
+  const remaining = useRef(duration);
+  const startedAt = useRef(0);
+
+  // A new tone or a repeat restarts the countdown.
+  useEffect(() => {
+    remaining.current = duration;
+  }, [duration, item.version]);
+
+  useEffect(() => {
+    if (!duration || paused || item.leaving) return;
+    startedAt.current = Date.now();
+    const timer = window.setTimeout(() => onDismiss(item.id), remaining.current);
+    return () => {
+      window.clearTimeout(timer);
+      remaining.current -= Date.now() - startedAt.current;
+    };
+  }, [duration, paused, item.id, item.leaving, item.version, onDismiss]);
+
+  const style = TOAST_STYLES[item.tone];
+  return (
+    <li
+      data-state={item.leaving ? 'closing' : 'open'}
+      role={item.tone === 'error' ? 'alert' : 'status'}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+      className="toast pointer-events-auto relative flex items-start gap-3 overflow-hidden rounded-2xl border border-line bg-surface/95 p-3 pr-2.5 text-ink shadow-pop backdrop-blur-md"
+    >
+      <span
+        className={cx(
+          'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl [&>svg]:h-[18px] [&>svg]:w-[18px]',
+          style.tile,
+        )}
+      >
+        {style.icon}
+      </span>
+      <div className="min-w-0 flex-1 py-0.5">
+        <p className="text-sm leading-5 font-semibold break-words">{item.title}</p>
+        {item.description && (
+          <p className="mt-0.5 text-[13px] leading-5 break-words text-muted">{item.description}</p>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={() => onDismiss(item.id)}
+        className="-mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-subtle transition hover:bg-surface-2 hover:text-ink"
+        aria-label={closeLabel}
+      >
+        <X className="h-4 w-4" />
+      </button>
+      {duration > 0 && (
+        <span
+          key={`${item.tone}-${item.version}`}
+          aria-hidden="true"
+          className={cx('toast-timer absolute inset-x-0 bottom-0 h-[3px] opacity-70', style.bar)}
+          style={{
+            animationDuration: `${duration}ms`,
+            animationPlayState: paused ? 'paused' : 'running',
+          }}
+        />
+      )}
+    </li>
+  );
+}
+
+/**
+ * Where the toast stack renders. A modal <dialog> makes everything outside it inert (even
+ * top-layer popovers), so while one is open the stack moves inside it to stay clickable.
+ */
+function findToastHost() {
+  const modals = [...document.querySelectorAll('dialog')].filter(
+    (dialog) => dialog.matches(':modal') && dialog.dataset.state !== 'closing',
+  );
+  return modals.at(-1) ?? document.body;
+}
+
+function useToastHost(active: boolean) {
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!active) return;
+    const sync = () => setHost(findToastHost());
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(document.body, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['open', 'data-state'],
+      childList: true,
+    });
+    return () => observer.disconnect();
+  }, [active]);
+  return host;
+}
+
 /** Provides `toast.*()` notifications and a promise-based `confirm()` dialog to the whole app. */
 export function FeedbackProvider({ children }: { children: ReactNode }) {
+  const { t } = useUiI18n();
+  const errors = useErrorText();
+  // Read through a ref so the context value (and every consumer) stays stable across renders.
+  const text = useRef({ t, errors });
+  useEffect(() => {
+    text.current = { t, errors };
+  });
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [pending, setPending] = useState<
     (ConfirmOptions & { resolve: (value: boolean) => void }) | null
   >(null);
   const nextId = useRef(1);
+  const host = useToastHost(toasts.length > 0);
 
   const dismiss = useCallback((id: number) => {
     setToasts((items) => items.map((item) => (item.id === id ? { ...item, leaving: true } : item)));
@@ -201,27 +351,65 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const push = useCallback(
-    (tone: ToastTone, message: string) => {
-      const id = nextId.current++;
-      setToasts((items) => [...items.slice(-3), { id, tone, message }]);
-      window.setTimeout(() => dismiss(id), tone === 'error' ? 7000 : 4500);
-    },
-    [dismiss],
-  );
+  const push = useCallback((content: ToastContent) => {
+    const id = nextId.current++;
+    setToasts((items) => {
+      const same = items.find(
+        (item) =>
+          !item.leaving &&
+          item.tone === content.tone &&
+          item.title === content.title &&
+          item.description === content.description,
+      );
+      // The same message twice in a row (a double submit) refreshes the visible toast.
+      if (same) {
+        return items.map((item) => (item === same ? { ...item, version: item.version + 1 } : item));
+      }
+      return [...items.slice(-(TOAST_LIMIT - 1)), { ...content, id, version: 0 }];
+    });
+    return id;
+  }, []);
 
-  const value = useMemo<FeedbackContextValue>(
-    () => ({
+  const update = useCallback((id: number, content: Partial<ToastContent>) => {
+    setToasts((items) =>
+      items.map((item) =>
+        item.id === id ? { ...item, ...content, version: item.version + 1 } : item,
+      ),
+    );
+  }, []);
+
+  const value = useMemo<FeedbackContextValue>(() => {
+    const of =
+      (tone: ToastTone): ToastFn =>
+      (title, description) =>
+        push({ tone, title, description });
+    return {
       toast: {
-        success: (message) => push('success', message),
-        error: (message) => push('error', message),
-        info: (message) => push('info', message),
-        warning: (message) => push('warning', message),
+        success: of('success'),
+        error: of('error'),
+        info: of('info'),
+        warning: of('warning'),
+        loading: of('loading'),
+        apiError: (error, title) => {
+          const { t: translate, errors: errorText } = text.current;
+          return errorText.hasFieldErrors(error)
+            ? push({
+                tone: 'error',
+                title: translate('toast.checkFields'),
+                description: translate('toast.checkFieldsHint'),
+              })
+            : push({
+                tone: 'error',
+                title: title ?? translate('toast.errorTitle'),
+                description: errorText.message(error),
+              });
+        },
+        update,
+        dismiss,
       },
       confirm: (options) => new Promise<boolean>((resolve) => setPending({ ...options, resolve })),
-    }),
-    [push],
-  );
+    };
+  }, [push, update, dismiss]);
 
   const settle = (result: boolean) => {
     pending?.resolve(result);
@@ -231,29 +419,25 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
   return (
     <FeedbackContext.Provider value={value}>
       {children}
-      <div
-        aria-live="polite"
-        className="pointer-events-none fixed right-4 bottom-20 z-[60] flex w-[min(24rem,calc(100%-2rem))] flex-col gap-2 lg:bottom-4"
-      >
-        {toasts.map((item) => (
-          <div
-            key={item.id}
-            data-state={item.leaving ? 'closing' : 'open'}
-            className="toast pointer-events-auto flex items-start gap-3 rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink shadow-pop"
+      {host &&
+        toasts.length > 0 &&
+        createPortal(
+          <ol
+            aria-live="polite"
+            aria-label={t('toast.region')}
+            className="pointer-events-none fixed inset-x-3 top-3 z-[70] mx-auto flex max-w-sm flex-col gap-2 sm:inset-x-auto sm:top-4 sm:right-4 sm:mx-0 sm:w-96"
           >
-            <span className="shrink-0">{TOAST_ICONS[item.tone]}</span>
-            <p className="min-w-0 flex-1 break-words">{item.message}</p>
-            <button
-              type="button"
-              onClick={() => dismiss(item.id)}
-              className="shrink-0 text-subtle hover:text-ink"
-              aria-label="Dismiss"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        ))}
-      </div>
+            {toasts.map((item) => (
+              <ToastCard
+                key={item.id}
+                item={item}
+                closeLabel={t('toast.close')}
+                onDismiss={dismiss}
+              />
+            ))}
+          </ol>,
+          host,
+        )}
       <Modal
         open={pending !== null}
         title={pending?.title ?? ''}
@@ -285,4 +469,19 @@ export function useFeedback() {
   const context = useContext(FeedbackContext);
   if (!context) throw new Error('useFeedback must be used within a FeedbackProvider');
   return context;
+}
+
+/**
+ * Shows a toast each time a new request error appears (a mutation's `error`, a flow's error
+ * state…), so forms don't need an inline error box. Field errors still render under inputs.
+ */
+// eslint-disable-next-line react-refresh/only-export-components -- hook colocated with its provider
+export function useErrorToast(error: unknown, title?: string) {
+  const { toast } = useFeedback();
+  const shown = useRef<unknown>(null);
+  useEffect(() => {
+    if (error == null || error === shown.current) return;
+    shown.current = error;
+    toast.apiError(error, title);
+  }, [error, title, toast]);
 }

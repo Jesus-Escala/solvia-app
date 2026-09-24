@@ -4,13 +4,13 @@ import { useRegisterPayment } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 import {
   useErrorText,
-  Alert,
   Button,
   Field,
   Modal,
   ProgressBar,
   SegmentedControl,
   useFeedback,
+  useErrorToast,
 } from '@/ui';
 import type { PaymentMethod, Receivable } from '../../lib/types';
 import { todayIso } from './dueLabel';
@@ -74,6 +74,8 @@ function PaymentForm({ receivable, onClose }: { receivable: Receivable; onClose:
   const isFull = numericAmount >= receivable.outstandingAmount;
   const paidShare = receivable.totalAmount > 0 ? receivable.paidAmount / receivable.totalAmount : 0;
 
+  useErrorToast(register.error);
+
   return (
     <form onSubmit={(event) => void submit(event).catch(() => undefined)} className="space-y-4">
       <div className="rounded-xl border border-line bg-surface-2 p-4">
@@ -103,10 +105,6 @@ function PaymentForm({ receivable, onClose }: { receivable: Receivable; onClose:
           />
         </div>
       </div>
-
-      {register.error && !errors.hasFieldErrors(register.error) && (
-        <Alert tone="danger">{errors.message(register.error)}</Alert>
-      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field

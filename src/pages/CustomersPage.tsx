@@ -68,7 +68,7 @@ export function CustomersPage() {
       await remove.mutateAsync(customer.id);
       toast.success(t('customers.deleted'));
     } catch (error) {
-      toast.error(errors.message(error));
+      toast.apiError(error);
     }
   };
 

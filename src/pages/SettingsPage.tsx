@@ -32,7 +32,6 @@ import {
   useFeedback,
   type DataTableColumn,
   LOCALES,
-  useErrorText,
   useTheme,
   type ThemePreference,
 } from '@/ui';
@@ -103,7 +102,6 @@ function RemindersTab() {
   const { t } = useI18n();
   const { isAdmin } = useAuth();
   const { toast } = useFeedback();
-  const errors = useErrorText();
   const { data, isLoading } = useReminderRules();
   const save = useSaveReminderRules();
   const run = useRunReminders();
@@ -122,7 +120,7 @@ function RemindersTab() {
       setDraft(null);
       toast.success(t('settings.reminders.saved'));
     } catch (error) {
-      toast.error(errors.message(error));
+      toast.apiError(error);
     }
   };
 
@@ -136,7 +134,7 @@ function RemindersTab() {
             evaluated: result.evaluated,
           }),
         ),
-      onError: (error) => toast.error(errors.message(error)),
+      onError: (error) => toast.apiError(error),
     });
 
   if (isLoading || !rules) return <Skeleton className="h-80 w-full" />;
@@ -282,7 +280,6 @@ function TemplateEditor({
   const { t } = useI18n();
   const { isAdmin } = useAuth();
   const { toast } = useFeedback();
-  const errors = useErrorText();
   const save = useSaveTemplate();
   const [text, setText] = useState(template.text);
   const textarea = useRef<HTMLTextAreaElement>(null);
@@ -306,7 +303,7 @@ function TemplateEditor({
       setText(result.text);
       toast.success(reset ? t('settings.templates.restored') : t('settings.templates.saved'));
     } catch (error) {
-      toast.error(errors.message(error));
+      toast.apiError(error);
     }
   };
 

@@ -17,7 +17,6 @@ import {
   RankingBars,
   Skeleton,
   Stat,
-  useErrorText,
   useFeedback,
 } from '@/ui';
 import { useAuth } from '../../auth/AuthContext';
@@ -31,7 +30,6 @@ function MonthlyReportCard({ report }: { report: MonthlyReport | null }) {
   const { t, fmt } = useI18n();
   const { isAdmin } = useAuth();
   const { toast } = useFeedback();
-  const errors = useErrorText();
   const generate = useGenerateMonthlyReport();
 
   return (
@@ -53,7 +51,7 @@ function MonthlyReportCard({ report }: { report: MonthlyReport | null }) {
             onClick={() =>
               generate.mutate(undefined, {
                 onSuccess: () => toast.success(t('dashboard.report.generated')),
-                onError: (error) => toast.error(errors.message(error)),
+                onError: (error) => toast.apiError(error),
               })
             }
           >

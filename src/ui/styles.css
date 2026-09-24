@@ -333,14 +333,23 @@ body {
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateY(14px) scale(0.95);
+    transform: translateY(-16px) scale(0.94);
   }
 }
 
 @keyframes toast-out {
   to {
     opacity: 0;
-    transform: translateX(24px) scale(0.97);
+    transform: translateX(28px) scale(0.96);
+  }
+}
+
+@keyframes toast-timer {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
   }
 }
 
@@ -406,7 +415,14 @@ body {
   animation: toast-in 320ms var(--ease-out) both;
 }
 .toast[data-state='closing'] {
-  animation: toast-out 180ms var(--ease-in) both;
+  animation: toast-out 200ms var(--ease-in) both;
+}
+/* Countdown bar under each toast; its duration and play state are set inline. */
+.toast-timer {
+  transform-origin: left;
+  animation-name: toast-timer;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
 }
 
 /* Scroll reveal (see <Reveal>): content rises in the first time it enters the viewport. */

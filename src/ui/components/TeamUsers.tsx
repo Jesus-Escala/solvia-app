@@ -10,6 +10,7 @@ import {
 import { useState } from 'react';
 import { useUiI18n } from '../i18n/context';
 import { useErrorText } from '../i18n/useErrorText';
+import { useErrorToast } from './Overlays';
 import { IconButton, Button } from './Button';
 import { DataTable, type DataTableColumn } from './DataTable';
 import { Avatar, Badge } from './Display';
@@ -75,6 +76,8 @@ function UserForm({
     }
   };
 
+  useErrorToast(error);
+
   return (
     <form
       className="space-y-3.5"
@@ -83,9 +86,6 @@ function UserForm({
         void submit();
       }}
     >
-      {error !== null && !errors.hasFieldErrors(error) && (
-        <Alert tone="danger">{errors.message(error)}</Alert>
-      )}
       <Field label={t('team.name')} error={errors.field(error, 'name')}>
         {(id) => (
           <input
@@ -191,7 +191,7 @@ export function TeamUsers({
       await onUpdate(user.id, { active: !user.active });
       toast.success(t(disabling ? 'team.disabled' : 'team.enabled', { name: user.name }));
     } catch (err) {
-      toast.error(errors.message(err));
+      toast.apiError(err);
     }
   };
 
@@ -208,7 +208,7 @@ export function TeamUsers({
       const { temporaryPassword } = await onResetPassword(user.id);
       setCredentials({ name: user.name, email: user.email, password: temporaryPassword });
     } catch (err) {
-      toast.error(errors.message(err));
+      toast.apiError(err);
     }
   };
 

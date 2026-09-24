@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useAuth } from '../../auth/AuthContext';
 import { useDeleteReceivable, usePaymentLink, useSendReminder } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
-import { useErrorText, Button, IconButton, MenuItems, Popover, useFeedback } from '@/ui';
+import { Button, IconButton, MenuItems, Popover, useFeedback } from '@/ui';
 import type { Receivable } from '../../lib/types';
 import { PaymentFormModal } from './PaymentFormModal';
 import { ReceivableFormModal } from './ReceivableFormModal';
@@ -19,7 +19,6 @@ import { ReceivableFormModal } from './ReceivableFormModal';
 export function useReceivableActions() {
   const { t, fmt } = useI18n();
   const { isAdmin } = useAuth();
-  const errors = useErrorText();
   const { toast, confirm } = useFeedback();
   const [paying, setPaying] = useState<Receivable | null>(null);
   const [editing, setEditing] = useState<Receivable | null>(null);
@@ -28,7 +27,7 @@ export function useReceivableActions() {
   const remove = useDeleteReceivable();
 
   const run = (action: () => Promise<void>) =>
-    void action().catch((error: unknown) => toast.error(errors.message(error)));
+    void action().catch((error: unknown) => toast.apiError(error));
 
   const sendReminder = (receivable: Receivable) =>
     run(async () => {

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useCustomers, useSaveReceivable } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
-import { useErrorText, Alert, Button, Field, Modal, useFeedback } from '@/ui';
+import { useErrorText, Button, Field, Modal, useFeedback, useErrorToast } from '@/ui';
 import type { Receivable } from '../../lib/types';
 import { addDaysIso, todayIso } from './dueLabel';
 
@@ -52,11 +52,10 @@ function ReceivableForm({ onClose, customerId, receivable }: Omit<Props, 'open'>
     onClose();
   };
 
+  useErrorToast(save.error);
+
   return (
     <form onSubmit={(event) => void submit(event).catch(() => undefined)} className="space-y-4">
-      {save.error && !errors.hasFieldErrors(save.error) && (
-        <Alert tone="danger">{errors.message(save.error)}</Alert>
-      )}
       <Field label={t('receivables.form.customer')} error={errors.field(save.error, 'customerId')}>
         {(id) => (
           <select
