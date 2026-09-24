@@ -24,12 +24,19 @@ export class ApiError extends Error {
 
 export type Query = Record<string, string | number | boolean | undefined | null>;
 
+export interface DownloadedFile {
+  blob: Blob;
+  fileName: string | null;
+}
+
 interface RequestOptions {
   method?: string;
   body?: unknown;
   query?: Query;
   /** Return the raw response body as a Blob (e.g. PDFs). */
   blob?: boolean;
+  /** Return `{ blob, fileName }` (file name from Content-Disposition). */
+  file?: boolean;
   auth?: boolean;
   /** Cancels the request (e.g. a search superseded by the next keystroke). */
   signal?: AbortSignal;
@@ -106,7 +113,15 @@ export function createApiClient({
   }
 
   async function request<T>(path: string, options: RequestOptions = {}, retry = true): Promise<T> {
-    const { method = 'GET', body, query, blob = false, auth = true, signal } = options;
+    const {
+      method = 'GET',
+      body,
+      query,
+      blob = false,
+      file = false,
+      auth = true,
+      signal,
+    } = options;
     // The interface language (set on <html lang> by the I18nProvider): the API writes statements
     // and WhatsApp messages in it.
     const headers: Record<string, string> = {
@@ -145,6 +160,11 @@ export function createApiClient({
     if (response.status === 204) {
       return undefined as T;
     }
+    if (file) {
+      const disposition = response.headers.get('Content-Disposition') ?? '';
+      const fileName = /filename="?([^";]+)"?/.exec(disposition)?.[1] ?? null;
+      return { blob: await response.blob(), fileName } as T;
+    }
     return (blob ? await response.blob() : await response.json()) as T;
   }
 
@@ -156,6 +176,9 @@ export function createApiClient({
     patch: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PATCH', body }),
     delete: <T = void>(path: string) => request<T>(path, { method: 'DELETE' }),
     blob: (path: string) => request<Blob>(path, { blob: true }),
+    /** A file with the name the server gave it (null when it sent none). */
+    file: (path: string, query?: Query) =>
+      request<DownloadedFile>(path, { file: true, ...(query && { query }) }),
     public: {
       get: <T>(path: string) => request<T>(path, { auth: false }),
       post: <T>(path: string, body?: unknown) =>

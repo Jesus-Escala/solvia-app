@@ -1,7 +1,7 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { CashFlowBucket } from '../../lib/types';
-import { ChartTooltipCard, AXIS_TICK, CHART_HEIGHT, useChartColors } from '@/ui';
+import { ChartTooltipCard, AXIS_TICK, CHART_HEIGHT, DataTable, useChartColors } from '@/ui';
 
 /** Expected inflows per period: single-series thin bars, or an accessible table view. */
 export function CashFlowChart({
@@ -24,38 +24,50 @@ export function CashFlowChart({
 
   if (view === 'table') {
     return (
-      <div className="max-h-[260px] overflow-auto rounded-lg border border-line">
-        <table className="w-full text-sm">
-          <thead className="sticky top-0 bg-surface-2 text-[11px] tracking-wide text-muted uppercase">
-            <tr>
-              <th className="px-3 py-2 text-left font-semibold">
-                {t('dashboard.cashFlow.period')}
-              </th>
-              <th className="px-3 py-2 text-left font-semibold">{t('dashboard.cashFlow.dates')}</th>
-              <th className="px-3 py-2 text-right font-semibold">
-                {t('dashboard.cashFlow.receivables')}
-              </th>
-              <th className="px-3 py-2 text-right font-semibold">
-                {t('dashboard.cashFlow.expectedAmount')}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {buckets.map((bucket) => (
-              <tr key={bucket.key} className="border-t border-line">
-                <td className="px-3 py-2 font-medium">{label(bucket)}</td>
-                <td className="px-3 py-2 text-muted">
-                  {fmt.shortDate(bucket.start)} – {fmt.shortDate(bucket.end)}
-                </td>
-                <td className="px-3 py-2 text-right tabular-nums">{bucket.count}</td>
-                <td className="px-3 py-2 text-right font-semibold tabular-nums">
-                  {fmt.money(bucket.amount)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        caption={t('dashboard.cashFlow.title')}
+        fill={false}
+        maxHeight={260}
+        rows={buckets}
+        rowKey={(bucket) => bucket.key}
+        columns={[
+          {
+            id: 'period',
+            header: t('dashboard.cashFlow.period'),
+            mobile: 'title',
+            sortValue: (bucket) => bucket.start,
+            cell: (bucket) => <span className="font-medium">{label(bucket)}</span>,
+          },
+          {
+            id: 'dates',
+            header: t('dashboard.cashFlow.dates'),
+            mobile: 'subtitle',
+            sortValue: (bucket) => bucket.start,
+            cell: (bucket) => (
+              <span className="text-muted">
+                {fmt.shortDate(bucket.start)} – {fmt.shortDate(bucket.end)}
+              </span>
+            ),
+          },
+          {
+            id: 'count',
+            header: t('dashboard.cashFlow.receivables'),
+            align: 'right',
+            sortValue: (bucket) => bucket.count,
+            cell: (bucket) => <span className="tabular-nums">{bucket.count}</span>,
+          },
+          {
+            id: 'amount',
+            header: t('dashboard.cashFlow.expectedAmount'),
+            align: 'right',
+            mobile: 'aside',
+            sortValue: (bucket) => bucket.amount,
+            cell: (bucket) => (
+              <span className="font-semibold tabular-nums">{fmt.money(bucket.amount)}</span>
+            ),
+          },
+        ]}
+      />
     );
   }
 

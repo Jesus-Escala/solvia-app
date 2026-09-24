@@ -149,6 +149,7 @@ function ProductsList() {
     {
       id: 'unit',
       header: t('products.columns.unit'),
+      sortable: true,
       mobile: 'subtitle',
       cell: (row) => t(`products.units.${row.unit}`),
     },
@@ -172,7 +173,7 @@ function ProductsList() {
       id: 'margin',
       header: t('products.columns.margin'),
       align: 'right',
-      sortValue: (row) => (row.cost === null ? null : row.price - row.cost),
+      sortable: true,
       cell: (row) =>
         row.cost === null ? (
           <span className="text-subtle">—</span>
@@ -188,7 +189,7 @@ function ProductsList() {
             id: 'stock',
             header: t('products.columns.stock'),
             align: 'right' as const,
-            sortValue: (row: Product) => (row.trackStock ? row.stock : null),
+            sortable: true,
             cell: (row: Product) =>
               !row.trackStock ? (
                 <span className="text-subtle">{t('products.noStock')}</span>
@@ -207,6 +208,7 @@ function ProductsList() {
     {
       id: 'minStock',
       header: t('products.columns.minStock'),
+      sortable: true,
       align: 'right',
       defaultHidden: true,
       cell: (row) =>

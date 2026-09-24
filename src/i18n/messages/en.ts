@@ -41,7 +41,7 @@ export const en: Messages = {
       commercial: 'Sales',
       receivables: 'Receivables',
       inventory: 'Inventory',
-      numbers: 'Numbers',
+      numbers: 'Results',
     },
     customers: 'Customers',
     receivables: 'Owed to me',
@@ -118,6 +118,18 @@ export const en: Messages = {
       hint: 'Reports show your sales and payments by customer, your best sellers and your stock.',
     },
   },
+  viewer: {
+    preparing: 'Preparing the file…',
+    cannotPreview: 'The preview could not be shown. Download it to open it.',
+    downloadPdf: 'Download PDF',
+    downloadExcel: 'Download Excel',
+    zoomIn: 'Zoom in',
+    zoomOut: 'Zoom out',
+    fit: 'Fit to width',
+    emptySheet: 'The file has no data.',
+    size: '{rows} rows · {columns} columns',
+    truncated: 'Preview of the first {rows} rows; download it to see everything.',
+  },
   reports: {
     title: 'Reports',
     subtitle:
@@ -153,7 +165,8 @@ export const en: Messages = {
       shortages: 'Good! Nothing was sold without stock in those dates.',
     },
     empty: 'Nothing to show',
-    download: 'Download Excel',
+    viewPdf: 'View PDF',
+    viewExcel: 'View Excel',
     voided: 'Voided',
     columns: {
       customer: 'Customer',

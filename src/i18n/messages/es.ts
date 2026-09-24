@@ -43,7 +43,7 @@ export const es = {
       commercial: 'Comercial',
       receivables: 'Cuentas por cobrar',
       inventory: 'Inventario',
-      numbers: 'Números',
+      numbers: 'Resultados',
     },
     customers: 'Clientes',
     receivables: 'Me deben',
@@ -120,6 +120,18 @@ export const es = {
       hint: 'En Reportes ves tus ventas y cobros por cliente, lo que más vendes y tu stock.',
     },
   },
+  viewer: {
+    preparing: 'Preparando el archivo…',
+    cannotPreview: 'No se pudo mostrar la vista previa. Descárgalo para abrirlo.',
+    downloadPdf: 'Descargar PDF',
+    downloadExcel: 'Descargar Excel',
+    zoomIn: 'Acercar',
+    zoomOut: 'Alejar',
+    fit: 'Ajustar al ancho',
+    emptySheet: 'El archivo no tiene datos.',
+    size: '{rows} filas · {columns} columnas',
+    truncated: 'Vista previa de las primeras {rows} filas; descárgalo para verlo completo.',
+  },
   reports: {
     title: 'Reportes',
     subtitle:
@@ -154,7 +166,8 @@ export const es = {
       shortages: '¡Bien! En esas fechas no vendiste nada sin stock.',
     },
     empty: 'Nada que mostrar',
-    download: 'Descargar Excel',
+    viewPdf: 'Ver PDF',
+    viewExcel: 'Ver Excel',
     voided: 'Anulada',
     columns: {
       customer: 'Cliente',

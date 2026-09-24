@@ -34,7 +34,7 @@ export interface NavSection {
 
 /**
  * The whole navigation, grouped by area of the business: Comercial (selling, customers),
- * Cuentas por cobrar (what is owed), Inventario (products, purchases, suppliers) and Números
+ * Cuentas por cobrar (what is owed), Inventario (products, purchases, suppliers) and Resultados
  * (dashboard charts and tabular reports). Settings and help go at the bottom.
  * Items of a module the business does not have are left out (see `visibleSections`).
  */

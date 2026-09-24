@@ -11,6 +11,7 @@ import {
   SearchInput,
   useErrorText,
   useFeedback,
+  urlSort,
   useUrlState,
   type DataTableColumn,
 } from '@/ui';
@@ -21,7 +22,8 @@ import { useI18n } from '../i18n/I18nProvider';
 import type { Purchase } from '../lib/types';
 import { ModuleOff } from './ProductsPage';
 
-const DEFAULTS = { search: '', page: '1', pageSize: '20' };
+// Empty sort = newest first.
+const DEFAULTS = { search: '', page: '1', pageSize: '20', sortBy: '', sortDir: '' };
 
 function PurchaseDetail({ purchase, onClose }: { purchase: Purchase; onClose: () => void }) {
   const { t, fmt } = useI18n();
@@ -110,11 +112,14 @@ function PurchasesList() {
     search: state.search || null,
     page: Number(state.page) || 1,
     pageSize: Number(state.pageSize) || 20,
+    sortBy: (state.sortBy || null) as 'number' | 'supplier' | 'items' | 'total' | null,
+    sortDir: state.sortDir === 'desc' ? 'desc' : 'asc',
   });
 
   const columns: Array<DataTableColumn<Purchase>> = [
     {
       id: 'number',
+      sortable: true,
       header: t('purchases.columns.number'),
       hideable: false,
       mobile: 'title',
@@ -134,6 +139,7 @@ function PurchasesList() {
     },
     {
       id: 'supplier',
+      sortable: true,
       header: t('purchases.columns.supplier'),
       mobile: 'subtitle',
       cell: (row) =>
@@ -141,12 +147,14 @@ function PurchasesList() {
     },
     {
       id: 'items',
+      sortable: true,
       header: t('purchases.columns.items'),
       minWidth: 220,
       cell: (row) => <span className="line-clamp-1 text-muted">{row.summary}</span>,
     },
     {
       id: 'total',
+      sortable: true,
       header: t('sales.columns.total'),
       align: 'right',
       mobile: 'aside',
@@ -187,6 +195,7 @@ function PurchasesList() {
         {...(query.error && {
           error: <Alert tone="danger">{errors.message(query.error)}</Alert>,
         })}
+        {...urlSort(state, update)}
         onRowClick={(row) => setViewing(row)}
         pagination={
           query.data && {

@@ -15,12 +15,13 @@ import {
   Wallet,
   XCircle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
 import { RiskBadge } from '../components/domain/Badges';
 import { PaymentMethodLabel } from '../components/domain/PaymentMethods';
 import { CustomerFormModal } from '../components/domain/CustomerFormModal';
+import { FileViewer, type ViewerRequest } from '../components/files/FileViewer';
 import { useReceivableColumns } from '../components/domain/receivableColumns';
 import { ReceivableFormModal } from '../components/domain/ReceivableFormModal';
 import { useReceivableActions } from '../components/domain/useReceivableActions';
@@ -68,7 +69,8 @@ export function CustomerDetailPage() {
   const [tab, setTab] = useState<TabKey>('receivables');
   const [editing, setEditing] = useState(false);
   const [addingReceivable, setAddingReceivable] = useState(false);
-  const [opening, setOpening] = useState(false);
+  const [statement, setStatement] = useState<ViewerRequest | null>(null);
+  const closeStatement = useCallback(() => setStatement(null), []);
   const sendStatement = useSendStatement();
   const deleteCustomer = useDeleteCustomer();
   const actions = useReceivableActions();
@@ -90,23 +92,14 @@ export function CustomerDetailPage() {
     );
   }
 
-  const openStatement = async () => {
-    setOpening(true);
-    // Open the tab synchronously so popup blockers allow it, then load the PDF into it.
-    const tab = window.open('', '_blank');
-    try {
-      const blob = await api.blob(`/customers/${customer.id}/statement`);
-      const url = URL.createObjectURL(blob);
-      if (tab) tab.location.href = url;
-      else window.location.assign(url);
-      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    } catch (err) {
-      tab?.close();
-      toast.apiError(err);
-    } finally {
-      setOpening(false);
-    }
-  };
+  // The statement opens in the in-page viewer (works on phones too) with its download button.
+  const openStatement = () =>
+    setStatement({
+      kind: 'pdf',
+      title: t('customerDetail.viewStatement'),
+      fileName: 'solvia-statement.pdf',
+      load: () => api.file(`/customers/${customer.id}/statement`),
+    });
 
   const sendStatementNow = async () => {
     try {
@@ -270,8 +263,7 @@ export function CustomerDetailPage() {
             <Button
               variant="secondary"
               icon={<FileText className="h-4 w-4" />}
-              loading={opening}
-              onClick={() => void openStatement()}
+              onClick={openStatement}
               title={t('customerDetail.viewStatement')}
               aria-label={t('customerDetail.viewStatement')}
             >
@@ -439,6 +431,7 @@ export function CustomerDetailPage() {
       )}
 
       {actions.modals}
+      <FileViewer request={statement} onClose={closeStatement} />
       <CustomerFormModal open={editing} customer={customer} onClose={() => setEditing(false)} />
       <ReceivableFormModal
         open={addingReceivable}

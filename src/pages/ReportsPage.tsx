@@ -1,4 +1,13 @@
-import { AlertTriangle, Boxes, Download, HandCoins, ShoppingBag, UserRound } from 'lucide-react';
+import {
+  AlertTriangle,
+  Boxes,
+  FileSpreadsheet,
+  FileText,
+  HandCoins,
+  ShoppingBag,
+  UserRound,
+} from 'lucide-react';
+import { useCallback, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router';
 import {
@@ -7,7 +16,6 @@ import {
   Button,
   cx,
   DataTable,
-  downloadCsv,
   KpiCard,
   KpiRow,
   Page,
@@ -18,7 +26,9 @@ import {
 } from '@/ui';
 import { isValidRange, presetRange, type PeriodRange } from '../components/dashboard/period';
 import { PeriodPicker } from '../components/dashboard/PeriodPicker';
+import { FileViewer, type ViewerKind, type ViewerRequest } from '../components/files/FileViewer';
 import { useReport } from '../hooks/queries';
+import { api } from '../lib/api';
 import { useModules } from '../hooks/useModules';
 import { useI18n, type TranslationKey } from '../i18n/I18nProvider';
 import type {
@@ -128,7 +138,8 @@ function ReportChooser({
 
 /**
  * Reports: plain tables to answer "who bought / paid how much", "what sold", "what stock do I
- * have" and "when did I sell without stock", for any date range, downloadable for Excel.
+ * have" and "when did I sell without stock", for any date range; each one can be seen and
+ * downloaded as PDF or Excel without leaving the page.
  * The charts live in the dashboard.
  */
 export function ReportsPage() {
@@ -185,7 +196,19 @@ function ReportView({
   const errors = useErrorText();
   const query = useReport(report.id, report.dated ? range : null);
   const table = useReportTable(report.id, query.data);
-  const fileName = `solvia-${report.id}${report.dated ? `-${range.from}-${range.to}` : ''}`;
+  const [viewing, setViewing] = useState<ViewerRequest | null>(null);
+  const closeViewer = useCallback(() => setViewing(null), []);
+  const view = (kind: ViewerKind) =>
+    setViewing({
+      kind,
+      title: t(`reports.names.${report.id}`),
+      fileName: `solvia-${report.id}.${kind}`,
+      load: () =>
+        api.file(`/reports/${report.id}/export`, {
+          format: kind,
+          ...(report.dated && { from: range.from, to: range.to }),
+        }),
+    });
 
   return (
     <>
@@ -201,14 +224,24 @@ function ReportView({
         ) : (
           <span />
         )}
-        <Button
-          variant="secondary"
-          icon={<Download className="h-4 w-4" />}
-          disabled={!query.data || query.data.rows.length === 0}
-          onClick={() => downloadCsv(fileName, table.csvHeader, table.csvRows)}
-        >
-          {t('reports.download')}
-        </Button>
+        <div className="grid grid-cols-2 gap-2 sm:flex">
+          <Button
+            variant="secondary"
+            icon={<FileText className="h-4 w-4 text-danger-ink" />}
+            disabled={!query.data}
+            onClick={() => view('pdf')}
+          >
+            {t('reports.viewPdf')}
+          </Button>
+          <Button
+            variant="secondary"
+            icon={<FileSpreadsheet className="h-4 w-4 text-success-ink" />}
+            disabled={!query.data}
+            onClick={() => view('xlsx')}
+          >
+            {t('reports.viewExcel')}
+          </Button>
+        </div>
       </div>
       <KpiRow>
         {table.kpis.map((kpi) => (
@@ -226,6 +259,7 @@ function ReportView({
         error={query.error ? <Alert tone="danger">{errors.message(query.error)}</Alert> : undefined}
         empty={{ title: t('reports.empty'), description: t(`reports.emptyHints.${report.id}`) }}
       />
+      <FileViewer request={viewing} onClose={closeViewer} />
     </>
   );
 }
@@ -239,11 +273,9 @@ interface ReportTable {
     value: string;
     tone?: 'default' | 'danger' | 'success' | 'warning';
   }>;
-  csvHeader: string[];
-  csvRows: Array<Array<string | number | null>>;
 }
 
-/** Columns, headline figures and CSV of each report. */
+/** Columns and headline figures of each report. */
 function useReportTable<R extends ReportId>(
   report: R,
   data: ReportTypes[R] | undefined,
@@ -257,15 +289,13 @@ function useReportTable<R extends ReportId>(
   const build = <Row,>(
     rows: Row[] | undefined,
     rowKey: (row: Row) => string,
-    columns: Array<DataTableColumn<Row> & { csv: (row: Row) => string | number | null }>,
+    columns: Array<DataTableColumn<Row>>,
     kpis: ReportTable['kpis'],
   ): ReportTable => ({
     columns: columns as unknown as Array<DataTableColumn<never>>,
     rows: rows as never[] | undefined,
     rowKey: rowKey as (row: never) => string,
     kpis,
-    csvHeader: columns.map((column) => column.header),
-    csvRows: (rows ?? []).map((row) => columns.map((column) => column.csv(row))),
   });
 
   switch (report) {
@@ -282,7 +312,6 @@ function useReportTable<R extends ReportId>(
             minWidth: 180,
             cell: (row) => row.name ?? <span className="text-muted">{walkIn}</span>,
             sortValue: (row) => row.name ?? walkIn,
-            csv: (row) => row.name ?? walkIn,
           },
           {
             id: 'total',
@@ -291,7 +320,6 @@ function useReportTable<R extends ReportId>(
             mobile: 'aside',
             cell: (row) => <span className="font-semibold tabular-nums">{money(row.total)}</span>,
             sortValue: (row) => row.total,
-            csv: (row) => row.total,
           },
           {
             id: 'sales',
@@ -299,7 +327,6 @@ function useReportTable<R extends ReportId>(
             align: 'right',
             cell: (row) => qty(row.sales),
             sortValue: (row) => row.sales,
-            csv: (row) => row.sales,
           },
           {
             id: 'cash',
@@ -307,7 +334,6 @@ function useReportTable<R extends ReportId>(
             align: 'right',
             cell: (row) => money(row.cash),
             sortValue: (row) => row.cash,
-            csv: (row) => row.cash,
           },
           {
             id: 'credit',
@@ -315,14 +341,12 @@ function useReportTable<R extends ReportId>(
             align: 'right',
             cell: (row) => money(row.credit),
             sortValue: (row) => row.credit,
-            csv: (row) => row.credit,
           },
           {
             id: 'last',
             header: t('reports.columns.lastSale'),
             cell: (row) => fmt.date(row.lastSale),
             sortValue: (row) => row.lastSale,
-            csv: (row) => row.lastSale,
           },
         ],
         [
@@ -342,15 +366,12 @@ function useReportTable<R extends ReportId>(
       const method = (
         key: 'yape' | 'plin' | 'cash' | 'bankTransfer',
         label: TranslationKey,
-      ): DataTableColumn<CollectionsByCustomerRow> & {
-        csv: (row: CollectionsByCustomerRow) => number;
-      } => ({
+      ): DataTableColumn<CollectionsByCustomerRow> => ({
         id: key,
         header: t(label),
         align: 'right',
         cell: (row) => (row[key] ? money(row[key]) : <span className="text-subtle">—</span>),
         sortValue: (row) => row[key],
-        csv: (row) => row[key],
       });
       return build<CollectionsByCustomerRow>(
         d?.rows,
@@ -363,7 +384,6 @@ function useReportTable<R extends ReportId>(
             minWidth: 180,
             cell: (row) => row.name,
             sortValue: (row) => row.name,
-            csv: (row) => row.name,
           },
           {
             id: 'amount',
@@ -372,7 +392,6 @@ function useReportTable<R extends ReportId>(
             mobile: 'aside',
             cell: (row) => <span className="font-semibold tabular-nums">{money(row.amount)}</span>,
             sortValue: (row) => row.amount,
-            csv: (row) => row.amount,
           },
           {
             id: 'payments',
@@ -380,7 +399,6 @@ function useReportTable<R extends ReportId>(
             align: 'right',
             cell: (row) => qty(row.payments),
             sortValue: (row) => row.payments,
-            csv: (row) => row.payments,
           },
           method('yape', 'methods.yape'),
           method('plin', 'methods.plin'),
@@ -391,7 +409,6 @@ function useReportTable<R extends ReportId>(
             header: t('reports.columns.lastPayment'),
             cell: (row) => fmt.date(row.lastPayment),
             sortValue: (row) => row.lastPayment,
-            csv: (row) => row.lastPayment,
           },
         ],
         [
@@ -418,7 +435,6 @@ function useReportTable<R extends ReportId>(
             minWidth: 200,
             cell: (row) => row.name,
             sortValue: (row) => row.name,
-            csv: (row) => row.name,
           },
           {
             id: 'revenue',
@@ -427,7 +443,6 @@ function useReportTable<R extends ReportId>(
             mobile: 'aside',
             cell: (row) => <span className="font-semibold tabular-nums">{money(row.revenue)}</span>,
             sortValue: (row) => row.revenue,
-            csv: (row) => row.revenue,
           },
           {
             id: 'quantity',
@@ -435,7 +450,6 @@ function useReportTable<R extends ReportId>(
             align: 'right',
             cell: (row) => `${qty(row.quantity)} ${unit(row.unit)}`,
             sortValue: (row) => row.quantity,
-            csv: (row) => row.quantity,
           },
           {
             id: 'cost',
@@ -443,7 +457,6 @@ function useReportTable<R extends ReportId>(
             align: 'right',
             cell: (row) => money(row.cost),
             sortValue: (row) => row.cost,
-            csv: (row) => row.cost,
           },
           {
             id: 'profit',
@@ -460,7 +473,6 @@ function useReportTable<R extends ReportId>(
               </span>
             ),
             sortValue: (row) => row.profit,
-            csv: (row) => row.profit,
           },
           {
             id: 'sales',
@@ -468,7 +480,6 @@ function useReportTable<R extends ReportId>(
             align: 'right',
             cell: (row) => qty(row.sales),
             sortValue: (row) => row.sales,
-            csv: (row) => row.sales,
           },
         ],
         [
@@ -501,7 +512,6 @@ function useReportTable<R extends ReportId>(
               </span>
             ),
             sortValue: (row) => row.name,
-            csv: (row) => row.name,
           },
           {
             id: 'status',
@@ -514,7 +524,6 @@ function useReportTable<R extends ReportId>(
             ),
             // Out of stock first when sorting ascending.
             sortValue: (row) => ({ out: 0, low: 1, ok: 2 })[row.status],
-            csv: (row) => t(`reports.stockStatus.${row.status}`),
           },
           {
             id: 'stock',
@@ -529,7 +538,6 @@ function useReportTable<R extends ReportId>(
               </span>
             ),
             sortValue: (row) => row.stock,
-            csv: (row) => row.stock,
           },
           {
             id: 'minStock',
@@ -537,7 +545,6 @@ function useReportTable<R extends ReportId>(
             align: 'right',
             cell: (row) => (row.minStock === null ? '—' : qty(row.minStock)),
             sortValue: (row) => row.minStock,
-            csv: (row) => row.minStock,
           },
           {
             id: 'cost',
@@ -545,7 +552,6 @@ function useReportTable<R extends ReportId>(
             align: 'right',
             cell: (row) => money(row.cost),
             sortValue: (row) => row.cost,
-            csv: (row) => row.cost,
           },
           {
             id: 'value',
@@ -553,7 +559,6 @@ function useReportTable<R extends ReportId>(
             align: 'right',
             cell: (row) => money(row.value),
             sortValue: (row) => row.value,
-            csv: (row) => row.value,
           },
           {
             id: 'retail',
@@ -561,7 +566,6 @@ function useReportTable<R extends ReportId>(
             align: 'right',
             cell: (row) => money(row.retail),
             sortValue: (row) => row.retail,
-            csv: (row) => row.retail,
           },
         ],
         [
@@ -585,7 +589,6 @@ function useReportTable<R extends ReportId>(
             minWidth: 150,
             cell: (row) => fmt.dateTime(row.at),
             sortValue: (row) => row.at,
-            csv: (row) => row.at,
           },
           {
             id: 'product',
@@ -594,7 +597,6 @@ function useReportTable<R extends ReportId>(
             minWidth: 180,
             cell: (row) => row.product,
             sortValue: (row) => row.product,
-            csv: (row) => row.product,
           },
           {
             id: 'shortage',
@@ -607,7 +609,6 @@ function useReportTable<R extends ReportId>(
               </span>
             ),
             sortValue: (row) => row.shortage,
-            csv: (row) => row.shortage,
           },
           {
             id: 'quantity',
@@ -615,7 +616,6 @@ function useReportTable<R extends ReportId>(
             align: 'right',
             cell: (row) => qty(row.quantity),
             sortValue: (row) => row.quantity,
-            csv: (row) => row.quantity,
           },
           {
             id: 'balance',
@@ -630,7 +630,6 @@ function useReportTable<R extends ReportId>(
                 </span>
               ),
             sortValue: (row) => row.balanceAfter,
-            csv: (row) => row.balanceAfter,
           },
           {
             id: 'sale',
@@ -644,15 +643,12 @@ function useReportTable<R extends ReportId>(
               </span>
             ),
             sortValue: (row) => row.sale.number,
-            csv: (row) =>
-              `#${row.sale.number}${row.sale.status === 'voided' ? ` (${t('reports.voided')})` : ''}`,
           },
           {
             id: 'customer',
             header: t('reports.columns.customer'),
             cell: (row) => row.customer ?? <span className="text-muted">{walkIn}</span>,
             sortValue: (row) => row.customer ?? walkIn,
-            csv: (row) => row.customer ?? walkIn,
           },
         ],
         [

@@ -43,3 +43,24 @@ export function useUrlState<T extends Record<string, string>>(defaults: T) {
 
   return [state, update] as const;
 }
+
+/**
+ * Connects a server-sorted `DataTable` to `useUrlState` (keys `sortBy` / `sortDir`): spread the
+ * result on the table. Changing the order goes back to page 1; a third click on a header clears
+ * it (the list's default order).
+ */
+export function urlSort(
+  state: { sortBy: string; sortDir: string },
+  update: (changes: { sortBy: string; sortDir: string; page: string }) => void,
+) {
+  return {
+    ...(state.sortBy && {
+      sort: {
+        id: state.sortBy,
+        dir: state.sortDir === 'desc' ? ('desc' as const) : ('asc' as const),
+      },
+    }),
+    onSortChange: (sort: { id: string; dir: 'asc' | 'desc' } | null) =>
+      update({ sortBy: sort?.id ?? '', sortDir: sort?.dir ?? '', page: '1' }),
+  };
+}

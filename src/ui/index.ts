@@ -97,13 +97,14 @@ export {
   createTokenStore,
   errorMessage,
   type ApiClient,
+  type DownloadedFile,
   type Query,
   type TokenStore,
 } from './lib/http';
 
 // Hooks
 export { useMinimumLoading } from './hooks/useMinimumLoading';
-export { useUrlState } from './hooks/useUrlState';
+export { urlSort, useUrlState } from './hooks/useUrlState';
 
 // Install as an app (PWA)
 export { InstallAppChip, PwaInstallGuide, PwaUpdatePrompt } from './pwa/InstallApp';

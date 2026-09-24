@@ -9,11 +9,20 @@ export interface ModalProps {
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  /** `full`: almost the whole screen, with a fixed height (file viewers). */
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  /** The body has no padding (content that draws its own edges, like a viewer). */
+  flush?: boolean;
   closeLabel?: string;
 }
 
-const SIZES = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-6xl' };
+const SIZES = {
+  sm: 'max-w-sm',
+  md: 'max-w-lg',
+  lg: 'max-w-2xl',
+  xl: 'max-w-6xl',
+  full: 'max-w-[1400px] h-[calc(100dvh-1.5rem)] sm:h-[calc(100dvh-2rem)]',
+};
 
 /**
  * Accessible modal built on the native <dialog> (focus trap, Escape and top layer for free).
@@ -27,6 +36,7 @@ export function Modal({
   children,
   footer,
   size = 'md',
+  flush = false,
   closeLabel = 'Close',
 }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -106,7 +116,12 @@ export function Modal({
       )}
     >
       {phase !== 'closed' && (
-        <div className="flex max-h-[calc(100dvh-1.5rem-2px)] flex-col sm:max-h-[calc(100dvh-2rem-2px)]">
+        <div
+          className={cx(
+            'flex max-h-[calc(100dvh-1.5rem-2px)] flex-col sm:max-h-[calc(100dvh-2rem-2px)]',
+            size === 'full' && 'h-full',
+          )}
+        >
           <header className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
             <div className="min-w-0">
               <h2 className="font-display text-xl font-semibold">{content.title}</h2>
@@ -123,7 +138,9 @@ export function Modal({
               <X className="h-4 w-4" />
             </button>
           </header>
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{content.children}</div>
+          <div className={cx('min-h-0 flex-1 overflow-y-auto', !flush && 'px-5 py-4')}>
+            {content.children}
+          </div>
           {content.footer && (
             <footer className="flex justify-end gap-2 border-t border-line px-5 py-3">
               {content.footer}

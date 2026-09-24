@@ -10,7 +10,15 @@ import {
   YAxis,
 } from 'recharts';
 import { Download, MousePointerClick } from 'lucide-react';
-import { AXIS_TICK, ChartTooltipCard, cx, downloadCsv, IconButton, useChartColors } from '@/ui';
+import {
+  AXIS_TICK,
+  ChartTooltipCard,
+  cx,
+  DataTable,
+  downloadCsv,
+  IconButton,
+  useChartColors,
+} from '@/ui';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { AnalyticsGranularity, DashboardAnalytics } from '../../lib/types';
 
@@ -89,45 +97,40 @@ export function PeriodChart({
     return (
       <div className="space-y-2">
         {exportButton && <div className="flex">{exportButton}</div>}
-        <div className="max-h-[300px] overflow-auto rounded-lg border border-line">
-          <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-surface-2 text-[11px] tracking-wide text-muted uppercase">
-              <tr>
-                <th className="px-3 py-2 text-left font-semibold">
-                  {t('dashboard.analytics.bucket')}
-                </th>
-                {SERIES.map((item) => (
-                  <th
-                    key={item.key}
-                    className="px-3 py-2 text-right font-semibold whitespace-nowrap"
-                  >
-                    {item.label}
-                  </th>
-                ))}
-                <th className="px-3 py-2 text-right font-semibold">
-                  {t('dashboard.analytics.series.payments')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...series].reverse().map((point) => (
-                <tr key={point.bucket} className="border-t border-line">
-                  <td className="px-3 py-2 whitespace-nowrap capitalize">
-                    {labels.title(point.bucket)}
-                  </td>
-                  <td className="px-3 py-2 text-right tabular-nums">
-                    {fmt.money(point.collected)}
-                  </td>
-                  <td className="px-3 py-2 text-right tabular-nums">{fmt.money(point.issued)}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">{fmt.money(point.due)}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">
-                    {fmt.number(point.payments)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          caption={t('dashboard.analytics.table')}
+          fill={false}
+          maxHeight={300}
+          rows={[...series].reverse()}
+          rowKey={(point) => point.bucket}
+          columns={[
+            {
+              id: 'bucket',
+              header: t('dashboard.analytics.bucket'),
+              mobile: 'title',
+              sortValue: (point) => point.bucket,
+              cell: (point) => (
+                <span className="whitespace-nowrap capitalize">{labels.title(point.bucket)}</span>
+              ),
+            },
+            ...SERIES.map((item) => ({
+              id: item.key,
+              header: item.label,
+              align: 'right' as const,
+              sortValue: (point: (typeof series)[number]) => point[item.key],
+              cell: (point: (typeof series)[number]) => (
+                <span className="tabular-nums">{fmt.money(point[item.key])}</span>
+              ),
+            })),
+            {
+              id: 'payments',
+              header: t('dashboard.analytics.series.payments'),
+              align: 'right',
+              sortValue: (point) => point.payments,
+              cell: (point) => <span className="tabular-nums">{fmt.number(point.payments)}</span>,
+            },
+          ]}
+        />
       </div>
     );
   }

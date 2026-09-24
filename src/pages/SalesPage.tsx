@@ -13,18 +13,20 @@ import {
   SegmentedControl,
   useErrorText,
   useFeedback,
+  urlSort,
   useUrlState,
   type DataTableColumn,
 } from '@/ui';
 import { PaymentMethodMark } from '../components/domain/PaymentMethods';
 import { SaleFormModal } from '../components/domain/SaleFormModal';
-import { useSales, useVoidSale } from '../hooks/queries';
+import { useSales, useVoidSale, type SaleListParams } from '../hooks/queries';
 import { useModules } from '../hooks/useModules';
 import { useI18n } from '../i18n/I18nProvider';
 import type { Sale } from '../lib/types';
 import { ModuleOff } from './ProductsPage';
 
-const DEFAULTS = { search: '', type: '', page: '1', pageSize: '20' };
+// Empty sort = newest first.
+const DEFAULTS = { search: '', type: '', page: '1', pageSize: '20', sortBy: '', sortDir: '' };
 
 /** "Contado · Yape" or "Fiado · Maria" in one short line. */
 function PaymentLabel({ sale }: { sale: Sale }) {
@@ -168,12 +170,17 @@ function SalesList() {
     shortage: state.type === 'shortage' ? true : null,
     page: Number(state.page) || 1,
     pageSize: Number(state.pageSize) || 20,
+    sortBy: (state.sortBy === 'payment'
+      ? 'paymentType'
+      : state.sortBy || null) as SaleListParams['sortBy'],
+    sortDir: state.sortDir === 'desc' ? 'desc' : 'asc',
   });
   const filtered = Boolean(state.search || state.type);
 
   const columns: Array<DataTableColumn<Sale>> = [
     {
       id: 'number',
+      sortable: true,
       header: t('sales.columns.number'),
       hideable: false,
       mobile: 'title',
@@ -198,23 +205,27 @@ function SalesList() {
     },
     {
       id: 'customer',
+      sortable: true,
       header: t('sales.columns.customer'),
       mobile: 'subtitle',
       cell: (row) => row.customer?.name ?? <span className="text-muted">{t('sales.walkIn')}</span>,
     },
     {
       id: 'items',
+      sortable: true,
       header: t('sales.columns.items'),
       minWidth: 220,
       cell: (row) => <span className="line-clamp-1 text-muted">{row.summary}</span>,
     },
     {
       id: 'payment',
+      sortable: true,
       header: t('sales.columns.payment'),
       cell: (row) => <PaymentLabel sale={row} />,
     },
     {
       id: 'total',
+      sortable: true,
       header: t('sales.columns.total'),
       align: 'right',
       mobile: 'aside',
@@ -276,6 +287,7 @@ function SalesList() {
         {...(query.error && {
           error: <Alert tone="danger">{errors.message(query.error)}</Alert>,
         })}
+        {...urlSort(state, update)}
         onRowClick={(row) => setViewing(row)}
         pagination={
           query.data && {

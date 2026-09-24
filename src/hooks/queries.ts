@@ -372,7 +372,17 @@ export interface ProductListParams {
   lowStock?: boolean | null;
   page: number;
   pageSize?: number | null;
-  sortBy?: 'name' | 'code' | 'price' | 'cost' | 'createdAt' | null;
+  sortBy?:
+    | 'name'
+    | 'code'
+    | 'unit'
+    | 'price'
+    | 'cost'
+    | 'margin'
+    | 'stock'
+    | 'minStock'
+    | 'createdAt'
+    | null;
   sortDir?: SortDir | null;
 }
 
@@ -474,6 +484,8 @@ export interface SaleListParams {
   to?: string | null;
   page: number;
   pageSize?: number | null;
+  sortBy?: 'number' | 'date' | 'customer' | 'items' | 'paymentType' | 'total' | null;
+  sortDir?: SortDir | null;
 }
 
 export function useSales(params: SaleListParams) {
@@ -527,7 +539,13 @@ export function useVoidSale() {
 
 // --- Inventory: suppliers, purchases, adjustments (inventory module) --------
 
-export function useSuppliers(params: { search?: string | null; page: number; pageSize?: number }) {
+export function useSuppliers(params: {
+  search?: string | null;
+  page: number;
+  pageSize?: number;
+  sortBy?: 'name' | 'phone' | 'purchases' | null;
+  sortDir?: SortDir | null;
+}) {
   return useQuery({
     queryKey: ['suppliers', params] as const,
     queryFn: () => api.get<Paginated<Supplier>>('/suppliers', { ...params }),
@@ -576,6 +594,8 @@ export function usePurchases(params: {
   status?: 'completed' | 'voided' | null;
   page: number;
   pageSize?: number;
+  sortBy?: 'number' | 'date' | 'supplier' | 'items' | 'total' | null;
+  sortDir?: SortDir | null;
 }) {
   return useQuery({
     queryKey: ['purchases', params] as const,
@@ -686,6 +706,8 @@ export function useNotifications(params: {
   pageSize?: number;
   receivableId?: string;
   customerId?: string;
+  sortBy?: 'sentAt' | 'customer' | 'type' | 'status' | 'content' | null;
+  sortDir?: SortDir | null;
 }) {
   return useQuery({
     queryKey: queryKeys.notifications(params),

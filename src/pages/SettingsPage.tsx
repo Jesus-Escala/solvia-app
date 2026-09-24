@@ -31,6 +31,7 @@ import {
   Tabs,
   useFeedback,
   type DataTableColumn,
+  type DataTableSort,
   LOCALES,
   useTheme,
   type ThemePreference,
@@ -408,16 +409,32 @@ function TemplatesTab() {
 
 // --- Send log -------------------------------------------------------------------------
 
+/** Send log column → API sort field. */
+const SORT_FIELDS = {
+  date: 'sentAt',
+  customer: 'customer',
+  type: 'type',
+  status: 'status',
+  content: 'content',
+} as const;
+
 function LogTab() {
   const { t, fmt } = useI18n();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const query = useNotifications({ page, pageSize });
+  // null = newest first (the API default).
+  const [sort, setSort] = useState<DataTableSort | null>(null);
+  const query = useNotifications({
+    page,
+    pageSize,
+    sortBy: sort ? SORT_FIELDS[sort.id as keyof typeof SORT_FIELDS] : null,
+    sortDir: sort?.dir ?? null,
+  });
 
   const columns: Array<DataTableColumn<NotificationLogItem>> = [
     {
       id: 'date',
-      sortValue: (row) => row.sentAt,
+      sortable: true,
       header: t('settings.log.date'),
       minWidth: 160,
       mobile: 'subtitle',
@@ -425,20 +442,20 @@ function LogTab() {
     },
     {
       id: 'customer',
-      sortValue: (row) => row.receivable.customer.name,
+      sortable: true,
       header: t('settings.log.customer'),
       mobile: 'title',
       cell: (row) => <span className="font-medium">{row.receivable.customer.name}</span>,
     },
     {
       id: 'type',
-      sortValue: (row) => (row.templateType ? t(`templateTypes.${row.templateType}.title`) : null),
+      sortable: true,
       header: t('settings.log.type'),
       cell: (row) => (row.templateType ? t(`templateTypes.${row.templateType}.title`) : '—'),
     },
     {
       id: 'status',
-      sortValue: (row) => row.status,
+      sortable: true,
       header: t('settings.log.status'),
       mobile: 'aside',
       cell: (row) =>
@@ -454,7 +471,7 @@ function LogTab() {
     },
     {
       id: 'content',
-      sortValue: (row) => row.sentContent,
+      sortable: true,
       header: t('settings.log.content'),
       minWidth: 320,
       cell: (row) => <p className="line-clamp-2 max-w-2xl text-muted">{row.sentContent}</p>,
@@ -471,6 +488,11 @@ function LogTab() {
       loading={query.isLoading}
       fetching={query.isFetching && !query.isLoading}
       empty={{ title: t('settings.log.empty') }}
+      {...(sort && { sort })}
+      onSortChange={(next) => {
+        setSort(next);
+        setPage(1);
+      }}
       pagination={
         query.data && {
           ...query.data.meta,

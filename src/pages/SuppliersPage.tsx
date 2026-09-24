@@ -17,6 +17,7 @@ import {
   useErrorText,
   useErrorToast,
   useFeedback,
+  urlSort,
   useUrlState,
   type DataTableColumn,
 } from '@/ui';
@@ -28,7 +29,7 @@ import { useI18n } from '../i18n/I18nProvider';
 import type { Supplier } from '../lib/types';
 import { ModuleOff } from './ProductsPage';
 
-const DEFAULTS = { search: '', page: '1', pageSize: '20' };
+const DEFAULTS = { search: '', page: '1', pageSize: '20', sortBy: '', sortDir: '' };
 
 function SupplierForm({ supplier, onClose }: { supplier: Supplier | null; onClose: () => void }) {
   const { t } = useI18n();
@@ -145,6 +146,8 @@ function SuppliersList() {
     search: state.search || null,
     page: Number(state.page) || 1,
     pageSize: Number(state.pageSize) || 20,
+    sortBy: (state.sortBy || null) as 'name' | 'phone' | 'purchases' | null,
+    sortDir: state.sortDir === 'desc' ? 'desc' : 'asc',
   });
 
   const deleteSupplier = async (supplier: Supplier) => {
@@ -166,6 +169,7 @@ function SuppliersList() {
   const columns: Array<DataTableColumn<Supplier>> = [
     {
       id: 'name',
+      sortable: true,
       header: t('suppliers.columns.name'),
       hideable: false,
       mobile: 'title',
@@ -180,6 +184,7 @@ function SuppliersList() {
     },
     {
       id: 'phone',
+      sortable: true,
       header: t('suppliers.columns.phone'),
       mobile: 'subtitle',
       cell: (row) =>
@@ -199,6 +204,7 @@ function SuppliersList() {
     },
     {
       id: 'purchases',
+      sortable: true,
       header: t('suppliers.columns.purchases'),
       align: 'right',
       mobile: 'aside',
@@ -263,6 +269,7 @@ function SuppliersList() {
             )}
           </Popover>
         )}
+        {...urlSort(state, update)}
         pagination={
           query.data && {
             ...query.data.meta,

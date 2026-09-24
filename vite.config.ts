@@ -50,8 +50,9 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
-          // Country flags (phone field) load on demand; don't precache ~260 SVGs.
-          globIgnores: ['**/assets/*.svg'],
+          // Country flags (phone field) load on demand; don't precache ~260 SVGs. The PDF and
+          // Excel readers of the file viewer (~1 MB) also load only when a file is opened.
+          globIgnores: ['**/assets/*.svg', '**/assets/pdf-*.js', '**/assets/xlsx-*.js'],
           // API calls and uploaded files always go to the network.
           navigateFallbackDenylist: [/^\/api\//, /^\/files\//],
         },

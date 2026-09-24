@@ -6,6 +6,7 @@ import {
   Alert,
   Card,
   cx,
+  DataTable,
   downloadCsv,
   EmptyState,
   IconButton,
@@ -92,67 +93,83 @@ function DebtorsTable({ data }: { data: DebtConcentration }) {
       <p className="text-xs text-muted">
         {t('dashboard.concentration.tableNote', { count: data.debtors.length })}
       </p>
-      <div className="max-h-[340px] overflow-auto rounded-lg border border-line">
-        <table className="w-full text-sm">
-          <thead className="sticky top-0 bg-surface-2 text-[11px] tracking-wide text-muted uppercase">
-            <tr>
-              <th className="px-3 py-2 text-right font-semibold">
-                {t('dashboard.concentration.table.rank')}
-              </th>
-              <th className="px-3 py-2 text-left font-semibold">
-                {t('dashboard.concentration.table.customer')}
-              </th>
-              <th className="px-3 py-2 text-center font-semibold">
-                {t('dashboard.concentration.table.class')}
-              </th>
-              <th className="px-3 py-2 text-right font-semibold">
-                {t('dashboard.concentration.table.outstanding')}
-              </th>
-              <th className="px-3 py-2 text-right font-semibold max-sm:hidden">
-                {t('dashboard.concentration.table.overdue')}
-              </th>
-              <th className="px-3 py-2 text-right font-semibold max-md:hidden">
-                {t('dashboard.concentration.table.share')}
-              </th>
-              <th className="px-3 py-2 text-right font-semibold max-sm:hidden">
-                {t('dashboard.concentration.table.cumulative')}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.debtors.map((debtor) => (
-              <tr key={debtor.customerId} className="border-t border-line">
-                <td className="px-3 py-2 text-right text-subtle tabular-nums">{debtor.rank}</td>
-                <td className="max-w-[16rem] px-3 py-2">
-                  <Link
-                    to={`/customers/${debtor.customerId}`}
-                    className="block truncate font-medium hover:underline"
-                  >
-                    {debtor.name}
-                  </Link>
-                </td>
-                <td className="px-3 py-2">
-                  <span className="flex justify-center">
-                    <ClassBadge value={debtor.class} />
-                  </span>
-                </td>
-                <td className="px-3 py-2 text-right font-semibold tabular-nums">
-                  {fmt.money(debtor.outstanding)}
-                </td>
-                <td className="px-3 py-2 text-right tabular-nums max-sm:hidden">
-                  {fmt.money(debtor.overdue)}
-                </td>
-                <td className="px-3 py-2 text-right tabular-nums max-md:hidden">
-                  {fmt.percent(debtor.share)}
-                </td>
-                <td className="px-3 py-2 text-right tabular-nums max-sm:hidden">
-                  {fmt.percent(debtor.cumulativeShare)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        caption={t('dashboard.concentration.title')}
+        fill={false}
+        maxHeight={340}
+        rows={data.debtors}
+        rowKey={(debtor) => debtor.customerId}
+        columns={[
+          {
+            id: 'rank',
+            header: t('dashboard.concentration.table.rank'),
+            align: 'right',
+            mobile: 'hidden',
+            sortValue: (debtor) => debtor.rank,
+            cell: (debtor) => <span className="text-subtle tabular-nums">{debtor.rank}</span>,
+          },
+          {
+            id: 'customer',
+            header: t('dashboard.concentration.table.customer'),
+            mobile: 'title',
+            minWidth: 160,
+            sortValue: (debtor) => debtor.name,
+            cell: (debtor) => (
+              <Link
+                to={`/customers/${debtor.customerId}`}
+                className="block max-w-[16rem] truncate font-medium hover:underline"
+              >
+                {debtor.name}
+              </Link>
+            ),
+          },
+          {
+            id: 'class',
+            header: t('dashboard.concentration.table.class'),
+            align: 'center',
+            mobile: 'subtitle',
+            sortValue: (debtor) => debtor.class,
+            cell: (debtor) => (
+              <span className="flex justify-center">
+                <ClassBadge value={debtor.class} />
+              </span>
+            ),
+          },
+          {
+            id: 'outstanding',
+            header: t('dashboard.concentration.table.outstanding'),
+            align: 'right',
+            mobile: 'aside',
+            sortValue: (debtor) => debtor.outstanding,
+            cell: (debtor) => (
+              <span className="font-semibold tabular-nums">{fmt.money(debtor.outstanding)}</span>
+            ),
+          },
+          {
+            id: 'overdue',
+            header: t('dashboard.concentration.table.overdue'),
+            align: 'right',
+            sortValue: (debtor) => debtor.overdue,
+            cell: (debtor) => <span className="tabular-nums">{fmt.money(debtor.overdue)}</span>,
+          },
+          {
+            id: 'share',
+            header: t('dashboard.concentration.table.share'),
+            align: 'right',
+            sortValue: (debtor) => debtor.share,
+            cell: (debtor) => <span className="tabular-nums">{fmt.percent(debtor.share)}</span>,
+          },
+          {
+            id: 'cumulative',
+            header: t('dashboard.concentration.table.cumulative'),
+            align: 'right',
+            sortValue: (debtor) => debtor.cumulativeShare,
+            cell: (debtor) => (
+              <span className="tabular-nums">{fmt.percent(debtor.cumulativeShare)}</span>
+            ),
+          },
+        ]}
+      />
     </div>
   );
 }
