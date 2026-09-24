@@ -55,8 +55,8 @@ export { TemporaryPasswordDialog } from './components/TemporaryPasswordDialog';
 
 // Brand
 export { Logo, LogoMark } from './brand/Logo';
-export { Mascot, type MascotMood } from './brand/Mascot';
-export { OwlFace } from './brand/OwlFace';
+
+export { Mascot, MascotFace, type MascotMood } from './brand/Mascot';
 export { OWL, OWL_COLORS } from './brand/owlGeometry';
 
 // Charts

@@ -75,7 +75,7 @@ const POSES: Record<MascotMood, { left: Pose; right: Pose }> = {
 
 /** Gradient ids of one rendered mascot (unique per instance). */
 function useIds() {
-  const id = useId().replace(/:/g, '');
+  const id = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const names = [
     'bg',
     'head',
@@ -229,6 +229,38 @@ function Head({ ids, happy, blink }: { ids: Ids; happy: boolean; blink: boolean 
   );
 }
 
+/** Box of the head in mascot view coordinates, used to fit it into other artwork. */
+const HEAD_BOX = { x: 21.8, y: 20.6, width: 76.4, height: 66.8 };
+
+/**
+ * Soli's illustrated head fitted into a square of `size` (in the parent SVG's units), centred
+ * at (`cx`, `cy`). The logo mark and the avatar use it so every Soli has the same face.
+ */
+export function MascotFace({
+  size,
+  cx,
+  cy,
+  happy = false,
+  blink = false,
+}: {
+  size: number;
+  cx: number;
+  cy: number;
+  happy?: boolean;
+  blink?: boolean;
+}) {
+  const ids = useIds();
+  const scale = size / HEAD_BOX.width;
+  const x = cx - (HEAD_BOX.x + HEAD_BOX.width / 2) * scale;
+  const y = cy - (HEAD_BOX.y + HEAD_BOX.height / 2) * scale;
+  return (
+    <g transform={`translate(${x} ${y}) scale(${scale})`}>
+      <Gradients ids={ids} />
+      <Head ids={ids} happy={happy} blink={blink} />
+    </g>
+  );
+}
+
 function Wing({
   ids,
   shoulder,
@@ -306,7 +338,6 @@ export function Mascot({
         className={cx('shrink-0', className)}
         {...a11y}
       >
-        <Gradients ids={ids} />
         <defs>
           <linearGradient id={ids.bg} x1="4" y1="2" x2="60" y2="62" gradientUnits="userSpaceOnUse">
             <stop offset="0" stopColor={OWL_COLORS.teal[0]} />
@@ -315,9 +346,7 @@ export function Mascot({
           </linearGradient>
         </defs>
         <circle cx="32" cy="32" r="32" fill={`url(#${ids.bg})`} />
-        <g transform="translate(-5.8 -0.4) scale(0.63)">
-          <Head ids={ids} happy={happy} blink />
-        </g>
+        <MascotFace size={50} cx={32} cy={33.5} happy={happy} blink />
       </svg>
     );
   }

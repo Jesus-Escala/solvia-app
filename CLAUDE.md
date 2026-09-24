@@ -65,3 +65,10 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
 - Phones are stored as E.164 (`PhoneInput`, Peru default); money formatted with `fmt.money`.
 - Before committing: `npm run lint && npm run build`, and check the change in the browser
   (light/dark, Spanish/English, phone width).
+
+## Brand assets
+
+Soli's face lives in `src/ui/brand/Mascot.tsx` (`MascotFace`); the logo mark, avatar and mascot
+all use it. After changing it run `npm run favicon && npm run icons` (writes public/favicon.svg
+and the PWA PNGs), copy `public/favicon.svg` to solvia-admin (then `npm run icons` there) and
+solvia-landing, and mirror the face in the PDF header (solvia-backend statement.service.ts).
