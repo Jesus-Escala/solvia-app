@@ -1,6 +1,7 @@
 /**
- * Geometry of Soli's head in a 64x64 box, shared by the logo mark and the full-body mascot so
- * both always look identical. Friendly on purpose: rounded ear tufts, big sparkly eyes, brows
+ * Geometry of Soli's head in a 64x64 box for the logo mark (flat, reads well at small sizes).
+ * The full-body mascot (Mascot.tsx) is a softer illustrated version that keeps these eye
+ * positions and the coin. Friendly on purpose: rounded ear tufts, big sparkly eyes, brows
  * arched upward (never a V, which reads as angry), blush and a small rounded beak.
  * Keep in sync with public/favicon.svg and the PDF header (backend/src/services/statement.service.ts).
  */
