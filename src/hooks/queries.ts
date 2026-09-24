@@ -139,6 +139,10 @@ export function useDashboardAnalytics(params: {
   from: string;
   to: string;
   granularity?: AnalyticsGranularity;
+  /** Cross-filters (omitted when undefined). */
+  method?: PaymentMethod;
+  customerId?: string;
+  weekday?: number;
 }) {
   return useQuery({
     queryKey: [...queryKeys.dashboard, 'analytics', params],

@@ -291,6 +291,20 @@ export const en: Messages = {
       },
       vs: 'Compared with {range}',
     },
+    filters: {
+      hint: 'Click a payment method, a weekday or a customer to filter the whole dashboard.',
+      active: 'Filtering by',
+      method: 'Payment method',
+      customer: 'Customer',
+      weekday: 'Day',
+      remove: 'Remove filter {name}',
+      clear: 'Clear all',
+      scopeNote:
+        'Payment method and day only apply to payments: issued, due, collection rate and reminders do not change.',
+      notFiltered: 'Not affected by this filter',
+      customerOnly: 'Filtered by customer only',
+      openCustomer: 'View customer',
+    },
     analytics: {
       drillHint: 'Click a bar to see its detail.',
       drillBack: 'Back',

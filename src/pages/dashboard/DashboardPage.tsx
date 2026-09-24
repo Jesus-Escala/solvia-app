@@ -10,7 +10,8 @@ import {
 } from '../../components/dashboard/period';
 import { useDashboardSummary } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
-import { CollectionView } from './CollectionView';
+import type { PaymentMethod } from '../../lib/types';
+import { CollectionView, type CollectionFilters } from './CollectionView';
 import { DashboardHeader } from './parts';
 import { PortfolioView } from './PortfolioView';
 import { ProjectionView } from './ProjectionView';
@@ -19,8 +20,19 @@ import { SummaryView } from './SummaryView';
 type View = 'summary' | 'collection' | 'portfolio' | 'projection';
 const VIEWS: View[] = ['summary', 'collection', 'portfolio', 'projection'];
 
-// Everything the dashboard shows is in the URL (?view=&from=&to=&g=): shareable and reload-safe.
-const DEFAULTS = { view: 'summary', from: '', to: '', g: '' };
+// Everything the dashboard shows is in the URL (?view=&from=&to=&g=&method=&customer=&weekday=):
+// shareable and reload-safe.
+const DEFAULTS = {
+  view: 'summary',
+  from: '',
+  to: '',
+  g: '',
+  method: '',
+  customer: '',
+  weekday: '',
+};
+const METHODS: PaymentMethod[] = ['yape', 'plin', 'cash', 'bank_transfer'];
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Business dashboard, split into four views with a single purpose each:
@@ -45,6 +57,16 @@ export function DashboardPage() {
     : allowed.includes(autoGranularity(range))
       ? autoGranularity(range)
       : allowed[0]!;
+
+  // Invalid values in a hand-edited URL are ignored instead of failing the request.
+  const weekday = Number(state.weekday);
+  const filters: CollectionFilters = {
+    method: METHODS.includes(state.method as PaymentMethod)
+      ? (state.method as PaymentMethod)
+      : null,
+    customerId: UUID.test(state.customer) ? state.customer : null,
+    weekday: Number.isInteger(weekday) && weekday >= 1 && weekday <= 7 ? weekday : null,
+  };
 
   return (
     <Page>
@@ -80,6 +102,16 @@ export function DashboardPage() {
             granularity={granularity}
             onRangeChange={(next) => update({ from: next.from, to: next.to, g: '' })}
             onGranularityChange={(g) => update({ g })}
+            filters={filters}
+            onFiltersChange={(changes) =>
+              update({
+                ...('method' in changes && { method: changes.method ?? '' }),
+                ...('customerId' in changes && { customer: changes.customerId ?? '' }),
+                ...('weekday' in changes && {
+                  weekday: changes.weekday ? String(changes.weekday) : '',
+                }),
+              })
+            }
           />
         )}
         {view === 'portfolio' && <PortfolioView summary={summary.data} refreshing={refreshing} />}

@@ -314,6 +314,12 @@ export interface DashboardAnalytics {
     /** Share (0..1) of reminded receivables that got a payment within 7 days. */
     paidAfterReminder: PeriodMetric;
   };
+  /** Cross-filters applied (echoed by the API; null when not filtering). */
+  filters: {
+    method: PaymentMethod | null;
+    customer: { id: string; name: string | null } | null;
+    weekday: number | null;
+  };
   generatedAt: string;
 }
 

@@ -1,11 +1,14 @@
 import { Info } from 'lucide-react';
-import { useId, type ReactNode } from 'react';
+import { useId, useRef, useState, type ReactNode } from 'react';
 import { useUiI18n } from '../i18n/context';
 import { cx } from './cx';
 
 /**
  * Small ⓘ that explains a metric or a chart ("how is this calculated?"). The explanation shows on
  * hover and on keyboard focus / tap, so it works on phones too.
+ *
+ * The bubble is `display: none` while closed (an invisible one still widens scroll containers
+ * near the right edge) and, when opening, flips to whichever side keeps it inside the viewport.
  */
 export function InfoTip({
   children,
@@ -19,8 +22,24 @@ export function InfoTip({
 }) {
   const { t } = useUiI18n();
   const id = useId();
+  const ref = useRef<HTMLSpanElement>(null);
+  const [side, setSide] = useState(align);
+  const place = () => {
+    const icon = ref.current?.getBoundingClientRect();
+    if (!icon) return;
+    const half = 136; // half the bubble (w-64 = 256px) plus a margin
+    const center = icon.left + icon.width / 2;
+    if (center + half > window.innerWidth) setSide('end');
+    else if (center - half < 0) setSide('start');
+    else setSide(align);
+  };
   return (
-    <span className={cx('group/info relative inline-flex align-middle', className)}>
+    <span
+      ref={ref}
+      onPointerEnter={place}
+      onFocus={place}
+      className={cx('group/info relative inline-flex align-middle', className)}
+    >
       <button
         type="button"
         aria-describedby={id}
@@ -33,10 +52,10 @@ export function InfoTip({
         id={id}
         role="tooltip"
         className={cx(
-          'pointer-events-none invisible absolute top-full z-50 mt-1.5 w-64 rounded-xl border border-line bg-surface p-3 text-left text-xs leading-relaxed font-normal tracking-normal text-muted normal-case opacity-0 shadow-pop transition duration-150 group-focus-within/info:visible group-focus-within/info:opacity-100 group-hover/info:visible group-hover/info:opacity-100',
-          align === 'start' && 'left-0',
-          align === 'center' && 'left-1/2 -translate-x-1/2',
-          align === 'end' && 'right-0',
+          'pointer-events-none absolute top-full z-50 mt-1.5 hidden w-64 animate-fade-in rounded-xl border border-line bg-surface p-3 text-left text-xs leading-relaxed font-normal tracking-normal text-muted normal-case shadow-pop group-focus-within/info:block group-hover/info:block',
+          side === 'start' && 'left-0',
+          side === 'center' && 'left-1/2 -translate-x-1/2',
+          side === 'end' && 'right-0',
         )}
       >
         {children}

@@ -2,13 +2,16 @@ import {
   BarChart3,
   ChevronRight,
   FilePlus2,
+  Filter,
   Undo2,
   HandCoins,
+  MousePointerClick,
   ReceiptText,
   Table2,
   Target,
   Timer,
   UserPlus,
+  X,
 } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -36,21 +39,109 @@ import {
 import { PeriodPicker } from '../../components/dashboard/PeriodPicker';
 import { useDashboardAnalytics } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
-import type { DashboardAnalytics } from '../../lib/types';
+import type { DashboardAnalytics, PaymentMethod } from '../../lib/types';
 import { change, METHOD_COLORS, pointsChange, tileMoney, formatPoints } from './metrics';
 import { Section } from './parts';
+
+/** Cross-filters of the collection view (null = not filtering by that dimension). */
+export interface CollectionFilters {
+  method: PaymentMethod | null;
+  customerId: string | null;
+  weekday: number | null;
+}
+
+/**
+ * Active filters as removable chips (or, without filters, a hint on how to add them). Method
+ * and weekday only apply to payments, which the note under the chips says.
+ */
+function FilterBar({
+  filters,
+  customerName,
+  weekdayName,
+  onChange,
+}: {
+  filters: CollectionFilters;
+  customerName: string;
+  weekdayName: (weekday: number) => string;
+  onChange: (changes: Partial<CollectionFilters>) => void;
+}) {
+  const { t } = useI18n();
+  const chips = [
+    filters.method && {
+      key: 'method' as const,
+      label: `${t('dashboard.filters.method')}: ${t(`methods.${filters.method}`)}`,
+    },
+    filters.customerId && {
+      key: 'customerId' as const,
+      label: `${t('dashboard.filters.customer')}: ${customerName}`,
+    },
+    filters.weekday && {
+      key: 'weekday' as const,
+      label: `${t('dashboard.filters.weekday')}: ${weekdayName(filters.weekday)}`,
+    },
+  ].filter((chip) => !!chip);
+
+  if (chips.length === 0) {
+    return (
+      <p className="flex items-center gap-1.5 text-xs text-muted">
+        <MousePointerClick className="h-3.5 w-3.5 shrink-0" />
+        {t('dashboard.filters.hint')}
+      </p>
+    );
+  }
+  return (
+    <div className="animate-page-in flex flex-wrap items-center gap-2 rounded-xl border border-primary/25 bg-primary-soft/60 px-3 py-2">
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary-ink">
+        <Filter className="h-3.5 w-3.5" />
+        {t('dashboard.filters.active')}
+      </span>
+      {chips.map((chip) => (
+        <button
+          key={chip.key}
+          type="button"
+          onClick={() => onChange({ [chip.key]: null })}
+          aria-label={t('dashboard.filters.remove', { name: chip.label })}
+          className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-surface py-1 pr-1.5 pl-3 text-xs font-medium text-ink shadow-card ring-1 ring-line transition hover:ring-primary/50"
+        >
+          <span className="truncate first-letter:uppercase">{chip.label}</span>
+          <X className="h-3.5 w-3.5 shrink-0 text-muted" />
+        </button>
+      ))}
+      {chips.length > 1 && (
+        <button
+          type="button"
+          onClick={() => onChange({ method: null, customerId: null, weekday: null })}
+          className="ml-auto text-xs font-medium text-primary-ink hover:underline"
+        >
+          {t('dashboard.filters.clear')}
+        </button>
+      )}
+      {(filters.method || filters.weekday) && (
+        <p className="basis-full text-xs text-muted">{t('dashboard.filters.scopeNote')}</p>
+      )}
+    </div>
+  );
+}
 
 /** Period KPIs, each compared with the previous period of the same length. */
 function PeriodKpis({
   analytics,
   loading,
   fetching,
+  filters,
 }: {
   analytics?: DashboardAnalytics;
   loading: boolean;
   fetching: boolean;
+  filters: CollectionFilters;
 }) {
   const { t, fmt } = useI18n();
+  // Receivable KPIs ignore the payment-only filters; new customers ignore every filter.
+  const paymentOnly = !!(filters.method || filters.weekday);
+  const anyFilter = paymentOnly || !!filters.customerId;
+  const notFiltered = t('dashboard.filters.notFiltered');
+  // Receivable KPIs still follow the customer filter.
+  const receivableNote = filters.customerId ? t('dashboard.filters.customerOnly') : notFiltered;
   if (loading || !analytics) {
     return (
       <KpiRow>
@@ -93,9 +184,13 @@ function PeriodKpis({
         valueTitle={fmt.money(kpis.issued.value ?? 0)}
         delta={change(kpis.issued)}
         formatPercent={fmt.percent}
-        hint={t('dashboard.analytics.kpi.issuedHint', {
-          count: fmt.number(kpis.receivablesIssued.value ?? 0),
-        })}
+        hint={
+          paymentOnly
+            ? receivableNote
+            : t('dashboard.analytics.kpi.issuedHint', {
+                count: fmt.number(kpis.receivablesIssued.value ?? 0),
+              })
+        }
         icon={<FilePlus2 />}
       />
       <KpiCard
@@ -116,11 +211,13 @@ function PeriodKpis({
         delta={rateDelta}
         formatPercent={formatPoints}
         hint={
-          rate.value === null
-            ? t('dashboard.analytics.kpi.collectionRateEmpty')
-            : t('dashboard.analytics.kpi.collectionRateHint', {
-                amount: fmt.money(kpis.dueInPeriod.value ?? 0),
-              })
+          paymentOnly
+            ? receivableNote
+            : rate.value === null
+              ? t('dashboard.analytics.kpi.collectionRateEmpty')
+              : t('dashboard.analytics.kpi.collectionRateHint', {
+                  amount: fmt.money(kpis.dueInPeriod.value ?? 0),
+                })
         }
         icon={<Target />}
       />
@@ -159,9 +256,13 @@ function PeriodKpis({
         value={fmt.number(kpis.newCustomers.value ?? 0)}
         delta={change(kpis.newCustomers)}
         formatPercent={fmt.percent}
-        hint={t('dashboard.analytics.kpi.newCustomersHint', {
-          total: fmt.number(snapshot.customers),
-        })}
+        hint={
+          anyFilter
+            ? notFiltered
+            : t('dashboard.analytics.kpi.newCustomersHint', {
+                total: fmt.number(snapshot.customers),
+              })
+        }
         icon={<UserPlus />}
       />
     </KpiRow>
@@ -173,11 +274,15 @@ export function CollectionView({
   granularity,
   onRangeChange,
   onGranularityChange,
+  filters,
+  onFiltersChange,
 }: {
   range: PeriodRange;
   granularity: Granularity;
   onRangeChange: (range: PeriodRange) => void;
   onGranularityChange: (granularity: Granularity) => void;
+  filters: CollectionFilters;
+  onFiltersChange: (changes: Partial<CollectionFilters>) => void;
 }) {
   const { t, fmt, locale } = useI18n();
   const colors = useChartColors();
@@ -210,7 +315,13 @@ export function CollectionView({
     value.from === value.to
       ? fmt.date(value.from)
       : `${fmt.shortDate(value.from)} – ${fmt.shortDate(value.to)}`;
-  const analytics = useDashboardAnalytics({ ...range, granularity });
+  const analytics = useDashboardAnalytics({
+    ...range,
+    granularity,
+    method: filters.method ?? undefined,
+    customerId: filters.customerId ?? undefined,
+    weekday: filters.weekday ?? undefined,
+  });
   const data = analytics.data;
   const loading = analytics.isLoading;
   // Changing the period keeps the previous numbers on screen and shows the spinners over them.
@@ -225,6 +336,13 @@ export function CollectionView({
     new Intl.DateTimeFormat(locale === 'es' ? 'es-PE' : 'en-US', { weekday: 'long' }).format(
       new Date(2024, 0, weekday),
     );
+  // Clicking the selected option again removes that filter.
+  const toggle = <K extends keyof CollectionFilters>(key: K, value: CollectionFilters[K]) =>
+    onFiltersChange({ [key]: filters[key] === value ? null : value });
+  const customerName =
+    data?.filters.customer?.name ??
+    data?.topPayers.find((payer) => payer.customerId === filters.customerId)?.name ??
+    t('dashboard.filters.customer');
 
   return (
     <Section
@@ -242,7 +360,13 @@ export function CollectionView({
       }
     >
       {analytics.error && <Alert tone="danger">{errors.message(analytics.error)}</Alert>}
-      <PeriodKpis analytics={data} loading={loading} fetching={fetching} />
+      <FilterBar
+        filters={filters}
+        customerName={customerName}
+        weekdayName={weekdayName}
+        onChange={onFiltersChange}
+      />
+      <PeriodKpis analytics={data} loading={loading} fetching={fetching} filters={filters} />
 
       <div className="grid gap-4 lg:grid-cols-12">
         <Card
@@ -324,6 +448,8 @@ export function CollectionView({
             <DonutChart
               centerLabel={t('dashboard.analytics.methods.center')}
               formatValue={fmt.compactMoney}
+              selectedKey={filters.method}
+              onSelect={(key) => toggle('method', key as PaymentMethod)}
               slices={data.byMethod.map((item) => ({
                 key: item.method,
                 label: t(`methods.${item.method}`),
@@ -353,7 +479,11 @@ export function CollectionView({
           ) : collected === 0 ? (
             <EmptyState compact title={t('dashboard.analytics.weekday.empty')} />
           ) : (
-            <WeekdayBars days={data.byWeekday} />
+            <WeekdayBars
+              days={data.byWeekday}
+              selected={filters.weekday}
+              onSelect={(weekday) => toggle('weekday', weekday)}
+            />
           )}
         </Card>
         <Card
@@ -373,6 +503,9 @@ export function CollectionView({
               formatValue={fmt.money}
               baseLabel={t('dashboard.analytics.payers.base')}
               highlightLabel=""
+              selectedId={filters.customerId}
+              onSelect={(id) => toggle('customerId', id)}
+              openLabel={t('dashboard.filters.openCustomer')}
               items={data.topPayers.map((payer) => ({
                 id: payer.customerId,
                 label: payer.name,

@@ -1,3 +1,4 @@
+import { ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router';
 import { cx } from '../components/cx';
 
@@ -14,17 +15,27 @@ export interface RankingItem {
 /**
  * Ranked horizontal bars in plain HTML (label, track, value). The leader gets a filled rank badge.
  * Two segments per bar with a labelled legend, so identity never depends on color alone.
+ *
+ * With `onSelect`, the label selects the item (e.g. to filter a dashboard) and `href` moves to a
+ * small arrow link labelled `openLabel`; the `selectedId` row is outlined, the others fade.
  */
 export function RankingBars({
   items,
   formatValue,
   baseLabel,
   highlightLabel,
+  selectedId = null,
+  onSelect,
+  openLabel,
 }: {
   items: RankingItem[];
   formatValue: (value: number) => string;
   baseLabel: string;
   highlightLabel: string;
+  selectedId?: string | null;
+  onSelect?: (id: string) => void;
+  /** Accessible label of the arrow link when `onSelect` is used (e.g. "View customer"). */
+  openLabel?: string;
 }) {
   const max = Math.max(...items.map((item) => item.value), 1);
   const hasHighlight = items.some((item) => (item.highlighted ?? 0) > 0);
@@ -34,7 +45,29 @@ export function RankingBars({
       <ol className="space-y-2.5">
         {items.map((item, index) => {
           const highlighted = Math.min(item.highlighted ?? 0, item.value);
-          const label = item.href ? (
+          const selected = item.id === selectedId;
+          const label = onSelect ? (
+            <span className="flex min-w-0 items-center gap-1">
+              <button
+                type="button"
+                aria-pressed={selected}
+                onClick={() => onSelect(item.id)}
+                className="min-w-0 truncate text-left hover:text-primary-ink hover:underline"
+              >
+                {item.label}
+              </button>
+              {item.href && (
+                <Link
+                  to={item.href}
+                  aria-label={openLabel ? `${openLabel}: ${item.label}` : item.label}
+                  title={openLabel}
+                  className="shrink-0 rounded p-0.5 text-subtle hover:bg-surface-3 hover:text-ink"
+                >
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+              )}
+            </span>
+          ) : item.href ? (
             <Link to={item.href} className="block truncate hover:underline">
               {item.label}
             </Link>
@@ -44,7 +77,12 @@ export function RankingBars({
           return (
             <li
               key={item.id}
-              className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1"
+              className={cx(
+                'grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-lg transition',
+                onSelect && '-mx-2 px-2 py-1',
+                selected && 'bg-primary-soft ring-1 ring-primary/40',
+                selectedId !== null && !selected && 'opacity-55',
+              )}
               title={`${item.label}: ${formatValue(item.value)}${highlighted ? ` · ${highlightLabel}: ${formatValue(highlighted)}` : ''}`}
             >
               <span

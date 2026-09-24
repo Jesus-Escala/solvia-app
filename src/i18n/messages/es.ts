@@ -298,6 +298,20 @@ export const es = {
       },
       vs: 'Comparado con {range}',
     },
+    filters: {
+      hint: 'Haz clic en un medio de pago, un día de la semana o un cliente para filtrar todo el panel.',
+      active: 'Filtrando por',
+      method: 'Medio de pago',
+      customer: 'Cliente',
+      weekday: 'Día',
+      remove: 'Quitar filtro {name}',
+      clear: 'Quitar todos',
+      scopeNote:
+        'El medio de pago y el día solo aplican a los pagos: lo emitido, lo que vencía, la tasa de cobranza y los recordatorios no cambian.',
+      notFiltered: 'No cambia con este filtro',
+      customerOnly: 'Filtrado solo por cliente',
+      openCustomer: 'Ver cliente',
+    },
     analytics: {
       drillHint: 'Haz clic en una barra para ver su detalle.',
       drillBack: 'Volver',
