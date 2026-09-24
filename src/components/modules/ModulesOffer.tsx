@@ -70,10 +70,10 @@ export function ModulesOffer({ className }: { className?: string }) {
         ))}
       </ul>
       <a
-        // One module: the request form with it checked; both: the landing section with the bundle.
+        // One module: the request form with it checked; both: the plan builder of the landing.
         href={
           missing.length > 1
-            ? `${LANDING_URL}/#modulos`
+            ? `${LANDING_URL}/#pricing`
             : `${LANDING_URL}/#solicitar-acceso-${missing[0]}`
         }
         target="_blank"
