@@ -173,6 +173,8 @@ interface ToastContent {
   kind?: ToastKind;
   /** Short technical reference next to the kind label, e.g. "409". */
   meta?: string;
+  /** Part of the description shown in bold, e.g. the name of the field to fix. */
+  emphasis?: string;
 }
 
 interface ToastItem extends ToastContent {
@@ -183,13 +185,13 @@ interface ToastItem extends ToastContent {
   leaving?: boolean;
   /** Direction it was swiped away to (-1 left, 1 right). */
   swipe?: number;
+  /** Form whose native validation raised it: it closes once that form is valid again. */
+  source?: HTMLFormElement;
 }
 
 const TOAST_EXIT_MS = 260;
 const TOAST_LIMIT = 5;
 const TOAST_GAP = 10;
-/** How much of each older toast peeks out below the front one while collapsed. */
-const TOAST_PEEK = 12;
 const TOAST_SWIPE_PX = 70;
 const TOAST_DURATION: Record<ToastTone, number> = {
   success: 4000,
@@ -278,10 +280,17 @@ function fieldLabel(field: FormField) {
   return text.replace(/\s*[*(].*$/s, '').trim();
 }
 
-/** A number attribute shown with two decimals, as amounts are typed. */
-function decimal(value: string | null) {
-  const number = Number(value);
-  return Number.isFinite(number) ? number.toFixed(2) : (value ?? '');
+/** `text` with the first occurrence of `part` in bold. */
+function Emphasized({ text, part }: { text: string; part?: string }) {
+  const at = part ? text.indexOf(part) : -1;
+  if (!part || at < 0) return text;
+  return (
+    <>
+      {text.slice(0, at)}
+      <strong className="font-semibold text-ink">{part}</strong>
+      {text.slice(at + part.length)}
+    </>
+  );
 }
 
 /**
@@ -316,14 +325,13 @@ function useToastHost(active: boolean) {
 interface ToastLayout {
   index: number;
   offset: number;
-  frontHeight: number;
-  expanded: boolean;
+  /** The pointer is over the list: every countdown waits. */
+  hovered: boolean;
 }
 
 /**
- * One notification. Collapsed, older toasts tuck behind the newest one; hovering the stack
- * fans them out. Its countdown pauses while the stack is open or it has focus, and it can be
- * swiped sideways to dismiss.
+ * One notification in the list. Its countdown pauses while the list is hovered or it has
+ * focus, and it can be swiped sideways to dismiss.
  */
 function ToastCard({
   item,
@@ -346,11 +354,17 @@ function ToastCard({
   const content = useRef<HTMLDivElement>(null);
   const remaining = useRef(duration);
   const startedAt = useRef(0);
-  const paused = layout.expanded || focused || drag !== null;
+  const paused = layout.hovered || focused || drag !== null;
 
+  // Enter on the next frame; the timeout covers background tabs, where frames are paused.
   useEffect(() => {
-    const frame = requestAnimationFrame(() => setMounted(true));
-    return () => cancelAnimationFrame(frame);
+    const enter = () => setMounted(true);
+    const frame = requestAnimationFrame(enter);
+    const timer = window.setTimeout(enter, 60);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+    };
   }, []);
 
   useLayoutEffect(() => {
@@ -378,16 +392,13 @@ function ToastCard({
     };
   }, [duration, paused, item.id, item.leaving, item.version, onDismiss]);
 
-  const { index, offset, frontHeight, expanded } = layout;
-  const behind = !expanded && index > 0;
-  const hidden = !expanded && index >= 3;
-  const scale = expanded ? 1 : 1 - index * 0.05;
-  let transform = `translateY(${offset}px) scale(${scale})`;
+  const { index, offset } = layout;
+  let transform = `translateY(${offset}px)`;
   if (!mounted) transform = `translateY(-110%) scale(0.96)`;
   if (item.leaving) {
     transform = item.swipe
       ? `translateX(${item.swipe * 115}%)`
-      : `translateY(${offset - 24}px) scale(${scale * 0.94})`;
+      : `translateY(${offset}px) scale(0.92)`;
   }
   if (drag !== null) transform = `translateY(${offset}px) translateX(${drag}px)`;
 
@@ -396,7 +407,6 @@ function ToastCard({
     <li
       data-state={item.leaving ? 'closing' : 'open'}
       role={item.tone === 'error' ? 'alert' : 'status'}
-      aria-hidden={behind || undefined}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
       onPointerDown={(event) => {
@@ -423,13 +433,7 @@ function ToastCard({
       style={{
         transform,
         zIndex: TOAST_LIMIT - index,
-        height: behind ? frontHeight : undefined,
-        opacity:
-          !mounted || item.leaving || hidden
-            ? 0
-            : drag
-              ? 1 - Math.min(Math.abs(drag) / 240, 0.6)
-              : 1,
+        opacity: !mounted || item.leaving ? 0 : drag ? 1 - Math.min(Math.abs(drag) / 240, 0.6) : 1,
         transition:
           drag !== null
             ? 'none'
@@ -437,20 +441,13 @@ function ToastCard({
         backgroundImage: `radial-gradient(130% 160% at 0% 0%, color-mix(in srgb, ${style.tint} 85%, transparent) 0%, transparent 58%)`,
       }}
       className={cx(
-        'group pointer-events-auto absolute inset-x-0 top-0 origin-bottom touch-pan-y overflow-hidden rounded-2xl border border-line bg-surface text-ink shadow-pop select-none',
-        hidden && 'pointer-events-none',
+        'group pointer-events-auto absolute inset-x-0 top-0 touch-pan-y overflow-hidden rounded-2xl border border-line bg-surface text-ink shadow-pop select-none',
       )}
     >
-      <div
-        ref={content}
-        className={cx(
-          'flex items-start gap-3 p-3.5 pr-3 transition-opacity duration-200',
-          behind && 'opacity-0',
-        )}
-      >
+      <div ref={content} className="flex items-center gap-3 p-3.5 pr-3">
         <span
           className={cx(
-            'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-4 [&>svg]:h-[17px] [&>svg]:w-[17px]',
+            'flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-4 [&>svg]:h-[17px] [&>svg]:w-[17px]',
             style.badge,
           )}
         >
@@ -470,14 +467,14 @@ function ToastCard({
           <p className="text-sm leading-5 font-semibold break-words">{item.title}</p>
           {item.description && (
             <p className="mt-0.5 text-[13px] leading-5 break-words text-muted">
-              {item.description}
+              <Emphasized text={item.description} part={item.emphasis} />
             </p>
           )}
         </div>
         <button
           type="button"
           onClick={() => onDismiss(item.id)}
-          className="-mt-0.5 -mr-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-subtle transition group-hover:opacity-100 hover:bg-surface-3 hover:text-ink focus-visible:opacity-100 sm:opacity-0 [@media(hover:none)]:opacity-100"
+          className="-mr-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-subtle transition group-hover:opacity-100 hover:bg-surface-3 hover:text-ink focus-visible:opacity-100 sm:opacity-0 [@media(hover:none)]:opacity-100"
           aria-label={labels.close}
         >
           <X className="h-4 w-4" />
@@ -500,7 +497,7 @@ function ToastCard({
   );
 }
 
-/** The toast region: newest on top, older ones stacked behind until hovered. */
+/** The toast region: a list with the newest on top; older ones slide down as new ones arrive. */
 function ToastStack({
   toasts,
   onDismiss,
@@ -509,7 +506,7 @@ function ToastStack({
   onDismiss: (id: number, swipe?: number) => void;
 }) {
   const { t } = useUiI18n();
-  const [expanded, setExpanded] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const [heights, setHeights] = useState<Record<number, number>>({});
   const onHeight = useCallback(
     (id: number, height: number) =>
@@ -519,26 +516,23 @@ function ToastStack({
 
   const ordered = [...toasts].reverse();
   const heightOf = (item: ToastItem) => heights[item.id] ?? 76;
-  const frontHeight = ordered[0] ? heightOf(ordered[0]) : 0;
   const offsets: number[] = [];
   let running = 0;
-  for (const [index, item] of ordered.entries()) {
-    offsets.push(expanded ? running : Math.min(index, 2) * TOAST_PEEK);
+  for (const item of ordered) {
+    offsets.push(running);
     running += heightOf(item) + TOAST_GAP;
   }
-  const total = expanded
-    ? Math.max(running - TOAST_GAP, 0)
-    : frontHeight + Math.min(ordered.length - 1, 2) * TOAST_PEEK;
+  const total = Math.max(running - TOAST_GAP, 0);
 
   return (
     <ol
       aria-live="polite"
       aria-label={t('toast.region')}
-      onPointerEnter={(event) => event.pointerType === 'mouse' && setExpanded(true)}
-      onPointerLeave={() => setExpanded(false)}
-      onFocus={() => setExpanded(true)}
+      onPointerEnter={(event) => event.pointerType === 'mouse' && setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
+      onFocus={() => setHovered(true)}
       onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setExpanded(false);
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHovered(false);
       }}
       style={{ height: total, transition: 'height 320ms ease' }}
       className="pointer-events-auto fixed inset-x-3 top-3 z-[70] mx-auto max-w-sm sm:inset-x-auto sm:top-4 sm:right-4 sm:mx-0 sm:w-[23rem]"
@@ -547,7 +541,7 @@ function ToastStack({
         <ToastCard
           key={item.id}
           item={item}
-          layout={{ index, offset: offsets[index] ?? 0, frontHeight, expanded }}
+          layout={{ index, offset: offsets[index] ?? 0, hovered }}
           labels={{
             close: t('toast.close'),
             kind: item.kind ? t(`toast.kinds.${item.kind}`) : undefined,
@@ -586,22 +580,31 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const push = useCallback((content: ToastContent) => {
-    const id = nextId.current++;
-    setToasts((items) => {
-      const same = items.find(
-        (item) =>
-          !item.leaving &&
-          item.tone === content.tone &&
-          item.title === content.title &&
-          item.description === content.description,
+  // Mirror of the list so `push` can find a duplicate and return its id synchronously.
+  const current = useRef<ToastItem[]>([]);
+  useEffect(() => {
+    current.current = toasts;
+  }, [toasts]);
+
+  const push = useCallback((content: ToastContent, source?: HTMLFormElement) => {
+    const same = current.current.find(
+      (item) =>
+        !item.leaving &&
+        item.tone === content.tone &&
+        item.title === content.title &&
+        item.description === content.description,
+    );
+    // The same message twice in a row (a double submit) refreshes the visible toast.
+    if (same) {
+      setToasts((items) =>
+        items.map((item) => (item.id === same.id ? { ...item, version: item.version + 1 } : item)),
       );
-      // The same message twice in a row (a double submit) refreshes the visible toast.
-      if (same) {
-        return items.map((item) => (item === same ? { ...item, version: item.version + 1 } : item));
-      }
-      return [...items.slice(-(TOAST_LIMIT - 1)), { ...content, id, version: 0 }];
-    });
+      return same.id;
+    }
+    const id = nextId.current++;
+    const item: ToastItem = { ...content, id, version: 0, source };
+    current.current = [...current.current, item];
+    setToasts((items) => [...items.slice(-(TOAST_LIMIT - 1)), item]);
     return id;
   }, []);
 
@@ -637,12 +640,20 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
           }
           const meta = error.status > 0 ? String(error.status) : undefined;
           if (errorText.hasFieldErrors(error) || error.code === 'VALIDATION_ERROR') {
+            // The service rejected the data: show its own reasons, not the interface template.
+            const reasons = [
+              ...new Set(
+                Object.keys(error.fieldErrors)
+                  .map((name) => errorText.field(error, name))
+                  .filter(Boolean),
+              ),
+            ];
             return push({
-              tone: 'warning',
-              kind: 'validation',
+              tone: 'error',
+              kind: 'service',
               meta,
-              title: translate('toast.titles.validation'),
-              description: translate('toast.hints.validation'),
+              title: translate('toast.titles.serviceRejected'),
+              description: reasons.length > 0 ? reasons.join(' · ') : errorText.message(error),
             });
           }
           if (error.status === 0) {
@@ -687,31 +698,24 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
       batch = [];
       if (!first) return;
       const { t: translate } = text.current;
-      const validity = first.validity;
-      const reason = validity.valueMissing
-        ? translate('toast.validation.required')
-        : validity.typeMismatch && first.type === 'email'
-          ? translate('toast.validation.email')
-          : first.type === 'number' && (validity.rangeOverflow || validity.rangeUnderflow)
-            ? translate(validity.rangeOverflow ? 'toast.validation.max' : 'toast.validation.min', {
-                value: decimal(
-                  validity.rangeOverflow ? first.getAttribute('max') : first.getAttribute('min'),
-                ),
-              })
-            : validity.tooShort
-              ? translate('toast.validation.tooShort', {
-                  count: first.getAttribute('minlength') ?? '',
-                })
-              : first.validationMessage;
       const label = fieldLabel(first);
+      const reason = !label
+        ? translate('toast.validation.generic')
+        : first.validity.valueMissing
+          ? translate('toast.validation.required', { field: label })
+          : translate('toast.validation.invalid', { field: label });
       const more =
         rest.length > 0 ? ` ${translate('toast.validation.more', { count: rest.length })}` : '';
-      push({
-        tone: 'warning',
-        kind: 'validation',
-        title: translate('toast.titles.validation'),
-        description: `${label ? `${label}: ` : ''}${reason}${more}`,
-      });
+      push(
+        {
+          tone: 'warning',
+          kind: 'validation',
+          title: translate('toast.titles.validation'),
+          description: `${reason}${more}`,
+          emphasis: label || undefined,
+        },
+        first.form ?? undefined,
+      );
       first.focus({ preventScroll: true });
       first.scrollIntoView({ block: 'center', behavior: 'smooth' });
     };
@@ -722,9 +726,27 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
       if (batch.length === 0) window.setTimeout(flush);
       batch.push(field);
     };
+    // Once the form is fixed (every field valid) or submitted, its validation toast is stale.
+    const settle = (event: Event) => {
+      const target = event.target as Element;
+      const form = target instanceof HTMLFormElement ? target : (target as FormField).form;
+      if (!form) return;
+      if (event.type !== 'submit' && !form.matches(':valid')) return;
+      for (const item of current.current) {
+        if (item.source === form && !item.leaving) dismiss(item.id);
+      }
+    };
     document.addEventListener('invalid', onInvalid, true);
-    return () => document.removeEventListener('invalid', onInvalid, true);
-  }, [push]);
+    document.addEventListener('input', settle, true);
+    document.addEventListener('change', settle, true);
+    document.addEventListener('submit', settle, true);
+    return () => {
+      document.removeEventListener('invalid', onInvalid, true);
+      document.removeEventListener('input', settle, true);
+      document.removeEventListener('change', settle, true);
+      document.removeEventListener('submit', settle, true);
+    };
+  }, [push, dismiss]);
 
   const settle = (result: boolean) => {
     pending?.resolve(result);
@@ -778,9 +800,19 @@ export function useFeedback() {
 export function useErrorToast(error: unknown, title?: string) {
   const { toast } = useFeedback();
   const shown = useRef<unknown>(null);
+  const toastId = useRef<number | null>(null);
   useEffect(() => {
-    if (error == null || error === shown.current) return;
+    if (error === shown.current) return;
     shown.current = error;
-    toast.apiError(error, title);
+    // A new attempt clears the error (or replaces it): the previous toast no longer applies.
+    if (toastId.current !== null) toast.dismiss(toastId.current);
+    toastId.current = error == null ? null : toast.apiError(error, title);
   }, [error, title, toast]);
+  // Closing the form takes its error with it.
+  useEffect(
+    () => () => {
+      if (toastId.current !== null) toast.dismiss(toastId.current);
+    },
+    [toast],
+  );
 }
