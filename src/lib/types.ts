@@ -112,6 +112,8 @@ export interface Receivable {
   dueDate: string;
   status: ReceivableStatus;
   createdAt: string;
+  /** List endpoint only: distinct payment methods used, most recent first. */
+  paymentMethods?: PaymentMethod[];
 }
 
 export interface CustomerDetail extends CustomerListItem {

@@ -1,5 +1,7 @@
 import { Layers, Plus } from 'lucide-react';
+import { isValidRange } from '../components/dashboard/period';
 import { StatusIcon } from '../components/domain/Badges';
+import { DueDateFilter } from '../components/domain/DueDateFilter';
 import { useState } from 'react';
 import { ReceivableFormModal } from '../components/domain/ReceivableFormModal';
 import { useReceivableColumns } from '../components/domain/receivableColumns';
@@ -22,6 +24,8 @@ import type { ReceivableStatus, SortDir } from '../lib/types';
 const DEFAULTS = {
   status: '',
   search: '',
+  dueFrom: '',
+  dueTo: '',
   page: '1',
   pageSize: '20',
   sortBy: 'dueDate',
@@ -38,9 +42,15 @@ export function ReceivablesPage() {
   const summary = useDashboardSummary();
   const columns = useReceivableColumns();
 
+  const dueRange = isValidRange({ from: state.dueFrom, to: state.dueTo })
+    ? { from: state.dueFrom, to: state.dueTo }
+    : null;
+
   const params: ReceivableListParams = {
     status: state.status as ReceivableStatus | '',
     search: state.search || undefined,
+    dueFrom: dueRange?.from,
+    dueTo: dueRange?.to,
     page: Number(state.page) || 1,
     pageSize: Number(state.pageSize) || 20,
     sortBy: state.sortBy as ReceivableListParams['sortBy'],
@@ -80,6 +90,12 @@ export function ReceivablesPage() {
                   count: counts?.[status].count,
                 })),
               ]}
+            />
+            <DueDateFilter
+              range={dueRange}
+              onChange={(range) =>
+                update({ dueFrom: range?.from ?? '', dueTo: range?.to ?? '', page: '1' })
+              }
             />
             <SearchInput
               value={state.search}

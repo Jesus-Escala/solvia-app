@@ -5,10 +5,11 @@ import { OWL, OWL_COLORS } from './owlGeometry';
 /**
  * - `default`: eyes open (blinks now and then). `happy`: smiling eyes.
  * - `wave`: raises the right wing and waves.
+ * - `fly`: both wings up and flapping, as if flying somewhere.
  * - `cover`: both wings completely cover the eyes (e.g. while a password is typed).
  * - `peek`: one wing covers an eye, the other eye peeks (e.g. password shown).
  */
-export type MascotMood = 'default' | 'happy' | 'wave' | 'cover' | 'peek';
+export type MascotMood = 'default' | 'happy' | 'wave' | 'fly' | 'cover' | 'peek';
 
 /*
  * Illustrated Soli (viewBox 0 0 120 131): a big round head on a small round body, drawn with
@@ -65,6 +66,7 @@ const POSES: Record<MascotMood, { left: Pose; right: Pose }> = {
   default: { left: REST_LEFT, right: REST_RIGHT },
   happy: { left: REST_LEFT, right: REST_RIGHT },
   wave: { left: REST_LEFT, right: { rotate: -145, scale: 0.85 } },
+  fly: { left: { rotate: 118, scale: 0.8 }, right: { rotate: -118, scale: 0.8 } },
   cover: { left: COVER_LEFT, right: COVER_RIGHT },
   // Right wing lowered just below its eye, so that eye peeks over it.
   peek: {
@@ -265,12 +267,13 @@ function Wing({
   ids,
   shoulder,
   pose,
-  waving,
+  animation,
 }: {
   ids: Ids;
   shoulder: { x: number; y: number };
   pose: Pose;
-  waving?: boolean;
+  /** Keyframe class played around the shoulder (waving, flapping). */
+  animation?: string;
 }) {
   const style: CSSProperties = {
     transformOrigin: `${shoulder.x}px ${shoulder.y}px`,
@@ -279,10 +282,7 @@ function Wing({
   };
   return (
     <g style={style}>
-      <g
-        className={waving ? 'mascot-wave' : undefined}
-        style={{ transformOrigin: `${shoulder.x}px ${shoulder.y}px` }}
-      >
+      <g className={animation} style={{ transformOrigin: `${shoulder.x}px ${shoulder.y}px` }}>
         <g transform={`translate(${shoulder.x} ${shoulder.y})`}>
           <path
             d={WING_PATH}
@@ -425,8 +425,20 @@ export function Mascot({
       <Head ids={ids} happy={happy} blink />
 
       {/* Wings in front of the head, so they can cover the eyes */}
-      <Wing ids={ids} shoulder={SHOULDERS.left} pose={pose.left} />
-      <Wing ids={ids} shoulder={SHOULDERS.right} pose={pose.right} waving={mood === 'wave'} />
+      <Wing
+        ids={ids}
+        shoulder={SHOULDERS.left}
+        pose={pose.left}
+        animation={mood === 'fly' ? 'mascot-flap-left' : undefined}
+      />
+      <Wing
+        ids={ids}
+        shoulder={SHOULDERS.right}
+        pose={pose.right}
+        animation={
+          mood === 'wave' ? 'mascot-wave' : mood === 'fly' ? 'mascot-flap-right' : undefined
+        }
+      />
     </svg>
   );
 }

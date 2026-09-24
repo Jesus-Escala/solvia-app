@@ -263,6 +263,35 @@ body {
   animation: mascot-wave 0.9s ease-in-out infinite;
 }
 
+/* Flying: both raised wings beat down and back up, mirrored. */
+@keyframes mascot-flap-left {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-38deg);
+  }
+}
+
+@keyframes mascot-flap-right {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(38deg);
+  }
+}
+
+.mascot-flap-left {
+  animation: mascot-flap-left 0.42s ease-in-out infinite;
+}
+
+.mascot-flap-right {
+  animation: mascot-flap-right 0.42s ease-in-out infinite;
+}
+
 @keyframes table-progress {
   from {
     transform: translateX(-100%);

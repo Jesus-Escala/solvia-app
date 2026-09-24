@@ -229,6 +229,9 @@ export interface ReceivableListParams {
   status?: ReceivableStatus | '';
   search?: string;
   customerId?: string;
+  /** Due date range (YYYY-MM-DD, both inclusive). */
+  dueFrom?: string;
+  dueTo?: string;
   page: number;
   pageSize?: number;
   sortBy?:
