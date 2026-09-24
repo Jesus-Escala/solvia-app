@@ -9,6 +9,7 @@ import { CustomerDetailPage } from './pages/CustomerDetailPage';
 import { CustomersPage } from './pages/CustomersPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { HelpPage } from './pages/HelpPage';
+import { HomePage } from './pages/HomePage';
 import { ReceivablesPage } from './pages/ReceivablesPage';
 import { SettingsPage } from './pages/SettingsPage';
 
@@ -40,7 +41,8 @@ export function App() {
       <Route element={<RequireAuth />}>
         <Route path="change-password" element={<ChangePasswordPage />} />
         <Route element={<AppShell />}>
-          <Route index element={<DashboardPage />} />
+          <Route index element={<HomePage />} />
+          <Route path="reports" element={<DashboardPage />} />
           <Route path="customers" element={<CustomersPage />} />
           <Route path="customers/:id" element={<CustomerDetailPage />} />
           <Route path="receivables" element={<ReceivablesPage />} />

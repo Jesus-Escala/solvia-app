@@ -16,6 +16,7 @@ import {
 import { useState } from 'react';
 import {
   Alert,
+  Button,
   Card,
   cx,
   DonutChart,
@@ -37,6 +38,7 @@ import {
   type PeriodRange,
 } from '../../components/dashboard/period';
 import { PeriodPicker } from '../../components/dashboard/PeriodPicker';
+import { CustomerPicker } from '../../components/domain/CustomerPicker';
 import { useDashboardAnalytics } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { DashboardAnalytics, PaymentMethod } from '../../lib/types';
@@ -50,9 +52,14 @@ export interface CollectionFilters {
   weekday: number | null;
 }
 
+const METHODS: PaymentMethod[] = ['yape', 'plin', 'cash', 'bank_transfer'];
+const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
+const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
 /**
- * Active filters as removable chips (or, without filters, a hint on how to add them). Method
- * and weekday only apply to payments, which the note under the chips says.
+ * The filters, always in the same place and order, as plain dropdowns: payment method, customer
+ * and weekday. Clicking a slice, a day or a payer in the charts below sets the same filters.
+ * Method and weekday only apply to payments, which the note says when one is active.
  */
 function FilterBar({
   filters,
@@ -66,59 +73,75 @@ function FilterBar({
   onChange: (changes: Partial<CollectionFilters>) => void;
 }) {
   const { t } = useI18n();
-  const chips = [
-    filters.method && {
-      key: 'method' as const,
-      label: `${t('dashboard.filters.method')}: ${t(`methods.${filters.method}`)}`,
-    },
-    filters.customerId && {
-      key: 'customerId' as const,
-      label: `${t('dashboard.filters.customer')}: ${customerName}`,
-    },
-    filters.weekday && {
-      key: 'weekday' as const,
-      label: `${t('dashboard.filters.weekday')}: ${weekdayName(filters.weekday)}`,
-    },
-  ].filter((chip) => !!chip);
+  const active = !!(filters.method || filters.customerId || filters.weekday);
+  const selectClass = (on: boolean) =>
+    cx('input h-10 min-w-0', on && 'border-primary bg-primary-soft/50 font-medium');
 
-  if (chips.length === 0) {
-    return (
-      <p className="flex items-center gap-1.5 text-xs text-muted">
-        <MousePointerClick className="h-3.5 w-3.5 shrink-0" />
-        {t('dashboard.filters.hint')}
-      </p>
-    );
-  }
   return (
-    <div className="animate-page-in flex flex-wrap items-center gap-2 rounded-xl border border-primary/25 bg-primary-soft/60 px-3 py-2">
-      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary-ink">
-        <Filter className="h-3.5 w-3.5" />
-        {t('dashboard.filters.active')}
-      </span>
-      {chips.map((chip) => (
-        <button
-          key={chip.key}
-          type="button"
-          onClick={() => onChange({ [chip.key]: null })}
-          aria-label={t('dashboard.filters.remove', { name: chip.label })}
-          className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-surface py-1 pr-1.5 pl-3 text-xs font-medium text-ink shadow-card ring-1 ring-line transition hover:ring-primary/50"
-        >
-          <span className="truncate first-letter:uppercase">{chip.label}</span>
-          <X className="h-3.5 w-3.5 shrink-0 text-muted" />
-        </button>
-      ))}
-      {chips.length > 1 && (
-        <button
-          type="button"
+    <div
+      className={cx(
+        'rounded-xl border p-3 transition',
+        active ? 'border-primary/30 bg-primary-soft/30' : 'border-line bg-surface',
+      )}
+    >
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1.4fr_1fr_auto] lg:items-end">
+        <label className="block min-w-0">
+          <span className="label flex items-center gap-1.5">
+            <Filter className="h-3.5 w-3.5" />
+            {t('dashboard.filters.method')}
+          </span>
+          <select
+            className={selectClass(!!filters.method)}
+            value={filters.method ?? ''}
+            onChange={(event) =>
+              onChange({ method: (event.target.value || null) as PaymentMethod | null })
+            }
+          >
+            <option value="">{t('dashboard.filters.allMethods')}</option>
+            {METHODS.map((method) => (
+              <option key={method} value={method}>
+                {t(`methods.${method}`)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="min-w-0">
+          <span className="label">{t('dashboard.filters.customer')}</span>
+          <CustomerPicker
+            value={filters.customerId ? { id: filters.customerId, name: customerName } : null}
+            onChange={(customer) => onChange({ customerId: customer?.id ?? null })}
+          />
+        </div>
+        <label className="block min-w-0">
+          <span className="label">{t('dashboard.filters.weekday')}</span>
+          <select
+            className={selectClass(!!filters.weekday)}
+            value={filters.weekday ?? ''}
+            onChange={(event) => onChange({ weekday: Number(event.target.value) || null })}
+          >
+            <option value="">{t('dashboard.filters.allDays')}</option>
+            {WEEKDAYS.map((weekday) => (
+              <option key={weekday} value={weekday}>
+                {capitalize(weekdayName(weekday))}
+              </option>
+            ))}
+          </select>
+        </label>
+        <Button
+          variant="ghost"
+          icon={<X className="h-4 w-4" />}
+          disabled={!active}
           onClick={() => onChange({ method: null, customerId: null, weekday: null })}
-          className="ml-auto text-xs font-medium text-primary-ink hover:underline"
         >
           {t('dashboard.filters.clear')}
-        </button>
-      )}
-      {(filters.method || filters.weekday) && (
-        <p className="basis-full text-xs text-muted">{t('dashboard.filters.scopeNote')}</p>
-      )}
+        </Button>
+      </div>
+      <p className="mt-2 flex items-start gap-1.5 text-xs text-muted">
+        <MousePointerClick className="mt-px h-3.5 w-3.5 shrink-0" />
+        {filters.method || filters.weekday
+          ? t('dashboard.filters.scopeNote')
+          : t('dashboard.filters.hint')}
+      </p>
     </div>
   );
 }

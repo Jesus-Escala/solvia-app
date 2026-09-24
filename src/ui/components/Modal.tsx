@@ -46,7 +46,16 @@ export function Modal({
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
-    if (phase === 'open' && !dialog.open) dialog.showModal();
+    if (phase === 'open' && !dialog.open) {
+      dialog.showModal();
+      // The native dialog focuses its first focusable element (the close button). Forms are
+      // quicker to fill when the cursor starts in their first field.
+      dialog
+        .querySelector<HTMLElement>(
+          '[data-autofocus], input:not([type="hidden"]):not([disabled]):not(.sr-only), select:not([disabled]), textarea:not([disabled])',
+        )
+        ?.focus();
+    }
     if (phase !== 'closing') return;
     let done = false;
     const finish = (event?: AnimationEvent) => {

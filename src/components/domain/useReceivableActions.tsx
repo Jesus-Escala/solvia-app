@@ -1,4 +1,4 @@
-import { BellRing, HandCoins, Link2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { HandCoins, Link2, MessageCircle, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../../auth/AuthContext';
 import { useDeleteReceivable, usePaymentLink, useSendReminder } from '../../hooks/queries';
@@ -9,8 +9,8 @@ import { PaymentFormModal } from './PaymentFormModal';
 import { ReceivableFormModal } from './ReceivableFormModal';
 
 /**
- * Everything needed to act on receivables from any table: the row actions (primary "Collect"
- * button + overflow menu) and the modals they open. Usage:
+ * Everything needed to act on receivables from any table: the row actions (visible "Paid me"
+ * and "WhatsApp" buttons + overflow menu) and the modals they open. Usage:
  *
  *   const actions = useReceivableActions();
  *   <DataTable rowActions={actions.render} ... />
@@ -32,7 +32,11 @@ export function useReceivableActions() {
   const sendReminder = (receivable: Receivable) =>
     run(async () => {
       const notification = await remind.mutateAsync(receivable.id);
-      if (notification.status === 'sent') {
+      if (notification.whatsappUrl) {
+        // No automatic sending configured: open WhatsApp with the message ready to send.
+        window.open(notification.whatsappUrl, '_blank', 'noopener');
+        toast.info(t('receivables.reminderOpened', { name: receivable.customer?.name ?? '' }));
+      } else if (notification.status === 'sent') {
         toast.success(t('receivables.reminderSent', { name: receivable.customer?.name ?? '' }));
       } else {
         toast.warning(t('receivables.reminderFailed'));
@@ -68,14 +72,25 @@ export function useReceivableActions() {
     return (
       <>
         {open && (
-          <Button
-            size="sm"
-            variant="soft"
-            icon={<HandCoins className="h-3.5 w-3.5" />}
-            onClick={() => setPaying(receivable)}
-          >
-            {t('receivables.actions.payShort')}
-          </Button>
+          <>
+            <Button
+              size="sm"
+              variant="soft"
+              icon={<HandCoins className="h-3.5 w-3.5" />}
+              onClick={() => setPaying(receivable)}
+            >
+              {t('receivables.actions.payShort')}
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={<MessageCircle className="h-3.5 w-3.5" />}
+              loading={remind.isPending && remind.variables === receivable.id}
+              onClick={() => sendReminder(receivable)}
+            >
+              {t('receivables.actions.remindShort')}
+            </Button>
+          </>
         )}
         <Popover
           trigger={({ toggle, ref, open: menuOpen }) => (
@@ -94,18 +109,6 @@ export function useReceivableActions() {
             <MenuItems
               close={close}
               items={[
-                {
-                  label: t('receivables.actions.pay'),
-                  icon: <HandCoins />,
-                  onSelect: () => setPaying(receivable),
-                  hidden: !open,
-                },
-                {
-                  label: t('receivables.actions.remind'),
-                  icon: <BellRing />,
-                  onSelect: () => sendReminder(receivable),
-                  hidden: !open,
-                },
                 {
                   label: t('receivables.actions.payLink'),
                   icon: <Link2 />,

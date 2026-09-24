@@ -1,4 +1,4 @@
-import { Layers, Plus } from 'lucide-react';
+import { CircleDollarSign, Layers, Plus, X } from 'lucide-react';
 import { isValidRange } from '../components/dashboard/period';
 import { StatusIcon } from '../components/domain/Badges';
 import { DueDateFilter } from '../components/domain/DueDateFilter';
@@ -21,8 +21,9 @@ import { useUrlState } from '@/ui';
 import { useI18n } from '../i18n/I18nProvider';
 import type { ReceivableStatus, SortDir } from '../lib/types';
 
+// `open` (the default) = everything still owed: pending, partially paid or late.
 const DEFAULTS = {
-  status: '',
+  status: 'open',
   search: '',
   dueFrom: '',
   dueTo: '',
@@ -32,7 +33,8 @@ const DEFAULTS = {
   sortBy: '',
   sortDir: '',
 };
-const STATUSES: ReceivableStatus[] = ['pending', 'partial', 'overdue', 'paid'];
+const OPEN = 'pending,partial,overdue';
+const STATUSES = ['overdue', 'paid'] as const satisfies ReceivableStatus[];
 
 export function ReceivablesPage() {
   const { t } = useI18n();
@@ -48,7 +50,7 @@ export function ReceivablesPage() {
     : null;
 
   const params: ReceivableListParams = {
-    status: state.status as ReceivableStatus | '',
+    status: state.status === 'open' ? OPEN : state.status,
     search: state.search || undefined,
     dueFrom: dueRange?.from,
     dueTo: dueRange?.to,
@@ -59,6 +61,9 @@ export function ReceivablesPage() {
   };
   const query = useReceivables(params);
   const counts = summary.data?.byStatus;
+  const filtered = state.status !== 'open' || Boolean(state.search) || Boolean(dueRange);
+  const clearFilters = () =>
+    update({ status: 'open', search: '', dueFrom: '', dueTo: '', page: '1' });
 
   return (
     <Page fill>
@@ -81,15 +86,23 @@ export function ReceivablesPage() {
               data-tour="status-filter"
               label={t('receivables.columns.status')}
               value={state.status}
-              onChange={(status) => update({ status })}
+              onChange={(status) => update({ status, page: '1' })}
               options={[
-                { value: '', label: t('common.all'), icon: <Layers /> },
+                {
+                  value: 'open',
+                  label: t('receivables.filters.open'),
+                  icon: <CircleDollarSign />,
+                  count: counts
+                    ? counts.pending.count + counts.partial.count + counts.overdue.count
+                    : undefined,
+                },
                 ...STATUSES.map((status) => ({
                   value: status,
-                  label: t(`status.${status}`),
+                  label: t(`receivables.filters.${status}`),
                   icon: <StatusIcon status={status} />,
                   count: counts?.[status].count,
                 })),
+                { value: '', label: t('common.all'), icon: <Layers /> },
               ]}
             />
             <DueDateFilter
@@ -128,17 +141,31 @@ export function ReceivablesPage() {
             onPageSizeChange: (pageSize) => update({ pageSize: String(pageSize) }),
           }
         }
-        empty={{
-          title:
-            state.status || state.search ? t('receivables.emptyFiltered') : t('receivables.empty'),
-          description: state.status || state.search ? undefined : t('receivables.emptyDescription'),
-          action:
-            !state.status && !state.search ? (
-              <Button icon={<Plus className="h-4 w-4" />} onClick={() => setCreating(true)}>
-                {t('receivables.new')}
-              </Button>
-            ) : undefined,
-        }}
+        empty={
+          filtered
+            ? {
+                title: t('receivables.emptyFiltered'),
+                description: t('receivables.emptyFilteredDescription'),
+                action: (
+                  <Button
+                    variant="secondary"
+                    icon={<X className="h-4 w-4" />}
+                    onClick={clearFilters}
+                  >
+                    {t('receivables.clearFilters')}
+                  </Button>
+                ),
+              }
+            : {
+                title: t('receivables.empty'),
+                description: t('receivables.emptyDescription'),
+                action: (
+                  <Button icon={<Plus className="h-4 w-4" />} onClick={() => setCreating(true)}>
+                    {t('receivables.new')}
+                  </Button>
+                ),
+              }
+        }
       />
       {actions.modals}
       <ReceivableFormModal open={creating} onClose={() => setCreating(false)} />

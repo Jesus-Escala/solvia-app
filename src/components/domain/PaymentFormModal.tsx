@@ -31,7 +31,14 @@ export function PaymentFormModal({
   );
 }
 
-function PaymentForm({ receivable, onClose }: { receivable: Receivable; onClose: () => void }) {
+/** Records a payment of one receivable. Also used by the quick "Registrar pago" flow. */
+export function PaymentForm({
+  receivable,
+  onClose,
+}: {
+  receivable: Receivable;
+  onClose: () => void;
+}) {
   const { t, fmt } = useI18n();
   const errors = useErrorText();
   const { toast } = useFeedback();
@@ -40,6 +47,7 @@ function PaymentForm({ receivable, onClose }: { receivable: Receivable; onClose:
   const [amount, setAmount] = useState(String(receivable.outstandingAmount));
   const [method, setMethod] = useState<PaymentMethod>('yape');
   const [date, setDate] = useState(todayIso());
+  const [changeDate, setChangeDate] = useState(false);
   const [proof, setProof] = useState<File | null>(null);
   const [proofError, setProofError] = useState<string>();
 
@@ -97,43 +105,44 @@ function PaymentForm({ receivable, onClose }: { receivable: Receivable; onClose:
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field
-          label={t('payment.amount')}
-          hint={isFull ? t('payment.full') : t('payment.partial')}
-          error={errors.field(register.error, 'amount')}
-        >
-          {(id, describedBy) => (
-            <input
-              id={id}
-              aria-describedby={describedBy}
-              className="input text-base font-semibold tabular-nums"
-              type="number"
-              inputMode="decimal"
-              min="0.01"
-              step="0.01"
-              max={receivable.outstandingAmount}
-              required
-              autoFocus
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
-          )}
-        </Field>
-        <Field label={t('payment.date')} error={errors.field(register.error, 'date')}>
-          {(id) => (
-            <input
-              id={id}
-              className="input"
-              type="date"
-              required
-              max={todayIso()}
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
-          )}
-        </Field>
-      </div>
+      <Field
+        label={t('payment.amount')}
+        hint={isFull ? t('payment.full') : t('payment.partial')}
+        error={errors.field(register.error, 'amount')}
+      >
+        {(id, describedBy) => (
+          <div className="space-y-2">
+            <div className="relative">
+              <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm font-semibold text-muted">
+                S/
+              </span>
+              <input
+                id={id}
+                aria-describedby={describedBy}
+                className="input pl-9 text-lg font-semibold tabular-nums"
+                type="number"
+                inputMode="decimal"
+                min="0.01"
+                step="0.01"
+                max={receivable.outstandingAmount}
+                required
+                autoFocus
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+            </div>
+            {!isFull && (
+              <button
+                type="button"
+                onClick={() => setAmount(String(receivable.outstandingAmount))}
+                className="text-xs font-medium text-primary-ink hover:underline"
+              >
+                {t('payment.payAll', { amount: fmt.money(receivable.outstandingAmount) })}
+              </button>
+            )}
+          </div>
+        )}
+      </Field>
 
       <div>
         <p className="label">{t('payment.method')}</p>
@@ -183,11 +192,34 @@ function PaymentForm({ receivable, onClose }: { receivable: Receivable; onClose:
         </p>
       </div>
 
-      <p className="rounded-lg bg-info-soft px-3 py-2 text-xs text-info-ink">
-        {t('payment.statementNote')}
-      </p>
+      {changeDate ? (
+        <Field label={t('payment.date')} error={errors.field(register.error, 'date')}>
+          {(id) => (
+            <input
+              id={id}
+              className="input"
+              type="date"
+              required
+              max={todayIso()}
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          )}
+        </Field>
+      ) : (
+        <p className="text-xs text-muted">
+          {t('payment.paidToday')}{' '}
+          <button
+            type="button"
+            onClick={() => setChangeDate(true)}
+            className="font-medium text-primary-ink hover:underline"
+          >
+            {t('receivables.form.changeDate')}
+          </button>
+        </p>
+      )}
 
-      <div className="flex justify-end gap-2 pt-1">
+      <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
         <Button variant="secondary" onClick={onClose}>
           {t('common.cancel')}
         </Button>

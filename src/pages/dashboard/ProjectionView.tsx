@@ -147,11 +147,7 @@ function UpcomingTable() {
         </div>
       }
       toolbarEnd={
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/receivables?status=pending&sortBy=dueDate&sortDir=asc')}
-        >
+        <Button variant="ghost" size="sm" onClick={() => navigate('/receivables?status=open')}>
           {t('dashboard.projection.upcoming.viewAll')}
         </Button>
       }

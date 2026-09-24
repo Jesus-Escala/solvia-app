@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router';
 import { useAuth } from '../../auth/AuthContext';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useTour } from '../../tour/TourProvider';
+import { useQuickActions } from '../quick/quickActionsContext';
 import { Mascot, Popover } from '@/ui';
 
 function Action({ icon, label, onClick }: { icon: ReactNode; label: string; onClick: () => void }) {
@@ -32,6 +33,7 @@ export function AssistantMenu() {
   const { user } = useAuth();
   const tour = useTour();
   const navigate = useNavigate();
+  const quick = useQuickActions();
   const firstName = user?.name.split(' ')[0] ?? '';
 
   return (
@@ -93,7 +95,7 @@ export function AssistantMenu() {
               label={t('assistant.newReceivable')}
               onClick={() => {
                 close();
-                navigate('/receivables');
+                quick.open('receivable');
               }}
             />
             <p className="flex items-center gap-2 rounded-lg bg-surface-2 px-3 py-2 text-xs text-muted">

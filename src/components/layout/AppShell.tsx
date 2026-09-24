@@ -4,6 +4,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { useMe } from '../../hooks/queries';
 import { ApiError } from '../../lib/api';
 import { TourProvider } from '../../tour/TourProvider';
+import { QuickActionsProvider } from '../quick/QuickActions';
 import { BottomNav } from './BottomNav';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
@@ -46,16 +47,18 @@ export function AppShell() {
 
   return (
     <TourProvider>
-      <div className="flex h-dvh overflow-hidden">
-        <Sidebar collapsed={collapsed} />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <Topbar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
-          <main className="min-h-0 flex-1 overflow-y-auto">
-            <Outlet />
-          </main>
-          <BottomNav />
+      <QuickActionsProvider>
+        <div className="flex h-dvh overflow-hidden">
+          <Sidebar collapsed={collapsed} />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <Topbar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
+            <main className="min-h-0 flex-1 overflow-y-auto">
+              <Outlet />
+            </main>
+            <BottomNav />
+          </div>
         </div>
-      </div>
+      </QuickActionsProvider>
     </TourProvider>
   );
 }

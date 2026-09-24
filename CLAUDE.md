@@ -29,15 +29,22 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
   (Logo, Bowl `Mascot`), theme, i18n core, charts, API client factory, PWA install, `styles.css`
   (design tokens + motion). The same kit is copied in solvia-admin (and a subset in
   solvia-landing): when you fix a kit file, apply the same change there.
-- `src/pages/` — routes (Customers, CustomerDetail, Receivables, Settings + UsersTab, Help,
-  AuthPages with login/register/change-password) and `src/pages/dashboard/`: the dashboard is
-  split into four views (`?view=summary|collection|portfolio|projection`), each with one purpose.
+- **Audience**: small shop owners who are not tech savvy. Plain everyday Spanish ("fiado", "Me
+  deben", "Me pagó"), no accounting jargon, the everyday actions one tap away.
+- `src/pages/` — routes: `HomePage` at `/` (three big actions, what you are owed / were paid this
+  month, and who to collect from now with "Me pagó" + "WhatsApp"), Customers, CustomerDetail,
+  Receivables ("Me deben", open debts by default), Settings + UsersTab, Help, AuthPages
+  (login/register/change-password) and `src/pages/dashboard/` at `/reports`: four views
+  (`?view=summary|collection|portfolio|projection`), each with one purpose. The collection view
+  has a filter row (method, customer, weekday; `?method=&customer=&weekday=`) under the period.
   Collection uses `GET /dashboard/analytics` with the period picker (`?from=&to=&g=`,
   `src/components/dashboard/period.ts` + `PeriodPicker.tsx`); the other views use
   `/dashboard/summary` and `/dashboard/cash-flow`. Shared helpers in `metrics.ts` (colors,
   change vs previous period, compact money for tiles).
 - `src/components/` — `layout/` (AppShell, Sidebar, Topbar, BottomNav, AssistantMenu, PwaManager),
-  `domain/` (forms/modals and columns for customers, receivables, payments), `charts/`, `auth/`.
+  `domain/` (forms/modals and columns for customers, receivables, payments; `CustomerPicker` =
+  search with "create on the spot"), `quick/` (the global "+ Anotar" menu and its forms:
+  `useQuickActions().open('receivable' | 'payment' | 'customer')`), `charts/`, `auth/`.
 - `src/hooks/queries.ts` — every API call as a TanStack Query hook (query keys + invalidation).
 - `src/lib/api.ts` (client, session in `solvia.*` localStorage), `src/lib/types.ts` (**must mirror
   the backend responses**), `src/lib/config.ts` (URLs from env).

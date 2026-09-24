@@ -213,7 +213,7 @@ export function SummaryView({
                 label={t('dashboard.today.dueToday')}
                 amount={fmt.money(snapshot.dueToday?.amount ?? 0)}
                 count={t('dashboard.today.receivables', { count: snapshot.dueToday?.count ?? 0 })}
-                to="/receivables?status=pending&sortBy=dueDate&sortDir=asc"
+                to="/receivables?status=open"
               />
               <TodayItem
                 icon={<CalendarClock />}
@@ -223,7 +223,7 @@ export function SummaryView({
                 count={t('dashboard.today.receivables', {
                   count: summary.totals.dueNext7Days.count,
                 })}
-                to="/receivables?status=pending&sortBy=dueDate&sortDir=asc"
+                to="/receivables?status=open"
               />
               <TodayItem
                 icon={<CalendarX2 />}
@@ -233,7 +233,7 @@ export function SummaryView({
                 count={t('dashboard.today.receivables', {
                   count: snapshot.overdueOver30Days?.count ?? 0,
                 })}
-                to="/receivables?status=overdue&sortBy=dueDate&sortDir=asc"
+                to="/receivables?status=overdue"
               />
               <TodayItem
                 icon={<ShieldAlert />}

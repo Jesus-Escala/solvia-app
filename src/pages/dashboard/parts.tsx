@@ -1,6 +1,5 @@
 import { Clock, RefreshCw } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
-import { useAuth } from '../../auth/AuthContext';
 import { useMe } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 
@@ -13,13 +12,6 @@ function useMinutesSince(iso: string | undefined) {
   return iso ? Math.max(0, Math.floor((now - Date.parse(iso)) / 60_000)) : 0;
 }
 
-function greetingKey() {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'dashboard.greetingMorning' as const;
-  if (hour < 19) return 'dashboard.greetingAfternoon' as const;
-  return 'dashboard.greetingEvening' as const;
-}
-
 export function DashboardHeader({
   generatedAt,
   onRefresh,
@@ -30,19 +22,17 @@ export function DashboardHeader({
   refreshing: boolean;
 }) {
   const { t } = useI18n();
-  const { user } = useAuth();
   const { data: me } = useMe();
   const minutes = useMinutesSince(generatedAt);
-  const firstName = user?.name.split(' ')[0] ?? '';
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <h1 className="text-[1.75rem] leading-tight font-semibold sm:text-[2.1rem]">
-          {t(greetingKey(), { name: firstName })}
+          {t('reports.title')}
         </h1>
         <p className="mt-1 text-sm text-muted">
-          {t('dashboard.subtitle', { business: me?.tenant.name ?? '' })}
+          {t('reports.subtitle', { business: me?.tenant.name ?? '' })}
         </p>
       </div>
       <div className="inline-flex items-center gap-1 self-start rounded-full border border-line bg-surface py-1 pr-1 pl-3 text-xs text-muted shadow-card sm:self-auto">

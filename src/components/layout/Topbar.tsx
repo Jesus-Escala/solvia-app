@@ -1,6 +1,7 @@
 import {
   Building2,
   ChevronDown,
+  CircleHelp,
   KeyRound,
   LogOut,
   MonitorDown,
@@ -23,6 +24,7 @@ import {
   pwaInstall,
   useCanOfferInstall,
 } from '@/ui';
+import { QuickAddMenu } from '../quick/QuickActions';
 import { AssistantMenu } from './AssistantMenu';
 
 export function Topbar({
@@ -65,6 +67,10 @@ export function Topbar({
       )}
 
       <div className="ml-auto flex items-center gap-1">
+        {/* On phones the "+" lives in the bottom bar. */}
+        <span className="mr-2 hidden lg:block">
+          <QuickAddMenu />
+        </span>
         <AssistantMenu />
 
         <PreferencesControls />
@@ -119,7 +125,12 @@ export function Topbar({
                     {
                       label: t('nav.settings'),
                       icon: <Settings />,
-                      onSelect: () => navigate('/settings?tab=preferences'),
+                      onSelect: () => navigate('/settings'),
+                    },
+                    {
+                      label: t('nav.help'),
+                      icon: <CircleHelp />,
+                      onSelect: () => navigate('/help'),
                     },
                     {
                       label: t('topbar.changePassword'),

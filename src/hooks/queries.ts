@@ -244,7 +244,8 @@ export function useSendStatement() {
 // --- Receivables & payments -----------------------------------------------
 
 export interface ReceivableListParams {
-  status?: ReceivableStatus | '';
+  /** One status or a comma-separated list (`pending,overdue`). */
+  status?: ReceivableStatus | '' | (string & {});
   search?: string;
   customerId?: string;
   /** Due date range (YYYY-MM-DD, both inclusive). */
@@ -342,7 +343,8 @@ export function useSendReminder() {
   const invalidate = useInvalidateCollections();
   return useMutation({
     mutationFn: (receivableId: string) =>
-      api.post<Notification>(`/receivables/${receivableId}/remind`),
+      // `whatsappUrl`: click-to-chat link, only when no real WhatsApp provider is configured.
+      api.post<Notification & { whatsappUrl?: string }>(`/receivables/${receivableId}/remind`),
     onSuccess: invalidate,
   });
 }
