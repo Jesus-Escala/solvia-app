@@ -108,23 +108,27 @@ function UpcomingTable() {
   const columns: Array<DataTableColumn<Receivable>> = [
     {
       id: 'customer',
+      sortValue: (row) => row.customer?.name,
       header: t('receivables.columns.customer'),
       cell: (row) => <span className="font-medium">{row.customer?.name}</span>,
       mobile: 'title',
     },
     {
       id: 'description',
+      sortValue: (row) => row.description,
       header: t('receivables.columns.description'),
       cell: (row) => row.description,
       mobile: 'subtitle',
     },
     {
       id: 'dueDate',
+      sortValue: (row) => row.dueDate,
       header: t('receivables.columns.dueDate'),
       cell: (row) => fmt.date(row.dueDate),
     },
     {
       id: 'outstanding',
+      sortValue: (row) => row.outstandingAmount,
       header: t('receivables.columns.outstanding'),
       align: 'right',
       cell: (row) => <span className="font-semibold">{fmt.money(row.outstandingAmount)}</span>,

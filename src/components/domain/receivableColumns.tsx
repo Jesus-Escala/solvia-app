@@ -14,6 +14,7 @@ export function useReceivableColumns({ showCustomer = true } = {}): Array<
   const columns: Array<DataTableColumn<Receivable>> = [
     {
       id: 'description',
+      sortValue: (row) => row.description,
       header: t('receivables.columns.description'),
       sortable: true,
       minWidth: 200,
@@ -30,6 +31,7 @@ export function useReceivableColumns({ showCustomer = true } = {}): Array<
     },
     {
       id: 'dueDate',
+      sortValue: (row) => row.dueDate,
       header: t('receivables.columns.dueDate'),
       sortable: true,
       minWidth: 150,
@@ -54,6 +56,7 @@ export function useReceivableColumns({ showCustomer = true } = {}): Array<
     },
     {
       id: 'totalAmount',
+      sortValue: (row) => row.totalAmount,
       header: t('receivables.columns.total'),
       sortable: true,
       align: 'right',
@@ -61,6 +64,7 @@ export function useReceivableColumns({ showCustomer = true } = {}): Array<
     },
     {
       id: 'outstanding',
+      sortValue: (row) => row.outstandingAmount,
       sortable: true,
       header: t('receivables.columns.outstanding'),
       align: 'right',
@@ -89,6 +93,7 @@ export function useReceivableColumns({ showCustomer = true } = {}): Array<
     },
     {
       id: 'status',
+      sortValue: (row) => t(`status.${row.status}`),
       header: t('receivables.columns.status'),
       sortable: true,
       hideable: false,
@@ -96,7 +101,9 @@ export function useReceivableColumns({ showCustomer = true } = {}): Array<
       cell: (row) => <StatusBadge status={row.status} />,
     },
     {
-      id: 'paymentMethods',
+      id: 'paymentMethod',
+      sortValue: (row) => (row.paymentMethods?.[0] ? t(`methods.${row.paymentMethods[0]}`) : null),
+      sortable: true,
       header: t('receivables.columns.paymentMethod'),
       cell: (row) => {
         const methods = row.paymentMethods ?? [];
@@ -121,6 +128,7 @@ export function useReceivableColumns({ showCustomer = true } = {}): Array<
     },
     {
       id: 'issueDate',
+      sortValue: (row) => row.issueDate,
       header: t('receivables.columns.issueDate'),
       sortable: true,
       defaultHidden: true,
@@ -130,6 +138,7 @@ export function useReceivableColumns({ showCustomer = true } = {}): Array<
   if (showCustomer) {
     columns.unshift({
       id: 'customer',
+      sortValue: (row) => row.customer?.name,
       header: t('receivables.columns.customer'),
       sortable: true,
       minWidth: 170,

@@ -215,6 +215,7 @@ export function TeamUsers({
   const columns: Array<DataTableColumn<TeamUser>> = [
     {
       id: 'name',
+      sortValue: (row) => row.name,
       header: t('team.name'),
       hideable: false,
       minWidth: 220,
@@ -236,6 +237,7 @@ export function TeamUsers({
     },
     {
       id: 'role',
+      sortValue: (row) => t(`team.roles.${row.role}`),
       header: t('team.role'),
       mobile: 'aside',
       cell: (row) => (
@@ -246,6 +248,7 @@ export function TeamUsers({
     },
     {
       id: 'status',
+      sortValue: (row) => (!row.active ? 2 : row.mustChangePassword ? 1 : 0),
       header: t('team.status'),
       mobile: 'subtitle',
       cell: (row) =>
@@ -265,6 +268,7 @@ export function TeamUsers({
     },
     {
       id: 'signIn',
+      sortValue: (row) => (row.hasGoogle ? t('team.google') : t('team.password')),
       header: t('team.signIn'),
       cell: (row) => (
         <span className="inline-flex items-center gap-1.5 text-muted">
@@ -275,6 +279,7 @@ export function TeamUsers({
     },
     {
       id: 'lastLogin',
+      sortValue: (row) => row.lastLoginAt,
       header: t('team.lastLogin'),
       cell: (row) =>
         row.lastLoginAt ? (

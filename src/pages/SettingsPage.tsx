@@ -417,6 +417,7 @@ function LogTab() {
   const columns: Array<DataTableColumn<NotificationLogItem>> = [
     {
       id: 'date',
+      sortValue: (row) => row.sentAt,
       header: t('settings.log.date'),
       minWidth: 160,
       mobile: 'subtitle',
@@ -424,17 +425,20 @@ function LogTab() {
     },
     {
       id: 'customer',
+      sortValue: (row) => row.receivable.customer.name,
       header: t('settings.log.customer'),
       mobile: 'title',
       cell: (row) => <span className="font-medium">{row.receivable.customer.name}</span>,
     },
     {
       id: 'type',
+      sortValue: (row) => (row.templateType ? t(`templateTypes.${row.templateType}.title`) : null),
       header: t('settings.log.type'),
       cell: (row) => (row.templateType ? t(`templateTypes.${row.templateType}.title`) : '—'),
     },
     {
       id: 'status',
+      sortValue: (row) => row.status,
       header: t('settings.log.status'),
       mobile: 'aside',
       cell: (row) =>
@@ -450,6 +454,7 @@ function LogTab() {
     },
     {
       id: 'content',
+      sortValue: (row) => row.sentContent,
       header: t('settings.log.content'),
       minWidth: 320,
       cell: (row) => <p className="line-clamp-2 max-w-2xl text-muted">{row.sentContent}</p>,

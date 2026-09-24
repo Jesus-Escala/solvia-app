@@ -149,23 +149,27 @@ export function CustomerDetailPage() {
   const paymentColumns: Array<DataTableColumn<PaymentRow>> = [
     {
       id: 'date',
+      sortValue: (row) => row.date,
       header: t('customerDetail.payments.date'),
       mobile: 'subtitle',
       cell: (row) => fmt.date(row.date),
     },
     {
       id: 'receivable',
+      sortValue: (row) => row.receivableDescription,
       header: t('customerDetail.payments.receivable'),
       mobile: 'title',
       cell: (row) => row.receivableDescription,
     },
     {
       id: 'method',
+      sortValue: (row) => t(`methods.${row.method}`),
       header: t('customerDetail.payments.method'),
       cell: (row) => <PaymentMethodLabel method={row.method} />,
     },
     {
       id: 'proof',
+      sortValue: (row) => (row.proofUrl ? 1 : 0),
       header: t('customerDetail.payments.proof'),
       cell: (row) =>
         row.proofUrl ? (
@@ -183,6 +187,7 @@ export function CustomerDetailPage() {
     },
     {
       id: 'amount',
+      sortValue: (row) => row.amount,
       header: t('customerDetail.payments.amount'),
       align: 'right',
       mobile: 'aside',
@@ -193,6 +198,7 @@ export function CustomerDetailPage() {
   const messageColumns: Array<DataTableColumn<NotificationLogItem>> = [
     {
       id: 'date',
+      sortValue: (row) => row.sentAt,
       header: t('customerDetail.messages.date'),
       minWidth: 150,
       mobile: 'subtitle',
@@ -200,12 +206,14 @@ export function CustomerDetailPage() {
     },
     {
       id: 'type',
+      sortValue: (row) => (row.templateType ? t(`templateTypes.${row.templateType}.title`) : null),
       header: t('customerDetail.messages.type'),
       mobile: 'title',
       cell: (row) => (row.templateType ? t(`templateTypes.${row.templateType}.title`) : '—'),
     },
     {
       id: 'status',
+      sortValue: (row) => row.status,
       header: t('customerDetail.messages.status'),
       mobile: 'aside',
       cell: (row) =>
@@ -221,6 +229,7 @@ export function CustomerDetailPage() {
     },
     {
       id: 'content',
+      sortValue: (row) => row.sentContent,
       header: t('customerDetail.messages.content'),
       minWidth: 320,
       cell: (row) => <p className="line-clamp-2 max-w-xl text-muted">{row.sentContent}</p>,

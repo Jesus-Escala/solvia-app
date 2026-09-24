@@ -85,29 +85,34 @@ export function SummaryView({
   const alertColumns: Array<DataTableColumn<DashboardSummary['overdueAlerts'][number]>> = [
     {
       id: 'customer',
+      sortValue: (row) => row.customer?.name,
       header: t('receivables.columns.customer'),
       cell: (row) => <span className="font-medium">{row.customer?.name}</span>,
       mobile: 'title',
     },
     {
       id: 'description',
+      sortValue: (row) => row.description,
       header: t('receivables.columns.description'),
       cell: (row) => row.description,
       mobile: 'subtitle',
     },
     {
       id: 'dueDate',
+      sortValue: (row) => row.dueDate,
       header: t('receivables.columns.dueDate'),
       cell: (row) => fmt.date(row.dueDate),
     },
     {
       id: 'days',
+      sortValue: (row) => row.daysOverdue,
       header: t('dashboard.alerts.daysOverdue'),
       align: 'right',
       cell: (row) => <span className="font-medium text-danger-ink">{row.daysOverdue}</span>,
     },
     {
       id: 'outstanding',
+      sortValue: (row) => row.outstandingAmount,
       header: t('receivables.columns.outstanding'),
       align: 'right',
       cell: (row) => <span className="font-semibold">{fmt.money(row.outstandingAmount)}</span>,
@@ -115,6 +120,7 @@ export function SummaryView({
     },
     {
       id: 'status',
+      sortValue: (row) => t(`status.${row.status}`),
       header: t('receivables.columns.status'),
       cell: (row) => <StatusBadge status={row.status} />,
       hideable: false,

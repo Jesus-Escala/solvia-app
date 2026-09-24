@@ -16,6 +16,11 @@ export interface DataTableColumn<T> {
   /** Minimum column width in px (the table scrolls horizontally when needed). */
   minWidth?: number;
   sortable?: boolean;
+  /**
+   * Value to sort by in the browser, for tables whose rows are all loaded (no `onSortChange`):
+   * the header becomes clickable. Empty values always go last.
+   */
+  sortValue?: (row: T) => string | number | null | undefined;
   /** Can the user hide this column from the columns menu? Default: true. */
   hideable?: boolean;
   defaultHidden?: boolean;
@@ -53,7 +58,11 @@ export interface DataTableProps<T> extends Omit<HTMLAttributes<HTMLElement>, 'ch
   onRowClick?: (row: T) => void;
   rowActions?: (row: T) => ReactNode;
   sort?: DataTableSort;
-  onSortChange?: (sort: DataTableSort) => void;
+  /**
+   * Server-side sorting. Each header cycles ascending → descending → back to the default order
+   * (`null`: the page should restore its default sort).
+   */
+  onSortChange?: (sort: DataTableSort | null) => void;
   pagination?: DataTablePagination;
   /** Left side of the toolbar (filters, search). */
   toolbar?: ReactNode;
@@ -109,7 +118,7 @@ export function DataTable<T>({
   empty,
   onRowClick,
   rowActions,
-  sort,
+  sort: controlledSort,
   onSortChange,
   pagination,
   toolbar,
@@ -164,12 +173,44 @@ export function DataTable<T>({
     setHidden(new Set(columns.filter((column) => column.defaultHidden).map((column) => column.id)));
   };
 
-  const onHeaderClick = (column: DataTableColumn<T>) => {
-    if (!column.sortable || !onSortChange) return;
-    onSortChange({
-      id: column.id,
-      dir: sort?.id === column.id && sort.dir === 'asc' ? 'desc' : 'asc',
+  // Server-sorted tables pass `sort` + `onSortChange`; the others sort their rows here by
+  // each column's `sortValue`.
+  const [localSort, setLocalSort] = useState<DataTableSort | null>(null);
+  const sort = onSortChange ? controlledSort : (localSort ?? undefined);
+  const canSort = (column: DataTableColumn<T>) =>
+    onSortChange ? Boolean(column.sortable) : Boolean(column.sortValue);
+  const sortedRows = useMemo(() => {
+    if (onSortChange || !rows || !localSort) return rows;
+    const column = columns.find((item) => item.id === localSort.id);
+    if (!column?.sortValue) return rows;
+    const direction = localSort.dir === 'asc' ? 1 : -1;
+    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+    return [...rows].sort((a, b) => {
+      const left = column.sortValue!(a);
+      const right = column.sortValue!(b);
+      const leftEmpty = left === null || left === undefined || left === '';
+      const rightEmpty = right === null || right === undefined || right === '';
+      if (leftEmpty || rightEmpty) return leftEmpty === rightEmpty ? 0 : leftEmpty ? 1 : -1;
+      const order =
+        typeof left === 'number' && typeof right === 'number'
+          ? left - right
+          : collator.compare(String(left), String(right));
+      return order * direction;
     });
+  }, [columns, localSort, onSortChange, rows]);
+
+  // Third click on the same header goes back to the original order.
+  const onHeaderClick = (column: DataTableColumn<T>) => {
+    if (!canSort(column)) return;
+    const current = sort?.id === column.id ? sort.dir : null;
+    const next: DataTableSort | null =
+      current === null
+        ? { id: column.id, dir: 'asc' }
+        : current === 'asc'
+          ? { id: column.id, dir: 'desc' }
+          : null;
+    if (onSortChange) onSortChange(next);
+    else setLocalSort(next);
   };
 
   const columnsMenu =
@@ -278,7 +319,7 @@ export function DataTable<T>({
             <tr>
               {visibleColumns.map((column) => {
                 const active = sort?.id === column.id;
-                const sortable = column.sortable && onSortChange;
+                const sortable = canSort(column);
                 return (
                   <th
                     key={column.id}
@@ -297,22 +338,34 @@ export function DataTable<T>({
                         type="button"
                         onClick={() => onHeaderClick(column)}
                         title={t('table.sortBy', { column: column.header })}
+                        // The whole header is the button; the arrow always sits on the right.
                         className={cx(
-                          'inline-flex items-center gap-1 uppercase transition hover:text-ink',
-                          column.align === 'right' && 'flex-row-reverse',
-                          active && 'text-ink',
+                          'group/sort -mx-2 inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 uppercase transition',
+                          active
+                            ? 'bg-primary-soft text-primary-ink'
+                            : 'hover:bg-surface-3 hover:text-ink',
                         )}
                       >
                         {column.header}
-                        {active ? (
-                          sort.dir === 'asc' ? (
-                            <ArrowUp className="h-3 w-3" />
+                        <span
+                          className={cx(
+                            'flex h-4 w-4 items-center justify-center rounded transition',
+                            active
+                              ? 'bg-primary text-on-primary'
+                              : 'opacity-40 group-hover/sort:bg-surface-2 group-hover/sort:opacity-100',
+                          )}
+                          aria-hidden="true"
+                        >
+                          {active ? (
+                            sort.dir === 'asc' ? (
+                              <ArrowUp className="h-3 w-3" />
+                            ) : (
+                              <ArrowDown className="h-3 w-3" />
+                            )
                           ) : (
-                            <ArrowDown className="h-3 w-3" />
-                          )
-                        ) : (
-                          <ArrowUpDown className="h-3 w-3 opacity-40" />
-                        )}
+                            <ArrowUpDown className="h-3 w-3" />
+                          )}
+                        </span>
                       </button>
                     ) : (
                       column.header
@@ -350,7 +403,7 @@ export function DataTable<T>({
                 </tr>
               ))}
             {!showSkeleton &&
-              rows?.map((row) => (
+              sortedRows?.map((row) => (
                 <tr
                   key={rowKey(row)}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
@@ -411,7 +464,7 @@ export function DataTable<T>({
               </li>
             ))}
           {!showSkeleton &&
-            rows?.map((row) => (
+            sortedRows?.map((row) => (
               <li
                 key={rowKey(row)}
                 className={cx(

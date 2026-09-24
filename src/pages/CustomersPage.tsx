@@ -193,7 +193,14 @@ export function CustomersPage() {
         error={query.error ? <Alert tone="danger">{errors.message(query.error)}</Alert> : undefined}
         onRowClick={(row) => navigate(`/customers/${row.id}`)}
         sort={{ id: state.sortBy, dir: state.sortDir as SortDir }}
-        onSortChange={(sort) => update({ sortBy: sort.id, sortDir: sort.dir })}
+        onSortChange={(sort) =>
+          // No sort (third click): back to the page's default order.
+          update({
+            sortBy: sort?.id ?? DEFAULTS.sortBy,
+            sortDir: sort?.dir ?? DEFAULTS.sortDir,
+            page: '1',
+          })
+        }
         rowActions={(row) => (
           <Popover
             trigger={({ toggle, ref }) => (
