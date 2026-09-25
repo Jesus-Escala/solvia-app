@@ -1248,6 +1248,7 @@ export const es = {
     emptyFiltered: 'No hay productos así',
     emptyFilteredDescription: 'Prueba con otro nombre o cambia el filtro.',
     form: {
+      zoomImage: 'Ver foto en grande',
       changeImage: 'Cambiar foto',
       imageHint: 'JPG, PNG o WEBP · hasta 5 MB',
       qrCode: 'Su código QR',

@@ -1,10 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { Flame, PackageOpen, PackagePlus, Plus, ScanBarcode, X } from 'lucide-react';
+import { Flame, PackageOpen, PackagePlus, Plus, ScanBarcode, X, ZoomIn } from 'lucide-react';
 import { useRef, useState, type RefObject } from 'react';
 import { cx, Skeleton } from '@/ui';
 import { productLookupQuery, useProductCatalog } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { ProductOption } from '../../lib/types';
+import { ImageViewer } from '../domain/ImageViewer';
 import { ProductThumb } from '../domain/ProductThumb';
 import { useDebouncedValue } from '../domain/useSearchBox';
 
@@ -41,6 +42,7 @@ export function ProductCatalog({
   const { t } = useI18n();
   const [text, setText] = useState('');
   const [notFound, setNotFound] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<{ url: string; title: string } | null>(null);
   const typed = text.trim();
   const debounced = useDebouncedValue(typed);
   const catalog = useProductCatalog(debounced);
@@ -156,7 +158,7 @@ export function ProductCatalog({
             )}
           >
             {products.map((product, index) => (
-              <li key={product.id}>
+              <li key={product.id} className="relative">
                 <ProductTile
                   // The three best sellers get a mark (only in the default list).
                   top={typed === '' && index < 3 && (product.sold ?? 0) > 0}
@@ -171,6 +173,17 @@ export function ProductCatalog({
                     searchRef.current?.focus();
                   }}
                 />
+                {product.imageUrl && (
+                  <button
+                    type="button"
+                    title={t('products.form.zoomImage')}
+                    aria-label={t('products.form.zoomImage')}
+                    onClick={() => setViewing({ url: product.imageUrl!, title: product.name })}
+                    className="absolute top-2 left-2 flex h-7 w-7 items-center justify-center rounded-lg bg-surface/90 text-muted shadow-sm transition hover:text-ink"
+                  >
+                    <ZoomIn className="h-4 w-4" />
+                  </button>
+                )}
               </li>
             ))}
             {products.length > 0 && (
@@ -211,6 +224,7 @@ export function ProductCatalog({
           <p className="mt-3 text-center text-sm text-muted">{t('pos.searchMore')}</p>
         )}
       </div>
+      <ImageViewer image={viewing} onClose={() => setViewing(null)} />
     </div>
   );
 }

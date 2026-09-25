@@ -1,4 +1,4 @@
-import { Camera, Package, QrCode, Trash2, Wrench } from 'lucide-react';
+import { Camera, Package, QrCode, Trash2, Wrench, ZoomIn } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
   Button,
@@ -12,6 +12,7 @@ import {
   useErrorToast,
   useFeedback,
 } from '@/ui';
+import { ImageViewer } from './ImageViewer';
 import { MoneyInput } from './MoneyInput';
 import { ProductThumb } from './ProductThumb';
 import { useProductImage, useSaveProduct } from '../../hooks/queries';
@@ -91,6 +92,7 @@ function ProductForm({
   const preview = usePreview(picture === 'keep' ? null : picture);
   const imageUrl = picture === 'keep' ? (product?.imageUrl ?? null) : preview;
   const fileInput = useRef<HTMLInputElement>(null);
+  const [viewing, setViewing] = useState<{ url: string; title: string } | null>(null);
   const update = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
 
@@ -158,16 +160,21 @@ function ProductForm({
         <div className="flex shrink-0 flex-col items-center gap-1.5">
           <button
             type="button"
-            onClick={() => fileInput.current?.click()}
-            aria-label={t('products.form.image')}
+            // With a picture: see it big; without one: choose it.
+            onClick={() =>
+              imageUrl
+                ? setViewing({ url: imageUrl, title: form.name || t('products.form.image') })
+                : fileInput.current?.click()
+            }
+            aria-label={imageUrl ? t('products.form.zoomImage') : t('products.form.image')}
             className="group relative rounded-2xl focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
           >
             {imageUrl ? (
               <span className="relative block">
                 <ProductThumb name={form.name || '?'} imageUrl={imageUrl} size={144} />
                 <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 rounded-b-xl bg-ink/60 py-1 text-[11px] font-medium text-surface opacity-0 transition group-hover:opacity-100">
-                  <Camera className="h-3.5 w-3.5" />
-                  {t('products.form.changeImage')}
+                  <ZoomIn className="h-3.5 w-3.5" />
+                  {t('products.form.zoomImage')}
                 </span>
               </span>
             ) : (
@@ -181,11 +188,18 @@ function ProductForm({
             )}
           </button>
           {imageUrl && (
-            <TextButton size="sm" onClick={() => setPicture(null)}>
-              <Trash2 className="h-3.5 w-3.5" />
-              {t('products.form.removeImage')}
-            </TextButton>
+            <span className="flex items-center gap-3">
+              <TextButton size="sm" onClick={() => fileInput.current?.click()}>
+                <Camera className="h-3.5 w-3.5" />
+                {t('products.form.changeImage')}
+              </TextButton>
+              <TextButton size="sm" onClick={() => setPicture(null)}>
+                <Trash2 className="h-3.5 w-3.5" />
+                {t('products.form.removeImage')}
+              </TextButton>
+            </span>
           )}
+          <ImageViewer image={viewing} onClose={() => setViewing(null)} />
           <input
             ref={fileInput}
             type="file"

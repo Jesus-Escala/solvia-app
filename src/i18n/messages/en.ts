@@ -1244,6 +1244,7 @@ export const en: Messages = {
     emptyFiltered: 'No products like that',
     emptyFilteredDescription: 'Try another name or change the filter.',
     form: {
+      zoomImage: 'See picture large',
       changeImage: 'Change picture',
       imageHint: 'JPG, PNG or WEBP · up to 5 MB',
       qrCode: 'Its QR code',

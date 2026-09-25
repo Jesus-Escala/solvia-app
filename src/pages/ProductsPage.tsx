@@ -39,6 +39,7 @@ import { KardexModal } from '../components/domain/KardexModal';
 import { ProductFormModal } from '../components/domain/ProductFormModal';
 import { ProductQrModal } from '../components/domain/ProductQrModal';
 import { LabelPrintModal } from '../components/labels/LabelPrintModal';
+import { ImageViewer } from '../components/domain/ImageViewer';
 import { ProductThumb } from '../components/domain/ProductThumb';
 import { ModulesOffer } from '../components/modules/ModulesOffer';
 import {
@@ -94,6 +95,7 @@ function ProductsList() {
   const [kardex, setKardex] = useState<Product | null>(null);
   const [adjusting, setAdjusting] = useState<Product | null>(null);
   const [qr, setQr] = useState<Product | null>(null);
+  const [viewing, setViewing] = useState<{ url: string; title: string } | null>(null);
   // Label printer: null closed, otherwise the products it starts with.
   const [labels, setLabels] = useState<Product[] | null>(null);
   const remove = useDeleteProduct();
@@ -147,7 +149,24 @@ function ProductsList() {
       mobile: 'title',
       cell: (row) => (
         <div className="flex min-w-0 items-center gap-3">
-          <ProductThumb name={row.name} imageUrl={row.imageUrl} size={36} />
+          {row.imageUrl ? (
+            <button
+              type="button"
+              title={t('products.form.zoomImage')}
+              aria-label={t('products.form.zoomImage')}
+              // Only the picture: not the row (edit) nor its double click (delete).
+              onClick={(event) => {
+                event.stopPropagation();
+                setViewing({ url: row.imageUrl!, title: row.name });
+              }}
+              onDoubleClick={(event) => event.stopPropagation()}
+              className="rounded-xl transition hover:ring-2 hover:ring-primary/40"
+            >
+              <ProductThumb name={row.name} imageUrl={row.imageUrl} size={36} />
+            </button>
+          ) : (
+            <ProductThumb name={row.name} imageUrl={null} size={36} />
+          )}
           <div className="min-w-0">
             <p className="truncate font-medium">
               {row.name}
@@ -399,6 +418,7 @@ function ProductsList() {
           setLabels([product]);
         }}
       />
+      <ImageViewer image={viewing} onClose={() => setViewing(null)} />
       <LabelPrintModal
         open={labels !== null}
         products={labels ?? []}
