@@ -186,64 +186,38 @@ interface ToastContent {
 
 interface ToastItem extends ToastContent {
   id: number;
-  /** Bumped when an identical toast is shown again: restarts its timer instead of stacking. */
-  version: number;
+  /** When it appeared (or when a loading toast turned into a result): its countdown starts here. */
+  createdAt: number;
+  /** How long it stays (ms); 0 stays until closed (loading). */
+  duration: number;
   /** Playing its exit animation; removed right after. */
   leaving?: boolean;
-  /** Direction it was swiped away to (-1 left, 1 right). */
-  swipe?: number;
   /** Form whose native validation raised it: it closes once that form is valid again. */
   source?: HTMLFormElement;
 }
 
 const TOAST_EXIT_MS = 260;
-const TOAST_LIMIT = 5;
+/** Most toasts on screen: a new one pushes the oldest out. */
+const TOAST_LIMIT = 6;
 /** Lines of a toast list shown before "+N". */
 const TOAST_LIST_LIMIT = 5;
-const TOAST_GAP = 10;
-const TOAST_SWIPE_PX = 70;
+/** The same toast twice within this time (a double click) is shown once. */
+const TOAST_REPEAT_MS = 400;
 const TOAST_DURATION: Record<ToastTone, number> = {
-  success: 4000,
-  info: 5000,
-  warning: 6500,
-  error: 7000,
+  success: 3500,
+  info: 4500,
+  warning: 5500,
+  error: 6000,
   loading: 0, // stays until updated or dismissed
 };
 
-const TOAST_STYLES: Record<
-  ToastTone,
-  { badge: string; bar: string; tint: string; icon: ReactNode }
-> = {
-  success: {
-    badge: 'bg-success text-white ring-success-soft',
-    bar: 'bg-success',
-    tint: 'var(--success-soft)',
-    icon: <CheckCircle2 />,
-  },
-  error: {
-    badge: 'bg-danger text-white ring-danger-soft',
-    bar: 'bg-danger',
-    tint: 'var(--danger-soft)',
-    icon: <XCircle />,
-  },
-  info: {
-    badge: 'bg-info text-white ring-info-soft',
-    bar: 'bg-info',
-    tint: 'var(--info-soft)',
-    icon: <Info />,
-  },
-  warning: {
-    badge: 'bg-warning text-white ring-warning-soft',
-    bar: 'bg-warning',
-    tint: 'var(--warning-soft)',
-    icon: <AlertTriangle />,
-  },
-  loading: {
-    badge: 'bg-primary-soft text-primary ring-transparent',
-    bar: 'bg-primary',
-    tint: 'var(--primary-soft)',
-    icon: <Spinner />,
-  },
+/** Solid colored cards, like the TSI component library: the color says what happened. */
+const TOAST_STYLES: Record<ToastTone, { card: string; icon: ReactNode }> = {
+  success: { card: 'bg-success text-white', icon: <CheckCircle2 /> },
+  error: { card: 'bg-danger text-white', icon: <XCircle /> },
+  info: { card: 'bg-info text-white', icon: <Info /> },
+  warning: { card: 'bg-warning text-white', icon: <AlertTriangle /> },
+  loading: { card: 'border border-line bg-surface text-ink', icon: <Spinner /> },
 };
 
 /**
@@ -299,7 +273,7 @@ function Emphasized({ text, part }: { text: string; part?: string }) {
   return (
     <>
       {text.slice(0, at)}
-      <strong className="font-semibold text-ink">{part}</strong>
+      <strong className="font-semibold">{part}</strong>
       {text.slice(at + part.length)}
     </>
   );
@@ -334,216 +308,158 @@ function useToastHost(active: boolean) {
   return host;
 }
 
-interface ToastLayout {
-  index: number;
-  offset: number;
-  /** The pointer is over the list: every countdown waits. */
-  hovered: boolean;
-  /** Where the list lives now (the page, or the open dialog). */
-  host: HTMLElement | null;
-}
-
 /**
- * One notification in the list. Its countdown pauses while the list is hovered or it has
- * focus, and it can be swiped sideways to dismiss.
+ * One notification: it slides in from the right, stays its time (the bar shows what is left) and
+ * slides out to the right; the ones below move up. Always the same, like the TSI library: no
+ * pause, no restart.
  */
 function ToastCard({
   item,
-  layout,
+  host,
   labels,
-  onHeight,
   onDismiss,
 }: {
   item: ToastItem;
-  layout: ToastLayout;
+  /** Where the list lives now; the bar is laid out again when it moves. */
+  host: HTMLElement | null;
   labels: { close: string; kind?: string };
-  onHeight: (id: number, height: number) => void;
-  onDismiss: (id: number, swipe?: number) => void;
+  onDismiss: (id: number) => void;
 }) {
-  const duration = TOAST_DURATION[item.tone];
-  const [mounted, setMounted] = useState(false);
-  const [focused, setFocused] = useState(false);
-  const [drag, setDrag] = useState<number | null>(null);
-  const dragStart = useRef<number | null>(null);
-  const content = useRef<HTMLDivElement>(null);
-  const remaining = useRef(duration);
-  const startedAt = useRef(0);
   const bar = useRef<HTMLSpanElement>(null);
-  const paused = layout.hovered || focused || drag !== null;
-
-  // Enter on the next frame; the timeout covers background tabs, where frames are paused.
+  // The entrance plays once: moving the list into or out of a dialog must not replay it.
+  const [entered, setEntered] = useState(false);
+  // Also when the animation end is missed (a background tab): done once its time is over.
   useEffect(() => {
-    const enter = () => setMounted(true);
-    const frame = requestAnimationFrame(enter);
-    const timer = window.setTimeout(enter, 60);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.clearTimeout(timer);
-    };
+    const timer = window.setTimeout(() => setEntered(true), 450);
+    return () => window.clearTimeout(timer);
   }, []);
 
-  useLayoutEffect(() => {
-    const node = content.current;
-    if (!node) return;
-    const report = () => onHeight(item.id, node.offsetHeight);
-    report();
-    const observer = new ResizeObserver(report);
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [item.id, onHeight]);
-
-  // A new tone or a repeat restarts the countdown.
+  // The bar runs from the time the toast appeared (also after the list moved).
   useEffect(() => {
-    remaining.current = duration;
-  }, [duration, item.version]);
-
-  // The countdown and its bar come from the same remaining time: pausing (hover, focus, drag)
-  // freezes both, and moving the list (into or out of a dialog) carries on where it was.
-  useEffect(() => {
-    if (!duration || item.leaving) return;
     const node = bar.current;
-    const left = Math.max(remaining.current, 0);
-    const show = (time: number) => {
-      if (node) node.style.transform = `scaleX(${Math.max(time, 0) / duration})`;
-    };
-    if (paused) {
-      show(left);
-      return;
-    }
-    startedAt.current = Date.now();
-    const timer = window.setTimeout(() => onDismiss(item.id), left);
-    const animation = node?.animate(
-      [{ transform: `scaleX(${left / duration})` }, { transform: 'scaleX(0)' }],
-      { duration: left, easing: 'linear', fill: 'forwards' },
+    if (!node || !item.duration || item.leaving) return;
+    const elapsed = Math.min(Date.now() - item.createdAt, item.duration);
+    const animation = node.animate(
+      [{ transform: `scaleX(${1 - elapsed / item.duration})` }, { transform: 'scaleX(0)' }],
+      { duration: item.duration - elapsed, easing: 'linear', fill: 'forwards' },
     );
-    return () => {
-      window.clearTimeout(timer);
-      animation?.cancel();
-      remaining.current -= Date.now() - startedAt.current;
-      show(remaining.current);
-    };
-  }, [duration, paused, item.id, item.leaving, item.version, onDismiss, layout.host]);
+    return () => animation.cancel();
+  }, [item.createdAt, item.duration, item.leaving, host]);
 
-  const { index, offset } = layout;
-  let transform = `translateY(${offset}px)`;
-  if (!mounted) transform = `translateY(-110%) scale(0.96)`;
-  if (item.leaving) {
-    transform = item.swipe
-      ? `translateX(${item.swipe * 115}%)`
-      : `translateY(${offset}px) scale(0.92)`;
-  }
-  if (drag !== null) transform = `translateY(${offset}px) translateX(${drag}px)`;
-
+  const loading = item.tone === 'loading';
   const style = TOAST_STYLES[item.tone];
   return (
+    // The row collapses as the toast leaves, so the others glide up instead of jumping.
     <li
-      data-state={item.leaving ? 'closing' : 'open'}
-      role={item.tone === 'error' ? 'alert' : 'status'}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
-      onPointerDown={(event) => {
-        if ((event.target as HTMLElement).closest('button')) return;
-        dragStart.current = event.clientX;
-      }}
-      onPointerMove={(event) => {
-        if (dragStart.current === null) return;
-        const dx = event.clientX - dragStart.current;
-        if (drag === null && Math.abs(dx) < 6) return;
-        if (drag === null) event.currentTarget.setPointerCapture(event.pointerId);
-        setDrag(dx);
-      }}
-      onPointerUp={() => {
-        const dx = drag ?? 0;
-        dragStart.current = null;
-        setDrag(null);
-        if (Math.abs(dx) > TOAST_SWIPE_PX) onDismiss(item.id, Math.sign(dx));
-      }}
-      onPointerCancel={() => {
-        dragStart.current = null;
-        setDrag(null);
-      }}
-      style={{
-        transform,
-        zIndex: TOAST_LIMIT - index,
-        opacity: !mounted || item.leaving ? 0 : drag ? 1 - Math.min(Math.abs(drag) / 240, 0.6) : 1,
-        transition:
-          drag !== null
-            ? 'none'
-            : 'transform 420ms cubic-bezier(0.21, 1.02, 0.73, 1), opacity 320ms ease, height 320ms ease',
-        backgroundImage: `radial-gradient(130% 160% at 0% 0%, color-mix(in srgb, ${style.tint} 85%, transparent) 0%, transparent 58%)`,
-      }}
       className={cx(
-        'group pointer-events-auto absolute inset-x-0 top-0 touch-pan-y overflow-hidden rounded-2xl border border-line bg-surface text-ink shadow-pop select-none',
+        'grid w-full transition-[grid-template-rows] duration-300 ease-out',
+        item.leaving ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]',
       )}
     >
-      <div ref={content} className="flex items-center gap-3 p-3.5 pr-3">
-        <span
+      <div className={cx('min-h-0', !item.leaving && 'pb-2.5')}>
+        <div
+          role={item.tone === 'error' ? 'alert' : 'status'}
+          onAnimationEnd={(event) => {
+            if (event.target === event.currentTarget) setEntered(true);
+          }}
           className={cx(
-            'flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-4 [&>svg]:h-[17px] [&>svg]:w-[17px]',
-            style.badge,
+            'pointer-events-auto relative ml-auto w-full overflow-hidden rounded-2xl shadow-pop transition-transform duration-200 hover:-translate-y-0.5 sm:w-[23rem]',
+            style.card,
+            item.leaving ? 'animate-toast-out' : !entered && 'animate-toast-in',
           )}
         >
-          {style.icon}
-        </span>
-        <div className="min-w-0 flex-1">
-          {labels.kind && (
-            <p className="mb-0.5 flex items-center gap-1.5 text-[10.5px] font-semibold tracking-[0.08em] text-subtle uppercase">
-              {labels.kind}
-              {item.meta && (
-                <span className="rounded-md bg-surface-3 px-1 py-px font-mono text-[10px] tracking-normal text-muted normal-case">
-                  {item.meta}
-                </span>
+          {/* Darker accent on the left edge. */}
+          {!loading && (
+            <span aria-hidden="true" className="absolute inset-y-0 left-0 w-[3px] bg-black/25" />
+          )}
+          <div className="flex items-start gap-3 py-3.5 pr-11 pl-5">
+            <span
+              className={cx(
+                'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] [&>svg]:h-[18px] [&>svg]:w-[18px]',
+                loading ? 'bg-primary-soft text-primary' : 'border border-white/35 bg-white/20',
               )}
-            </p>
-          )}
-          <p className="text-sm leading-5 font-semibold break-words">{item.title}</p>
-          {item.description && (
-            <p className="mt-0.5 text-[13px] leading-5 break-words text-muted">
-              <Emphasized text={item.description} part={item.emphasis} />
-            </p>
-          )}
-          {item.items && item.items.length > 0 && (
-            <ul className="mt-1.5 space-y-1">
-              {item.items.slice(0, TOAST_LIST_LIMIT).map((line) => (
-                <li
-                  key={line}
-                  className="flex items-start gap-2 text-[13px] leading-5 break-words text-muted"
+            >
+              {style.icon}
+            </span>
+            <div className="min-w-0 flex-1">
+              {labels.kind && (
+                <p
+                  className={cx(
+                    'mb-0.5 flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.08em] uppercase',
+                    loading ? 'text-subtle' : 'text-white/75',
+                  )}
                 >
-                  <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-current" />
-                  <span className="min-w-0">{line}</span>
-                </li>
-              ))}
-              {item.items.length > TOAST_LIST_LIMIT && (
-                <li className="pl-3 text-[12px] font-medium text-subtle">
-                  +{item.items.length - TOAST_LIST_LIMIT}
-                </li>
+                  {labels.kind}
+                  {item.meta && (
+                    <span
+                      className={cx(
+                        'rounded px-1 font-mono text-[10px] tracking-normal normal-case',
+                        loading ? 'bg-surface-3' : 'bg-white/20',
+                      )}
+                    >
+                      {item.meta}
+                    </span>
+                  )}
+                </p>
               )}
-            </ul>
+              <p className="text-[13.5px] leading-5 font-semibold break-words">{item.title}</p>
+              {item.description && (
+                <p
+                  className={cx(
+                    'mt-0.5 text-[12.5px] leading-5 break-words',
+                    loading ? 'text-muted' : 'text-white/85',
+                  )}
+                >
+                  <Emphasized text={item.description} part={item.emphasis} />
+                </p>
+              )}
+              {item.items && item.items.length > 0 && (
+                <ul className={cx('mt-1.5 space-y-0.5', loading ? 'text-muted' : 'text-white/90')}>
+                  {item.items.slice(0, TOAST_LIST_LIMIT).map((line) => (
+                    <li
+                      key={line}
+                      className="flex items-start gap-2 text-[12.5px] leading-5 break-words"
+                    >
+                      <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-current" />
+                      <span className="min-w-0">{line}</span>
+                    </li>
+                  ))}
+                  {item.items.length > TOAST_LIST_LIMIT && (
+                    <li className="pl-3 text-[12px] font-semibold">
+                      +{item.items.length - TOAST_LIST_LIMIT}
+                    </li>
+                  )}
+                </ul>
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onDismiss(item.id)}
+            aria-label={labels.close}
+            className={cx(
+              'absolute top-2.5 right-3 flex h-6 w-6 items-center justify-center rounded-lg border transition',
+              loading
+                ? 'border-line bg-surface-2 text-muted hover:text-ink'
+                : 'border-white/30 bg-white/15 text-white/85 hover:bg-white/30 hover:text-white',
+            )}
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+          {item.duration > 0 && (
+            <span
+              ref={bar}
+              aria-hidden="true"
+              className="absolute inset-x-0 bottom-0 h-[3px] origin-left bg-white/70"
+            />
           )}
         </div>
-        <button
-          type="button"
-          onClick={() => onDismiss(item.id)}
-          className="-mr-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-subtle transition group-hover:opacity-100 hover:bg-surface-3 hover:text-ink focus-visible:opacity-100 sm:opacity-0 [@media(hover:none)]:opacity-100"
-          aria-label={labels.close}
-        >
-          <X className="h-4 w-4" />
-        </button>
       </div>
-      {duration > 0 && (
-        <span className="absolute inset-x-3 bottom-1 h-[3px] overflow-hidden rounded-full bg-surface-3/70">
-          <span
-            ref={bar}
-            aria-hidden="true"
-            className={cx('block h-full origin-left rounded-full', style.bar)}
-          />
-        </span>
-      )}
     </li>
   );
 }
 
-/** The toast region: a list with the newest on top; older ones slide down as new ones arrive. */
+/** The toast region, top right: newest at the bottom; they pile up and leave on their own. */
 function ToastStack({
   toasts,
   host,
@@ -551,61 +467,24 @@ function ToastStack({
 }: {
   toasts: ToastItem[];
   host: HTMLElement | null;
-  onDismiss: (id: number, swipe?: number) => void;
+  onDismiss: (id: number) => void;
 }) {
   const { t } = useUiI18n();
-  const [hovered, setHovered] = useState(false);
-  const list = useRef<HTMLOListElement>(null);
-  const [heights, setHeights] = useState<Record<number, number>>({});
-  // A toast that leaves (or a list that shrinks) under a still pointer fires no pointerleave:
-  // check again, or every countdown would stay paused.
-  useEffect(() => {
-    if (!hovered) return;
-    const frame = requestAnimationFrame(() => {
-      if (list.current && !list.current.matches(':hover')) setHovered(false);
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [toasts, hovered]);
-  const onHeight = useCallback(
-    (id: number, height: number) =>
-      setHeights((current) => (current[id] === height ? current : { ...current, [id]: height })),
-    [],
-  );
-
-  const ordered = [...toasts].reverse();
-  const heightOf = (item: ToastItem) => heights[item.id] ?? 76;
-  const offsets: number[] = [];
-  let running = 0;
-  for (const item of ordered) {
-    offsets.push(running);
-    running += heightOf(item) + TOAST_GAP;
-  }
-  const total = Math.max(running - TOAST_GAP, 0);
-
   return (
     <ol
-      ref={list}
       aria-live="polite"
       aria-label={t('toast.region')}
-      onPointerEnter={(event) => event.pointerType === 'mouse' && setHovered(true)}
-      onPointerLeave={() => setHovered(false)}
-      onFocus={() => setHovered(true)}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHovered(false);
-      }}
-      style={{ height: total, transition: 'height 320ms ease' }}
-      className="pointer-events-auto fixed inset-x-3 top-3 z-[70] mx-auto max-w-sm sm:inset-x-auto sm:top-4 sm:right-4 sm:mx-0 sm:w-[23rem]"
+      className="pointer-events-none fixed inset-x-3 top-3 z-[70] flex flex-col sm:inset-x-auto sm:top-5 sm:right-5 sm:w-[23rem]"
     >
-      {ordered.map((item, index) => (
+      {toasts.map((item) => (
         <ToastCard
           key={item.id}
           item={item}
-          layout={{ index, offset: offsets[index] ?? 0, hovered, host }}
+          host={host}
           labels={{
             close: t('toast.close'),
             kind: item.kind ? t(`toast.kinds.${item.kind}`) : undefined,
           }}
-          onHeight={onHeight}
           onDismiss={onDismiss}
         />
       ))}
@@ -639,52 +518,89 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
   }, [toastRoot, host]);
   useEffect(() => () => toastRoot?.remove(), [toastRoot]);
 
-  const dismiss = useCallback((id: number, swipe?: number) => {
-    setToasts((items) =>
-      items.map((item) => (item.id === id ? { ...item, leaving: true, swipe } : item)),
-    );
+  // One timer per toast, started when it appears: it always leaves after its time.
+  const timers = useRef(new Map<number, number>());
+  useEffect(() => {
+    const all = timers.current;
+    return () => all.forEach((timer) => window.clearTimeout(timer));
+  }, []);
+
+  const dismiss = useCallback((id: number) => {
+    window.clearTimeout(timers.current.get(id));
+    timers.current.delete(id);
+    setToasts((items) => items.map((item) => (item.id === id ? { ...item, leaving: true } : item)));
     window.setTimeout(
       () => setToasts((items) => items.filter((item) => item.id !== id)),
       TOAST_EXIT_MS,
     );
   }, []);
 
-  // Mirror of the list so `push` can find a duplicate and return its id synchronously.
+  const schedule = useCallback(
+    (id: number, duration: number) => {
+      window.clearTimeout(timers.current.get(id));
+      if (duration > 0)
+        timers.current.set(
+          id,
+          window.setTimeout(() => dismiss(id), duration),
+        );
+    },
+    [dismiss],
+  );
+
+  // Mirror of the list, to find a double click's repeat and the toasts of a form.
   const current = useRef<ToastItem[]>([]);
   useEffect(() => {
     current.current = toasts;
   }, [toasts]);
 
-  const push = useCallback((content: ToastContent, source?: HTMLFormElement) => {
-    const same = current.current.find(
-      (item) =>
-        !item.leaving &&
-        item.tone === content.tone &&
-        item.title === content.title &&
-        item.description === content.description &&
-        item.items?.join('|') === content.items?.join('|'),
-    );
-    // The same message twice in a row (a double submit) refreshes the visible toast.
-    if (same) {
-      setToasts((items) =>
-        items.map((item) => (item.id === same.id ? { ...item, version: item.version + 1 } : item)),
+  const push = useCallback(
+    (content: ToastContent, source?: HTMLFormElement) => {
+      const now = Date.now();
+      // The very same toast right after (a double click): one is enough.
+      const repeat = current.current.find(
+        (item) =>
+          !item.leaving &&
+          now - item.createdAt < TOAST_REPEAT_MS &&
+          item.tone === content.tone &&
+          item.title === content.title &&
+          item.description === content.description,
       );
-      return same.id;
-    }
-    const id = nextId.current++;
-    const item: ToastItem = { ...content, id, version: 0, source };
-    current.current = [...current.current, item];
-    setToasts((items) => [...items.slice(-(TOAST_LIMIT - 1)), item]);
-    return id;
-  }, []);
+      if (repeat) return repeat.id;
+      const id = nextId.current++;
+      const duration = TOAST_DURATION[content.tone];
+      const item: ToastItem = { ...content, id, createdAt: now, duration, source };
+      const kept = current.current.filter((toast) => !toast.leaving);
+      // Too many on screen: the oldest one leaves.
+      if (kept.length >= TOAST_LIMIT) dismiss(kept[0]!.id);
+      current.current = [...current.current, item];
+      setToasts((items) => [...items, item]);
+      schedule(id, duration);
+      return id;
+    },
+    [dismiss, schedule],
+  );
 
-  const update = useCallback((id: number, content: Partial<ToastContent>) => {
-    setToasts((items) =>
-      items.map((item) =>
-        item.id === id ? { ...item, ...content, version: item.version + 1 } : item,
-      ),
-    );
-  }, []);
+  /** Changes a toast in place; a loading toast that becomes a result starts its countdown. */
+  const update = useCallback(
+    (id: number, content: Partial<ToastContent>) => {
+      const tone = content.tone;
+      const restart = tone !== undefined && tone !== 'loading';
+      const now = Date.now();
+      setToasts((items) =>
+        items.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                ...content,
+                ...(restart && { createdAt: now, duration: TOAST_DURATION[tone] }),
+              }
+            : item,
+        ),
+      );
+      if (restart) schedule(id, TOAST_DURATION[tone]);
+    },
+    [schedule],
+  );
 
   const value = useMemo<FeedbackContextValue>(() => {
     const of =
