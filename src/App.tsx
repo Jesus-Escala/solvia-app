@@ -13,7 +13,9 @@ import { ReportsPage } from './pages/ReportsPage';
 import { HelpPage } from './pages/HelpPage';
 import { HomePage } from './pages/HomePage';
 import { ProductsPage } from './pages/ProductsPage';
+import { PurchasePosPage } from './pages/PurchasePosPage';
 import { PurchasesPage } from './pages/PurchasesPage';
+import { SalePosPage } from './pages/SalePosPage';
 import { SalesPage } from './pages/SalesPage';
 import { SuppliersPage } from './pages/SuppliersPage';
 import { ReceivablesPage } from './pages/ReceivablesPage';
@@ -46,6 +48,13 @@ export function App() {
       </Route>
       <Route element={<RequireAuth />}>
         <Route path="change-password" element={<ChangePasswordPage />} />
+        {/* Points of sale: full screens of their own, outside the app shell. */}
+        <Route element={<ModuleRoute need="sales" />}>
+          <Route path="sales/new" element={<SalePosPage />} />
+        </Route>
+        <Route element={<ModuleRoute need="inventory" />}>
+          <Route path="purchases/new" element={<PurchasePosPage />} />
+        </Route>
         <Route element={<AppShell />}>
           <Route index element={<HomePage />} />
           <Route element={<ModuleRoute need="collections" />}>

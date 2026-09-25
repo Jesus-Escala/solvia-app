@@ -4,21 +4,20 @@ import {
   Checkbox,
   Field,
   IconButton,
-  Modal,
   SegmentedControl,
   TextButton,
   cx,
   useErrorToast,
   useFeedback,
 } from '@/ui';
-import { Kbd, PosLayout } from '../pos/PosLayout';
-import { ProductCatalog } from '../pos/ProductCatalog';
-import { roundQuantity } from './quantity';
-import { QuantityStepper } from './QuantityStepper';
+import { Kbd, PosLayout } from './PosLayout';
+import { ProductCatalog } from './ProductCatalog';
+import { roundQuantity } from '../domain/quantity';
+import { QuantityStepper } from '../domain/QuantityStepper';
 import { useCreatePurchase, useSaveSupplier } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { ProductOption, SaleDocType, SupplierOption } from '../../lib/types';
-import { SupplierPicker } from './SupplierPicker';
+import { SupplierPicker } from '../domain/SupplierPicker';
 
 interface Line {
   product: ProductOption;
@@ -63,55 +62,13 @@ function switchPacks(line: Line, inPacks: boolean): Line {
 
 const DOC_TYPES: SaleDocType[] = ['receipt', 'invoice', 'sale_note'];
 
-export function PurchaseFormModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { t } = useI18n();
-  const { confirm } = useFeedback();
-  const dirty = useRef(false);
-  const close = async () => {
-    if (dirty.current) {
-      const leave = await confirm({
-        title: t('sales.pos.leaveTitle'),
-        message: t('sales.pos.leaveMessage'),
-        confirmLabel: t('sales.pos.leave'),
-        cancelLabel: t('common.cancel'),
-      });
-      if (!leave) return;
-    }
-    dirty.current = false;
-    onClose();
-  };
-  return (
-    <Modal
-      open={open}
-      size="screen"
-      flush
-      title={t('purchases.form.title')}
-      description={<span className="hidden lg:inline">{t('purchases.pos.keys')}</span>}
-      onClose={() => void close()}
-      closeLabel={t('common.close')}
-    >
-      {open && (
-        <PurchasePos
-          onClose={() => {
-            dirty.current = false;
-            onClose();
-          }}
-          onDirty={(value) => {
-            dirty.current = value;
-          }}
-        />
-      )}
-    </Modal>
-  );
-}
-
 /**
  * Goods that arrived, like at a point of sale: tap or scan the products on the left (with their
  * last cost and stock), and on the right say how many and what each one cost — in sacks/boxes
  * when the product is bought that way. The stock goes up and the product costs are updated.
  * Supplier and invoice are optional. Keyboard: F2 search, F4 save.
  */
-function PurchasePos({
+export function PurchasePos({
   onClose,
   onDirty,
 }: {

@@ -29,7 +29,7 @@ export function PosLayout({
 }) {
   const { t, fmt } = useI18n();
   return (
-    <div className="grid h-full min-h-0 lg:grid-cols-[minmax(0,1fr)_420px]">
+    <div className="grid h-full min-h-0 lg:grid-cols-[minmax(0,1fr)_440px]">
       <section
         className={cx('flex min-h-0 flex-col bg-surface-2/60', panelOpen && 'max-lg:hidden')}
       >
@@ -60,7 +60,7 @@ export function PosLayout({
       </section>
       <aside
         className={cx(
-          'flex min-h-0 flex-col border-line bg-surface lg:border-l',
+          'flex min-h-0 flex-col border-line bg-surface lg:border-l lg:shadow-pop',
           !panelOpen && 'max-lg:hidden',
         )}
       >

@@ -1,6 +1,6 @@
 import { AlertTriangle, Ban, HandCoins, Layers, ReceiptText, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import {
   Alert,
   Badge,
@@ -18,7 +18,6 @@ import {
   type DataTableColumn,
 } from '@/ui';
 import { PaymentMethodMark } from '../components/domain/PaymentMethods';
-import { SaleFormModal } from '../components/domain/SaleFormModal';
 import { useSales, useVoidSale, type SaleListParams } from '../hooks/queries';
 import { useModules } from '../hooks/useModules';
 import { useI18n } from '../i18n/I18nProvider';
@@ -181,7 +180,7 @@ function SalesList() {
   const modules = useModules();
   const errors = useErrorText();
   const [state, update] = useUrlState(DEFAULTS);
-  const [creating, setCreating] = useState(false);
+  const navigate = useNavigate();
   const [viewing, setViewing] = useState<Sale | null>(null);
 
   const query = useSales({
@@ -263,7 +262,10 @@ function SalesList() {
         title={t('sales.title')}
         description={t('sales.subtitle')}
         actions={
-          <Button icon={<ShoppingCart className="h-4 w-4" />} onClick={() => setCreating(true)}>
+          <Button
+            icon={<ShoppingCart className="h-4 w-4" />}
+            onClick={() => navigate('/sales/new')}
+          >
             {t('sales.new')}
           </Button>
         }
@@ -321,14 +323,16 @@ function SalesList() {
           ...(!filtered && { description: t('sales.emptyDescription') }),
           ...(!filtered && {
             action: (
-              <Button icon={<ShoppingCart className="h-4 w-4" />} onClick={() => setCreating(true)}>
+              <Button
+                icon={<ShoppingCart className="h-4 w-4" />}
+                onClick={() => navigate('/sales/new')}
+              >
                 {t('sales.new')}
               </Button>
             ),
           }),
         }}
       />
-      <SaleFormModal open={creating} onClose={() => setCreating(false)} />
       <Modal
         open={viewing !== null}
         title={viewing ? t('sales.number', { number: viewing.number }) : ''}

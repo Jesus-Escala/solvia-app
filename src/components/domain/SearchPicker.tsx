@@ -159,7 +159,11 @@ export function SearchPicker<T extends { id: string }>({
             role="listbox"
             style={{
               position: 'fixed',
-              top: position?.top ?? -9999,
+              ...(position === null
+                ? { top: -9999 }
+                : position.top !== null
+                  ? { top: position.top }
+                  : { bottom: position.bottom ?? 0 }),
               left: position?.left ?? -9999,
               width: position?.width,
               maxHeight: position?.maxHeight,

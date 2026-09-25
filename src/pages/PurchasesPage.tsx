@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router';
 import { Ban, Warehouse } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -15,7 +16,6 @@ import {
   useUrlState,
   type DataTableColumn,
 } from '@/ui';
-import { PurchaseFormModal } from '../components/domain/PurchaseFormModal';
 import { usePurchases, useVoidPurchase } from '../hooks/queries';
 import { useModules } from '../hooks/useModules';
 import { useI18n } from '../i18n/I18nProvider';
@@ -106,7 +106,7 @@ function PurchasesList() {
   const { t, fmt } = useI18n();
   const errors = useErrorText();
   const [state, update] = useUrlState(DEFAULTS);
-  const [creating, setCreating] = useState(false);
+  const navigate = useNavigate();
   const [viewing, setViewing] = useState<Purchase | null>(null);
   const query = usePurchases({
     search: state.search || null,
@@ -172,7 +172,10 @@ function PurchasesList() {
         title={t('purchases.title')}
         description={t('purchases.subtitle')}
         actions={
-          <Button icon={<Warehouse className="h-4 w-4" />} onClick={() => setCreating(true)}>
+          <Button
+            icon={<Warehouse className="h-4 w-4" />}
+            onClick={() => navigate('/purchases/new')}
+          >
             {t('purchases.new')}
           </Button>
         }
@@ -209,14 +212,16 @@ function PurchasesList() {
           ...(!state.search && {
             description: t('purchases.emptyDescription'),
             action: (
-              <Button icon={<Warehouse className="h-4 w-4" />} onClick={() => setCreating(true)}>
+              <Button
+                icon={<Warehouse className="h-4 w-4" />}
+                onClick={() => navigate('/purchases/new')}
+              >
                 {t('purchases.new')}
               </Button>
             ),
           }),
         }}
       />
-      <PurchaseFormModal open={creating} onClose={() => setCreating(false)} />
       <Modal
         open={viewing !== null}
         title={viewing !== null ? t('purchases.number', { number: viewing.number }) : ''}

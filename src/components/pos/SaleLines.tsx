@@ -3,10 +3,10 @@ import { useState } from 'react';
 import { Button, cx, Field, IconButton, WhatsAppIcon } from '@/ui';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { Sale } from '../../lib/types';
-import { MoneyInput } from './MoneyInput';
-import { isWeighed, roundQuantity, WEIGHED_PRESETS } from './quantity';
+import { MoneyInput } from '../domain/MoneyInput';
+import { isWeighed, roundQuantity, WEIGHED_PRESETS } from '../domain/quantity';
 import { money, onEnter, round2, stepFor, type Line } from './saleMath';
-import { QuantityStepper } from './QuantityStepper';
+import { QuantityStepper } from '../domain/QuantityStepper';
 import { type CashGiven, useSaleTicket } from './saleTicket';
 
 /** Bills a customer usually pays with (PEN), for the change. */
@@ -112,15 +112,17 @@ export function LineRow({
           <X className="h-4 w-4" />
         </IconButton>
       </div>
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className="flex items-center gap-1.5">
         <QuantityStepper
           value={line.quantity}
           step={stepFor(unit)}
           onChange={(quantity) => onChange({ quantity: Math.max(0, roundQuantity(quantity)) })}
           onRemove={onRemove}
         />
-        {weighed &&
-          WEIGHED_PRESETS.map((amount) => (
+      </div>
+      {weighed && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {WEIGHED_PRESETS.map((amount) => (
             <button
               key={amount}
               type="button"
@@ -136,8 +138,7 @@ export function LineRow({
               {amount < 1 ? small(amount) : `1 ${t(`products.unitsShort.${unit}`)}`}
             </button>
           ))}
-        {weighed &&
-          (amountText === null ? (
+          {amountText === null ? (
             <button
               type="button"
               onClick={() => setAmountText('')}
@@ -164,8 +165,9 @@ export function LineRow({
                 <X className="h-4 w-4" />
               </IconButton>
             </span>
-          ))}
-      </div>
+          )}
+        </div>
+      )}
     </li>
   );
 }

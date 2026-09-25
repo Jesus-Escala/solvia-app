@@ -17,22 +17,21 @@ import {
   cx,
   Field,
   IconButton,
-  Modal,
   SegmentedControl,
   TextButton,
   useErrorText,
   useErrorToast,
   useFeedback,
 } from '@/ui';
-import { Kbd, PosLayout } from '../pos/PosLayout';
-import { ProductCatalog } from '../pos/ProductCatalog';
-import { CustomerPicker, type PickedCustomer } from './CustomerPicker';
-import { DueDateField } from './DueDateField';
-import { addDaysIso, todayIso } from './dueLabel';
-import { MoneyInput } from './MoneyInput';
-import { NewCustomerFields, type NewCustomer } from './NewCustomerFields';
-import { PaymentMethodMark } from './PaymentMethods';
-import { roundQuantity } from './quantity';
+import { Kbd, PosLayout } from './PosLayout';
+import { ProductCatalog } from './ProductCatalog';
+import { CustomerPicker, type PickedCustomer } from '../domain/CustomerPicker';
+import { DueDateField } from '../domain/DueDateField';
+import { addDaysIso, todayIso } from '../domain/dueLabel';
+import { MoneyInput } from '../domain/MoneyInput';
+import { NewCustomerFields, type NewCustomer } from '../domain/NewCustomerFields';
+import { PaymentMethodMark } from '../domain/PaymentMethods';
+import { roundQuantity } from '../domain/quantity';
 import type { CashGiven } from './saleTicket';
 import { ChangeCalculator, FreeLineForm, LineRow, SaleDone } from './SaleLines';
 import { money, round2, stepFor, type Line } from './saleMath';
@@ -46,62 +45,6 @@ const DOC_TYPES: SaleDocType[] = ['sale_note', 'receipt', 'invoice'];
 type PayOption = PaymentMethod | 'credit';
 const PAY_OPTIONS: PaymentMethod[] = ['cash', 'yape', 'plin', 'bank_transfer'];
 
-export function SaleFormModal({
-  open,
-  onClose,
-  customer,
-}: {
-  open: boolean;
-  onClose: () => void;
-  customer?: PickedCustomer;
-}) {
-  const { t } = useI18n();
-  const { confirm } = useFeedback();
-  // A new key starts an empty sale ("Nueva venta" after saving one).
-  const [round, setRound] = useState(0);
-  // Whether the ticket has products that would be lost by closing.
-  const dirty = useRef(false);
-  const close = async () => {
-    if (dirty.current) {
-      const leave = await confirm({
-        title: t('sales.pos.leaveTitle'),
-        message: t('sales.pos.leaveMessage'),
-        confirmLabel: t('sales.pos.leave'),
-        cancelLabel: t('common.cancel'),
-      });
-      if (!leave) return;
-    }
-    dirty.current = false;
-    onClose();
-  };
-  return (
-    <Modal
-      open={open}
-      size="screen"
-      flush
-      title={t('sales.form.title')}
-      description={<span className="hidden lg:inline">{t('sales.pos.keys')}</span>}
-      onClose={() => void close()}
-      closeLabel={t('common.close')}
-    >
-      {open && (
-        <SalePos
-          key={round}
-          onClose={() => {
-            dirty.current = false;
-            onClose();
-          }}
-          onDirty={(value) => {
-            dirty.current = value;
-          }}
-          onAnother={() => setRound((value) => value + 1)}
-          preset={customer}
-        />
-      )}
-    </Modal>
-  );
-}
-
 /**
  * A point of sale for any kind of business. Left: the catalog (best sellers as big tiles, search
  * or scan). Right: the ticket — lines with − / + and prices that can be changed for this sale, a
@@ -111,7 +54,7 @@ export function SaleFormModal({
  * Once saved: the change, the ticket (print or WhatsApp) and "Nueva venta". Keyboard: F2 search,
  * F4 charge / confirm, Esc back. Stock never blocks a sale: it only warns.
  */
-function SalePos({
+export function SalePos({
   onClose,
   onDirty,
   onAnother,
@@ -463,6 +406,31 @@ function SalePos({
           <p className="font-display text-4xl font-semibold tabular-nums">{fmt.money(total)}</p>
         </div>
 
+        <Field
+          label={t(credit ? 'receivables.form.customer' : 'sales.form.customer')}
+          {...(!credit && { optionalLabel: t('common.optional') })}
+          error={errors.field(create.error, 'customerId')}
+        >
+          {(id) =>
+            newCustomer ? (
+              <NewCustomerFields
+                id={id}
+                value={newCustomer}
+                onChange={setNewCustomer}
+                onCancel={() => setNewCustomer(null)}
+              />
+            ) : (
+              <CustomerPicker
+                id={id}
+                value={customer}
+                disabled={Boolean(preset)}
+                onChange={setCustomer}
+                onCreate={(name) => setNewCustomer({ name, phone: '' })}
+              />
+            )
+          }
+        </Field>
+
         <div>
           <p className="label">{t('sales.form.howPays')}</p>
           <div
@@ -508,31 +476,6 @@ function SalePos({
             received={received}
           />
         )}
-
-        <Field
-          label={t(credit ? 'receivables.form.customer' : 'sales.form.customer')}
-          {...(!credit && { optionalLabel: t('common.optional') })}
-          error={errors.field(create.error, 'customerId')}
-        >
-          {(id) =>
-            newCustomer ? (
-              <NewCustomerFields
-                id={id}
-                value={newCustomer}
-                onChange={setNewCustomer}
-                onCancel={() => setNewCustomer(null)}
-              />
-            ) : (
-              <CustomerPicker
-                id={id}
-                value={customer}
-                disabled={Boolean(preset)}
-                onChange={setCustomer}
-                onCreate={(name) => setNewCustomer({ name, phone: '' })}
-              />
-            )
-          }
-        </Field>
 
         {credit && (
           <div className="space-y-3 rounded-2xl border border-line p-3">

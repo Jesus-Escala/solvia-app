@@ -144,7 +144,7 @@ export function ProductCatalog({
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-2.5 pb-4 sm:px-4">
         {catalog.isLoading ? (
-          <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4">
+          <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {Array.from({ length: 8 }, (_, index) => (
               <li key={index}>
                 <Skeleton className="h-32 w-full rounded-2xl" />
@@ -154,7 +154,7 @@ export function ProductCatalog({
         ) : (
           <ul
             className={cx(
-              'grid grid-cols-2 gap-2.5 transition-opacity sm:grid-cols-3 xl:grid-cols-4',
+              'grid grid-cols-2 gap-2.5 transition-opacity sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5',
               !fresh && 'opacity-70',
             )}
           >

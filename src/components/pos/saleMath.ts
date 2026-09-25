@@ -1,6 +1,6 @@
 import type { KeyboardEvent } from 'react';
 import type { ProductOption, ProductUnit } from '../../lib/types';
-import { isWeighed } from './quantity';
+import { isWeighed } from '../domain/quantity';
 
 /** A line of the sale: a catalog product, or a free line (a service, something not in the catalog). */
 export interface Line {

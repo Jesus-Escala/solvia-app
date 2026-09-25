@@ -17,9 +17,7 @@ import { CustomerFormModal } from '../domain/CustomerFormModal';
 import { CustomerPicker, type PickedCustomer } from '../domain/CustomerPicker';
 import { dueLabel } from '../domain/dueLabel';
 import { PaymentForm } from '../domain/PaymentFormModal';
-import { PurchaseFormModal } from '../domain/PurchaseFormModal';
 import { ReceivableFormModal } from '../domain/ReceivableFormModal';
-import { SaleFormModal } from '../domain/SaleFormModal';
 import { useModules } from '../../hooks/useModules';
 import {
   QuickActionsContext,
@@ -35,16 +33,21 @@ export function QuickActionsProvider({ children }: { children: ReactNode }) {
     null,
   );
   const value = useMemo<QuickActionsValue>(
-    () => ({ open: (action, customer) => setState({ action, customer }) }),
-    [],
+    () => ({
+      open: (action, customer) => {
+        // Selling and buying are screens of their own (points of sale), not dialogs.
+        if (action === 'sale') navigate('/sales/new', { state: customer ? { customer } : null });
+        else if (action === 'purchase') navigate('/purchases/new');
+        else setState({ action, customer });
+      },
+    }),
+    [navigate],
   );
   const close = () => setState(null);
 
   return (
     <QuickActionsContext.Provider value={value}>
       {children}
-      <SaleFormModal open={state?.action === 'sale'} customer={state?.customer} onClose={close} />
-      <PurchaseFormModal open={state?.action === 'purchase'} onClose={close} />
       <ReceivableFormModal
         open={state?.action === 'receivable'}
         customer={state?.customer}

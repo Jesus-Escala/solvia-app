@@ -5,11 +5,16 @@ const LIST_HEIGHT = 288;
 
 /**
  * Where the floating list goes: under the input (or above it when the viewport has no room),
- * in viewport coordinates. Recomputed on scroll and resize so it follows the input.
+ * in viewport coordinates. Above the input it is pinned by its bottom edge, so a short list sits
+ * right on the input instead of floating at the top of the room it could take. Recomputed on
+ * scroll and resize so it follows the input.
  */
 export function useFloatingPosition(anchor: HTMLElement | null, open: boolean) {
   const [position, setPosition] = useState<{
-    top: number;
+    /** Distance from the top of the viewport (opening down) or null. */
+    top: number | null;
+    /** Distance from the bottom of the viewport (opening up) or null. */
+    bottom: number | null;
     left: number;
     width: number;
     maxHeight: number;
@@ -27,7 +32,8 @@ export function useFloatingPosition(anchor: HTMLElement | null, open: boolean) {
         const up = below < Math.min(LIST_HEIGHT, 200) && above > below;
         const maxHeight = Math.min(LIST_HEIGHT, up ? above : below);
         setPosition({
-          top: up ? rect.top - 4 - maxHeight : rect.bottom + 4,
+          top: up ? null : rect.bottom + 4,
+          bottom: up ? window.innerHeight - rect.top + 4 : null,
           left: rect.left,
           width: rect.width,
           maxHeight,
