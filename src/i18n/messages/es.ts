@@ -859,7 +859,8 @@ export const es = {
   },
   sales: {
     title: 'Ventas',
-    subtitle: 'Todo lo que vendiste. Toca una venta para ver el detalle o anularla.',
+    subtitle:
+      'Todo lo que vendiste. Toca una venta para ver el detalle, o «Anular» si te equivocaste.',
     new: 'Nueva venta',
     number: 'Venta #{number}',
     walkIn: 'Cliente de paso',
@@ -993,6 +994,11 @@ export const es = {
     lowStockOut: '{name} — sin stock',
     lowStockLeft: '{name} — quedan {count}',
     void: 'Anular venta',
+    voidShort: 'Anular',
+    viewDetail: 'Ver detalle',
+    voidQuestion: '¿Te equivocaste en esta venta?',
+    voidHint: 'Anúlala: los productos vuelven al stock y deja de contar en tus ventas.',
+    voidHintCredit: 'Anúlala: los productos vuelven al stock y se borra la deuda de «Cobranza».',
     voidTitle: '¿Anular la venta #{number}?',
     voidMessage: 'Los productos vuelven al stock. Esto no se puede deshacer.',
     voidMessageCredit:
@@ -1056,6 +1062,9 @@ export const es = {
     saved: 'Compra #{number} guardada.',
     savedHint: 'El stock de esos productos ya subió.',
     void: 'Anular compra',
+    viewDetail: 'Ver detalle',
+    voidQuestion: '¿Te equivocaste en esta compra?',
+    voidHint: 'Anúlala: esos productos salen otra vez del stock.',
     voidTitle: '¿Anular la compra #{number}?',
     voidMessage: 'Esos productos salen otra vez del stock. Esto no se puede deshacer.',
     voided: 'Compra #{number} anulada.',

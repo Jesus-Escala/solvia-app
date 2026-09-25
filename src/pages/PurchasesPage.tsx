@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router';
 import { Ban, Warehouse } from 'lucide-react';
+import { RowActions } from '../components/domain/RowActions';
 import { useState } from 'react';
 import {
   Alert,
@@ -25,26 +26,38 @@ import { ModuleOff } from './ProductsPage';
 // Empty sort = newest first.
 const DEFAULTS = { search: '', page: '1', pageSize: '20', sortBy: '', sortDir: '' };
 
-function PurchaseDetail({ purchase, onClose }: { purchase: Purchase; onClose: () => void }) {
-  const { t, fmt } = useI18n();
+/** Voiding a purchase, always after a red confirmation: its products leave the stock again. */
+function useVoidPurchaseAction() {
+  const { t } = useI18n();
   const { toast, confirm } = useFeedback();
   const voidPurchase = useVoidPurchase();
-
-  const cancel = async () => {
+  const run = async (purchase: Purchase) => {
     const confirmed = await confirm({
       title: t('purchases.voidTitle', { number: purchase.number }),
       message: t('purchases.voidMessage'),
       confirmLabel: t('purchases.void'),
       cancelLabel: t('common.cancel'),
+      tone: 'danger',
     });
-    if (!confirmed) return;
+    if (!confirmed) return false;
     try {
       await voidPurchase.mutateAsync(purchase.id);
       toast.success(t('purchases.voided', { number: purchase.number }));
-      onClose();
+      return true;
     } catch (error) {
       toast.apiError(error);
+      return false;
     }
+  };
+  return { run, pending: voidPurchase.isPending };
+}
+
+function PurchaseDetail({ purchase, onClose }: { purchase: Purchase; onClose: () => void }) {
+  const { t, fmt } = useI18n();
+  const voidAction = useVoidPurchaseAction();
+
+  const cancel = async () => {
+    if (await voidAction.run(purchase)) onClose();
   };
 
   return (
@@ -81,11 +94,15 @@ function PurchaseDetail({ purchase, onClose }: { purchase: Purchase; onClose: ()
         </span>
       </div>
       {purchase.status === 'completed' && (
-        <div className="flex justify-end border-t border-line pt-4">
+        <div className="flex flex-col gap-3 rounded-xl border border-danger/30 bg-danger-soft/60 p-4 sm:flex-row sm:items-center">
+          <p className="min-w-0 flex-1 text-sm text-danger-ink">
+            <span className="block font-semibold">{t('purchases.voidQuestion')}</span>
+            {t('purchases.voidHint')}
+          </p>
           <Button
-            variant="secondary"
+            variant="danger"
             icon={<Ban className="h-4 w-4" />}
-            loading={voidPurchase.isPending}
+            loading={voidAction.pending}
             onClick={() => void cancel()}
           >
             {t('purchases.void')}
@@ -107,6 +124,7 @@ function PurchasesList() {
   const errors = useErrorText();
   const [state, update] = useUrlState(DEFAULTS);
   const navigate = useNavigate();
+  const voidAction = useVoidPurchaseAction();
   const [viewing, setViewing] = useState<Purchase | null>(null);
   const query = usePurchases({
     search: state.search || null,
@@ -200,6 +218,14 @@ function PurchasesList() {
         })}
         {...urlSort(state, update)}
         onRowClick={(row) => setViewing(row)}
+        rowActions={(row) => (
+          <RowActions
+            onView={() => setViewing(row)}
+            {...(row.status === 'completed' && { onVoid: () => void voidAction.run(row) })}
+            viewLabel={t('purchases.viewDetail')}
+            voidLabel={t('sales.voidShort')}
+          />
+        )}
         pagination={
           query.data && {
             ...query.data.meta,

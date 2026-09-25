@@ -854,7 +854,7 @@ export const en: Messages = {
   },
   sales: {
     title: 'Sales',
-    subtitle: 'Everything you sold. Tap a sale to see it or void it.',
+    subtitle: 'Everything you sold. Tap a sale to see its detail, or “Void” if you made a mistake.',
     new: 'New sale',
     number: 'Sale #{number}',
     walkIn: 'Walk-in customer',
@@ -988,6 +988,12 @@ export const en: Messages = {
     lowStockOut: '{name} — out of stock',
     lowStockLeft: '{name} — {count} left',
     void: 'Void sale',
+    voidShort: 'Void',
+    viewDetail: 'See detail',
+    voidQuestion: 'Did you make a mistake in this sale?',
+    voidHint: 'Void it: the products go back to stock and it no longer counts in your sales.',
+    voidHintCredit:
+      'Void it: the products go back to stock and the debt is removed from Collections.',
     voidTitle: 'Void sale #{number}?',
     voidMessage: 'The products go back to stock. This cannot be undone.',
     voidMessageCredit:
@@ -1051,6 +1057,9 @@ export const en: Messages = {
     saved: 'Purchase #{number} saved.',
     savedHint: 'Those products are already up in stock.',
     void: 'Void purchase',
+    viewDetail: 'See detail',
+    voidQuestion: 'Did you make a mistake in this purchase?',
+    voidHint: 'Void it: those products leave the stock again.',
     voidTitle: 'Void purchase #{number}?',
     voidMessage: 'Those products leave stock again. This cannot be undone.',
     voided: 'Purchase #{number} voided.',

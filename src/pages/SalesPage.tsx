@@ -1,4 +1,5 @@
 import { AlertTriangle, Ban, HandCoins, Layers, ReceiptText, ShoppingCart } from 'lucide-react';
+import { RowActions } from '../components/domain/RowActions';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import {
@@ -47,28 +48,40 @@ function PaymentLabel({ sale }: { sale: Sale }) {
   );
 }
 
-function SaleDetail({ sale, onClose }: { sale: Sale; onClose: () => void }) {
-  const { t, fmt } = useI18n();
-  const modules = useModules();
+/** Voiding a sale, always after a red confirmation: the stock comes back (and the debt goes). */
+function useVoidSaleAction() {
+  const { t } = useI18n();
   const { toast, confirm } = useFeedback();
   const voidSale = useVoidSale();
-
-  const cancel = async () => {
+  const run = async (sale: Sale) => {
     const confirmed = await confirm({
       title: t('sales.voidTitle', { number: sale.number }),
       message:
         sale.paymentType === 'credit' ? t('sales.voidMessageCredit') : t('sales.voidMessage'),
       confirmLabel: t('sales.void'),
       cancelLabel: t('common.cancel'),
+      tone: 'danger',
     });
-    if (!confirmed) return;
+    if (!confirmed) return false;
     try {
       await voidSale.mutateAsync(sale.id);
       toast.success(t('sales.voided', { number: sale.number }));
-      onClose();
+      return true;
     } catch (error) {
       toast.apiError(error);
+      return false;
     }
+  };
+  return { run, pending: voidSale.isPending };
+}
+
+function SaleDetail({ sale, onClose }: { sale: Sale; onClose: () => void }) {
+  const { t, fmt } = useI18n();
+  const modules = useModules();
+  const voidAction = useVoidSaleAction();
+
+  const cancel = async () => {
+    if (await voidAction.run(sale)) onClose();
   };
 
   return (
@@ -154,11 +167,15 @@ function SaleDetail({ sale, onClose }: { sale: Sale; onClose: () => void }) {
         </p>
       )}
       {sale.status === 'completed' && (
-        <div className="flex justify-end border-t border-line pt-4">
+        <div className="flex flex-col gap-3 rounded-xl border border-danger/30 bg-danger-soft/60 p-4 sm:flex-row sm:items-center">
+          <p className="min-w-0 flex-1 text-sm text-danger-ink">
+            <span className="block font-semibold">{t('sales.voidQuestion')}</span>
+            {sale.paymentType === 'credit' ? t('sales.voidHintCredit') : t('sales.voidHint')}
+          </p>
           <Button
-            variant="secondary"
+            variant="danger"
             icon={<Ban className="h-4 w-4" />}
-            loading={voidSale.isPending}
+            loading={voidAction.pending}
             onClick={() => void cancel()}
           >
             {t('sales.void')}
@@ -181,6 +198,7 @@ function SalesList() {
   const errors = useErrorText();
   const [state, update] = useUrlState(DEFAULTS);
   const navigate = useNavigate();
+  const voidAction = useVoidSaleAction();
   const [viewing, setViewing] = useState<Sale | null>(null);
 
   const query = useSales({
@@ -311,6 +329,14 @@ function SalesList() {
         })}
         {...urlSort(state, update)}
         onRowClick={(row) => setViewing(row)}
+        rowActions={(row) => (
+          <RowActions
+            onView={() => setViewing(row)}
+            {...(row.status === 'completed' && { onVoid: () => void voidAction.run(row) })}
+            viewLabel={t('sales.viewDetail')}
+            voidLabel={t('sales.voidShort')}
+          />
+        )}
         pagination={
           query.data && {
             ...query.data.meta,
