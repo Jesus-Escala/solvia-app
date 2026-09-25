@@ -9,6 +9,7 @@ import {
   TextButton,
   Checkbox,
   IconButton,
+  SegmentedControl,
 } from '@/ui';
 import { roundQuantity } from './quantity';
 import { QuantityStepper } from './QuantityStepper';
@@ -20,9 +21,43 @@ import { SupplierPicker } from './SupplierPicker';
 
 interface Line {
   product: ProductOption;
+  /** How many: sacks/boxes when `inPacks`, otherwise the product's own unit. */
   quantity: number;
-  /** Text of the cost input (editable: what was paid this time). */
+  /** Text of the cost input (what was paid this time): per sack/box when `inPacks`. */
   unitCost: string;
+  /** Entered in the sack/box the product is bought in (`product.packSize`). */
+  inPacks: boolean;
+}
+
+const round2 = (value: number) => Math.round(value * 100) / 100;
+
+/** The line in the product's unit, as the API and the stock count it. */
+function inUnits(line: Line) {
+  const cost = Number(line.unitCost) || 0;
+  const size = line.product.packSize;
+  if (!line.inPacks || size === null) return { quantity: line.quantity, unitCost: cost };
+  return { quantity: roundQuantity(line.quantity * size), unitCost: round2(cost / size) };
+}
+
+/** Switches a line between sacks/boxes and the product's unit, keeping what it amounts to. */
+function switchPacks(line: Line, inPacks: boolean): Line {
+  const size = line.product.packSize;
+  if (size === null || inPacks === line.inPacks) return line;
+  const cost = Number(line.unitCost) || 0;
+  const units = inUnits(line);
+  return inPacks
+    ? {
+        ...line,
+        inPacks,
+        quantity: Math.max(1, Math.round(units.quantity / size)),
+        unitCost: line.unitCost === '' ? '' : String(round2(cost * size)),
+      }
+    : {
+        ...line,
+        inPacks,
+        quantity: units.quantity,
+        unitCost: line.unitCost === '' ? '' : String(units.unitCost),
+      };
 }
 
 const DOC_TYPES: SaleDocType[] = ['receipt', 'invoice', 'sale_note'];
@@ -69,7 +104,13 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
           line === existing ? { ...line, quantity: roundQuantity(line.quantity + 1) } : line,
         );
       }
-      return [...current, { product, quantity: 1, unitCost: String(product.cost ?? '') }];
+      // Bought in sacks/boxes: the line starts with one of them, at the last cost of one.
+      const inPacks = product.packSize !== null;
+      const cost =
+        product.cost === null
+          ? ''
+          : String(inPacks ? round2(product.cost * product.packSize!) : product.cost);
+      return [...current, { product, quantity: 1, unitCost: cost, inPacks }];
     });
   const update = (id: string, changes: Partial<Line>) =>
     setLines((current) =>
@@ -91,11 +132,7 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
     event.preventDefault();
     const items = lines
       .filter((line) => line.quantity > 0)
-      .map((line) => ({
-        productId: line.product.id,
-        quantity: line.quantity,
-        unitCost: Number(line.unitCost) || 0,
-      }));
+      .map((line) => ({ productId: line.product.id, ...inUnits(line) }));
     if (items.length === 0) {
       toast.warning(t('sales.form.empty'));
       return;
@@ -130,11 +167,51 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
               >
                 <div className="min-w-0 flex-1 basis-40">
                   <p className="truncate text-sm font-semibold">{line.product.name}</p>
+                  {line.product.packSize !== null && (
+                    <div className="mt-1">
+                      <SegmentedControl
+                        size="sm"
+                        label={t('purchases.form.howCounted')}
+                        value={line.inPacks ? 'packs' : 'units'}
+                        onChange={(value) =>
+                          setLines((current) =>
+                            current.map((item) =>
+                              item === line ? switchPacks(item, value === 'packs') : item,
+                            ),
+                          )
+                        }
+                        options={[
+                          {
+                            value: 'packs',
+                            label: t('purchases.form.byPack', {
+                              size: fmt.number(line.product.packSize),
+                              unit: t(`products.unitsShort.${line.product.unit}`),
+                            }),
+                          },
+                          {
+                            value: 'units',
+                            label: t('purchases.form.byUnit', {
+                              unit: t(`products.unitsShort.${line.product.unit}`),
+                            }),
+                          },
+                        ]}
+                      />
+                    </div>
+                  )}
+                  {line.inPacks && (
+                    <p className="text-xs font-medium text-ink">
+                      {t('purchases.form.packEquals', {
+                        quantity: fmt.number(inUnits(line).quantity),
+                        unit: t(`products.unitsShort.${line.product.unit}`),
+                        cost: fmt.money(inUnits(line).unitCost),
+                      })}
+                    </p>
+                  )}
                   {line.product.trackStock && (
                     <p className="text-xs text-muted">
                       {t('purchases.form.stockAfter', {
                         from: fmt.number(line.product.stock),
-                        to: fmt.number(roundQuantity(line.product.stock + line.quantity)),
+                        to: fmt.number(roundQuantity(line.product.stock + inUnits(line).quantity)),
                       })}
                     </p>
                   )}
@@ -145,7 +222,9 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
                   onRemove={() => remove(line.product.id)}
                 />
                 <label className="relative w-28">
-                  <span className="sr-only">{t('purchases.form.unitCost')}</span>
+                  <span className="sr-only">
+                    {line.inPacks ? t('purchases.form.packCost') : t('purchases.form.unitCost')}
+                  </span>
                   <span className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-xs text-muted">
                     S/
                   </span>
@@ -156,7 +235,9 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
                     min="0"
                     step="0.01"
                     required
-                    placeholder={t('purchases.form.unitCost')}
+                    placeholder={
+                      line.inPacks ? t('purchases.form.packCost') : t('purchases.form.unitCost')
+                    }
                     value={line.unitCost}
                     onChange={(event) => update(line.product.id, { unitCost: event.target.value })}
                   />

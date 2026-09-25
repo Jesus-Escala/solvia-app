@@ -82,6 +82,7 @@ function ProductForm({ product, onClose }: { product?: Product; onClose: () => v
     cost: (product?.cost ?? null) === null ? '' : String(product?.cost),
     trackStock: product?.trackStock ?? true,
     minStock: (product?.minStock ?? null) === null ? '' : String(product?.minStock),
+    packSize: (product?.packSize ?? null) === null ? '' : String(product?.packSize),
   });
   const update = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
@@ -100,6 +101,7 @@ function ProductForm({ product, onClose }: { product?: Product; onClose: () => v
       cost,
       trackStock: form.trackStock,
       minStock: form.trackStock && form.minStock !== '' ? Number(form.minStock) : null,
+      packSize: form.packSize !== '' && Number(form.packSize) > 0 ? Number(form.packSize) : null,
     });
     toast.success(product ? t('products.updated') : t('products.created'));
     onClose();
@@ -168,6 +170,33 @@ function ProductForm({ product, onClose }: { product?: Product; onClose: () => v
             value={form.cost}
             onChange={(v) => update('cost', v)}
           />
+        )}
+      </Field>
+
+      <Field
+        label={t('products.form.packSize')}
+        optionalLabel={t('common.optional')}
+        hint={t('products.form.packSizeHint', { unit: t(`products.unitsShort.${form.unit}`) })}
+        error={errors.field(save.error, 'packSize')}
+      >
+        {(id, describedBy) => (
+          <div className="relative sm:max-w-48">
+            <input
+              id={id}
+              aria-describedby={describedBy}
+              className="input pr-12 tabular-nums"
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="any"
+              placeholder={t('products.form.packSizePlaceholder')}
+              value={form.packSize}
+              onChange={(event) => update('packSize', event.target.value)}
+            />
+            <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted">
+              {t(`products.unitsShort.${form.unit}`)}
+            </span>
+          </div>
         )}
       </Field>
 

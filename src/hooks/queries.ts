@@ -441,6 +441,7 @@ export interface ProductInput {
   cost?: number | null;
   trackStock?: boolean;
   minStock?: number | null;
+  packSize?: number | null;
   active?: boolean;
 }
 

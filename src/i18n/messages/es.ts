@@ -862,6 +862,8 @@ export const es = {
       invoice: 'Factura',
     },
     form: {
+      grams: '{count} g',
+      milliliters: '{count} ml',
       title: 'Nueva venta',
       search: 'Busca o escanea un producto',
       left: 'Quedan {count}',
@@ -917,6 +919,11 @@ export const es = {
       items: 'Qué llegó',
     },
     form: {
+      howCounted: 'Cómo lo anotas',
+      byPack: 'Sacos/cajas de {size} {unit}',
+      byUnit: 'Por {unit}',
+      packEquals: '= {quantity} {unit} · a {cost} el {unit}',
+      packCost: 'Costo del saco',
       title: 'Nueva compra',
       intro: 'Agrega lo que te llegó, cuántos y cuánto te costó cada uno.',
       emptyCart: 'Busca o escanea los productos que te llegaron.',
@@ -1078,6 +1085,10 @@ export const es = {
     emptyFiltered: 'No hay productos así',
     emptyFilteredDescription: 'Prueba con otro nombre o cambia el filtro.',
     form: {
+      packSize: 'Lo compras en saco o caja de',
+      packSizePlaceholder: 'Ej. 10',
+      packSizeHint:
+        'Si lo compras en saco o caja, pon cuánto trae ({unit}). Así anotas la compra por sacos y vendes por {unit} o por gramos.',
       titleNew: 'Nuevo producto',
       titleEdit: 'Cambiar producto',
       intro: 'Solo necesitas el nombre y el precio. Lo demás es opcional.',

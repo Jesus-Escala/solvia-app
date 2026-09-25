@@ -857,6 +857,8 @@ export const en: Messages = {
       invoice: 'Invoice',
     },
     form: {
+      grams: '{count} g',
+      milliliters: '{count} ml',
       title: 'New sale',
       search: 'Search or scan a product',
       left: '{count} left',
@@ -912,6 +914,11 @@ export const en: Messages = {
       items: 'What arrived',
     },
     form: {
+      howCounted: 'How you record it',
+      byPack: 'Sacks/boxes of {size} {unit}',
+      byUnit: 'By {unit}',
+      packEquals: '= {quantity} {unit} · at {cost} per {unit}',
+      packCost: 'Cost of the sack',
       title: 'New purchase',
       intro: 'Add what arrived, how many and what each one cost.',
       emptyCart: 'Search or scan the products that arrived.',
@@ -1074,6 +1081,10 @@ export const en: Messages = {
     emptyFiltered: 'No products like that',
     emptyFilteredDescription: 'Try another name or change the filter.',
     form: {
+      packSize: 'You buy it in a sack or box of',
+      packSizePlaceholder: 'E.g. 10',
+      packSizeHint:
+        'If you buy it in a sack or box, enter how much it holds ({unit}). Then you record purchases in sacks and sell by {unit} or grams.',
       titleNew: 'New product',
       titleEdit: 'Change product',
       intro: 'You only need the name and the price. The rest is optional.',

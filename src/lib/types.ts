@@ -70,6 +70,8 @@ export interface Product {
   /** Current stock (sales take it out; can be negative). */
   stock: number;
   minStock: number | null;
+  /** Sack/box it is bought in, in its unit (e.g. 10 kg); null when bought loose. */
+  packSize: number | null;
   active: boolean;
   createdAt: string;
   updatedAt: string;
@@ -316,7 +318,16 @@ export interface Purchase {
 /** What a product picker needs (from `GET /products/lookup`). */
 export type ProductOption = Pick<
   Product,
-  'id' | 'name' | 'code' | 'unit' | 'price' | 'cost' | 'trackStock' | 'stock' | 'minStock'
+  | 'id'
+  | 'name'
+  | 'code'
+  | 'unit'
+  | 'price'
+  | 'cost'
+  | 'trackStock'
+  | 'stock'
+  | 'minStock'
+  | 'packSize'
 >;
 
 /** What a customer picker needs (from `GET /customers/lookup`). */

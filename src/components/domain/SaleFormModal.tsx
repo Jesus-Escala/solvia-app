@@ -12,7 +12,7 @@ import {
   IconButton,
 } from '@/ui';
 import { NewCustomerFields, type NewCustomer } from './NewCustomerFields';
-import { roundQuantity } from './quantity';
+import { isWeighed, roundQuantity, WEIGHED_PRESETS } from './quantity';
 import { QuantityStepper } from './QuantityStepper';
 import { useCreateSale, useSaveCustomer } from '../../hooks/queries';
 import { useModules } from '../../hooks/useModules';
@@ -31,9 +31,12 @@ interface Line {
 
 const DOC_TYPES: SaleDocType[] = ['sale_note', 'receipt', 'invoice'];
 
-/** Whole units step by 1; kilos, liters and meters by 0.5 (the number can still be typed). */
+/**
+ * Whole units step by 1; kilos and liters by a quarter, meters by a half. Any amount can still be
+ * typed (0.3 kg = 300 g).
+ */
 const stepFor = (product: ProductOption) =>
-  product.unit === 'kg' || product.unit === 'liter' || product.unit === 'meter' ? 0.5 : 1;
+  isWeighed(product.unit) ? 0.25 : product.unit === 'meter' ? 0.5 : 1;
 
 export function SaleFormModal({
   open,
@@ -71,6 +74,11 @@ function SaleForm({ onClose, preset }: { onClose: () => void; preset?: PickedCus
   const create = useCreateSale();
   const saveCustomer = useSaveCustomer();
   const today = todayIso();
+  /** Less than a kilo or liter in grams or milliliters: 0.3 kg → "300 g". */
+  const small = (quantity: number, unit: ProductOption['unit']) =>
+    t(unit === 'liter' ? 'sales.form.milliliters' : 'sales.form.grams', {
+      count: fmt.number(Math.round(quantity * 1000)),
+    });
 
   const [lines, setLines] = useState<Line[]>([]);
   // Selling on credit creates a debt in Cobranza: without that module every sale is cash.
@@ -178,6 +186,11 @@ function SaleForm({ onClose, preset }: { onClose: () => void; preset?: PickedCus
                     <p className="truncate text-sm font-semibold">{line.product.name}</p>
                     <p className="text-xs text-muted">
                       {fmt.money(line.product.price)} · {t(`products.units.${line.product.unit}`)}
+                      {isWeighed(line.product.unit) && line.quantity > 0 && line.quantity < 1 && (
+                        <span className="ml-1 font-medium text-ink">
+                          · {small(line.quantity, line.product.unit)}
+                        </span>
+                      )}
                       {short && (
                         <span className="ml-1 font-medium text-warning-ink">
                           {line.product.stock > 0
@@ -187,6 +200,29 @@ function SaleForm({ onClose, preset }: { onClose: () => void; preset?: PickedCus
                       )}
                     </p>
                   </div>
+                  {isWeighed(line.product.unit) && (
+                    // Quick amounts: ¼, ½ and 1 kilo (or liter); anything else can be typed.
+                    <span className="flex gap-1">
+                      {WEIGHED_PRESETS.map((amount) => (
+                        <button
+                          key={amount}
+                          type="button"
+                          aria-pressed={line.quantity === amount}
+                          onClick={() => setQuantity(line.product.id, amount)}
+                          className={cx(
+                            'h-9 rounded-lg border px-2 text-xs font-semibold tabular-nums transition',
+                            line.quantity === amount
+                              ? 'border-primary bg-primary-soft text-primary-ink'
+                              : 'border-line text-muted hover:bg-surface-2 hover:text-ink',
+                          )}
+                        >
+                          {amount < 1
+                            ? small(amount, line.product.unit)
+                            : `1 ${t(`products.unitsShort.${line.product.unit}`)}`}
+                        </button>
+                      ))}
+                    </span>
+                  )}
                   <QuantityStepper
                     value={line.quantity}
                     step={step}
