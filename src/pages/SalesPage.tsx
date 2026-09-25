@@ -121,12 +121,32 @@ function SaleDetail({ sale, onClose }: { sale: Sale; onClose: () => void }) {
           </li>
         ))}
       </ul>
-      <div className="flex items-baseline justify-between rounded-xl bg-surface-2 px-4 py-3">
-        <span className="text-sm text-muted">{t('sales.columns.total')}</span>
-        <span className="font-display text-2xl font-semibold tabular-nums">
-          {fmt.money(sale.total)}
-        </span>
+      <div className="space-y-1 rounded-xl bg-surface-2 px-4 py-3">
+        {sale.discount > 0 && (
+          <>
+            <p className="flex justify-between text-sm text-muted">
+              <span>{t('sales.form.subtotal')}</span>
+              <span className="tabular-nums">{fmt.money(sale.subtotal)}</span>
+            </p>
+            <p className="flex justify-between text-sm text-success-ink">
+              <span>{t('sales.form.discount')}</span>
+              <span className="tabular-nums">−{fmt.money(sale.discount)}</span>
+            </p>
+          </>
+        )}
+        <p className="flex items-baseline justify-between">
+          <span className="text-sm text-muted">{t('sales.columns.total')}</span>
+          <span className="font-display text-2xl font-semibold tabular-nums">
+            {fmt.money(sale.total)}
+          </span>
+        </p>
       </div>
+      {sale.notes && (
+        <p className="rounded-xl border border-line px-4 py-3 text-sm">
+          <span className="font-medium">{t('sales.form.notes')}: </span>
+          {sale.notes}
+        </p>
+      )}
       {sale.receivable && (
         <p className="text-sm text-muted">
           {sale.receivable.outstanding > 0

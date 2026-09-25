@@ -343,7 +343,8 @@ export type SaleDocType = 'none' | 'sale_note' | 'receipt' | 'invoice';
 
 export interface SaleItem {
   id: string;
-  productId: string;
+  /** Null for a free line (a service or something not in the catalog). */
+  productId: string | null;
   description: string;
   quantity: number;
   unitPrice: number;
@@ -361,7 +362,11 @@ export interface Sale {
   method: PaymentMethod | null;
   docType: SaleDocType;
   docNumber: string | null;
+  /** Sum of the lines, before the discount. */
+  subtotal: number;
+  discount: number;
   total: number;
+  notes: string | null;
   status: 'completed' | 'voided';
   createdAt: string;
   voidedAt: string | null;
@@ -369,7 +374,13 @@ export interface Sale {
   summary: string;
   /** Some counted product was sold beyond its stock. */
   hasShortage: boolean;
-  receivable: { id: string; status: ReceivableStatus; outstanding: number } | null;
+  receivable: {
+    id: string;
+    status: ReceivableStatus;
+    /** Paid so far (the down payment right after selling). */
+    paid: number;
+    outstanding: number;
+  } | null;
 }
 
 export interface MessageTemplate {

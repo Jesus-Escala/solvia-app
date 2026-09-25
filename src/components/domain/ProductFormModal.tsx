@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Button, cx, Field, Modal, useErrorText, useErrorToast, useFeedback, Checkbox } from '@/ui';
+import { MoneyInput } from './MoneyInput';
 import { useSaveProduct } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { Product, ProductUnit } from '../../lib/types';
@@ -26,42 +27,6 @@ export function ProductFormModal({
     >
       {open && <ProductForm product={product} onClose={onClose} />}
     </Modal>
-  );
-}
-
-/** Money input with the "S/" prefix. */
-function MoneyInput({
-  id,
-  value,
-  onChange,
-  required = false,
-  describedBy,
-}: {
-  id: string;
-  value: string;
-  onChange: (value: string) => void;
-  required?: boolean;
-  describedBy?: string;
-}) {
-  return (
-    <div className="relative">
-      <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm font-semibold text-muted">
-        S/
-      </span>
-      <input
-        id={id}
-        aria-describedby={describedBy}
-        className="input pl-9 tabular-nums"
-        type="number"
-        inputMode="decimal"
-        min={required ? '0.01' : '0'}
-        step="0.01"
-        required={required}
-        placeholder="0.00"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      />
-    </div>
   );
 }
 

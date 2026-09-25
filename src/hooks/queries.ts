@@ -514,7 +514,17 @@ export interface SaleInput {
   dueDate?: string;
   docType?: SaleDocType;
   docNumber?: string | null;
-  items: Array<{ productId: string; quantity: number; unitPrice?: number }>;
+  /** Catalog products, or free lines (a service, something not in the catalog) with a name. */
+  items: Array<
+    | { productId: string; quantity: number; unitPrice?: number }
+    | { description: string; quantity: number; unitPrice: number }
+  >;
+  /** Amount off the sum of the lines. */
+  discount?: number;
+  /** Credit sale: what the customer pays now (first payment of the debt). */
+  downPayment?: number;
+  downPaymentMethod?: PaymentMethod;
+  notes?: string | null;
 }
 
 /** A sale touches stock (products) and, on credit, receivables and the dashboard. */
