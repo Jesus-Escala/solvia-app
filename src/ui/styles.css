@@ -393,15 +393,6 @@ h1,
   }
 }
 
-@keyframes toast-timer {
-  from {
-    transform: scaleX(1);
-  }
-  to {
-    transform: scaleX(0);
-  }
-}
-
 /* Route content: every page fades and rises in when it mounts. */
 .animate-page-in {
   animation: page-in 360ms var(--ease-out) both;
@@ -465,14 +456,6 @@ html:has(dialog.modal[open]):not(:has(main.overflow-y-auto)) {
 }
 .modal[data-state='closing']::backdrop {
   animation: fade-out 170ms var(--ease-in) both;
-}
-
-/* Countdown bar under each toast; its duration and play state are set inline. */
-.toast-timer {
-  transform-origin: left;
-  animation-name: toast-timer;
-  animation-timing-function: linear;
-  animation-fill-mode: forwards;
 }
 
 /* Scroll reveal (see <Reveal>): content rises in the first time it enters the viewport. */
