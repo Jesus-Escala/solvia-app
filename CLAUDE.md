@@ -48,7 +48,7 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
   change vs previous period, compact money for tiles).
 - `src/components/` — `layout/` (AppShell, Sidebar, Topbar, BottomNav, AssistantMenu, PwaManager),
   `domain/` (forms/modals and columns for customers, receivables, payments; `CustomerPicker` =
-  search with "create on the spot"), `quick/` (the global "+ Anotar" menu and its forms:
+  search with "create on the spot"), `quick/` (the "+ Anotar" menu of the phone bottom bar and its forms:
   `useQuickActions().open('receivable' | 'payment' | 'customer')`), `charts/`, `auth/`.
 - `src/hooks/queries.ts` — every API call as a TanStack Query hook (query keys + invalidation).
 - **Modules** (enabled per business from solvia-admin, `me.tenant.modules`): `useModules()` →

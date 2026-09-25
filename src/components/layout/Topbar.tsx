@@ -23,7 +23,6 @@ import {
   pwaInstall,
   useCanOfferInstall,
 } from '@/ui';
-import { QuickAddMenu } from '../quick/QuickActions';
 import { AssistantMenu } from './AssistantMenu';
 
 export function Topbar({
@@ -66,10 +65,6 @@ export function Topbar({
       )}
 
       <div className="ml-auto flex items-center gap-1">
-        {/* On phones the "+" lives in the bottom bar. */}
-        <span className="mr-2 hidden lg:block">
-          <QuickAddMenu />
-        </span>
         <AssistantMenu />
 
         <PreferencesControls />

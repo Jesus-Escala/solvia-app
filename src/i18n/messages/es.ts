@@ -1537,7 +1537,6 @@ export const es = {
     intro: 'Te ayudo a usar Solvia. ¿Qué necesitas?',
     tour: 'Hacer el recorrido guiado',
     helpCenter: 'Ir al centro de ayuda',
-    newReceivable: 'Anotar un fiado',
     comingSoon: 'Muy pronto podrás chatear conmigo aquí.',
   },
   tour: {

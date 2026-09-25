@@ -215,7 +215,10 @@ function TourOverlay({
   const location = useLocation();
   const modules = useModules();
   // Only the steps of the modules this business has.
-  const steps = TOUR_STEPS.filter((item) => !item.module || modules[item.module]);
+  const phone = window.matchMedia('(max-width: 1023px)').matches;
+  const steps = TOUR_STEPS.filter(
+    (item) => (!item.module || modules[item.module]) && (!item.phoneOnly || phone),
+  );
   const step = steps[Math.min(index, steps.length - 1)]!;
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [ready, setReady] = useState(false);

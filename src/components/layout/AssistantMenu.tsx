@@ -1,10 +1,9 @@
-import { BookOpen, ChevronRight, Compass, MessageCircleHeart, ReceiptText } from 'lucide-react';
+import { BookOpen, ChevronRight, Compass, MessageCircleHeart } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../../auth/AuthContext';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useTour } from '../../tour/TourProvider';
-import { useQuickActions } from '../quick/quickActionsContext';
 import { Mascot, Popover } from '@/ui';
 
 function Action({ icon, label, onClick }: { icon: ReactNode; label: string; onClick: () => void }) {
@@ -25,15 +24,13 @@ function Action({ icon, label, onClick }: { icon: ReactNode; label: string; onCl
 }
 
 /**
- * "Bowl" assistant entry point in the top bar. Today it offers quick help (tour, help center,
- * shortcuts); the panel is designed to host a chat conversation later.
+ * "Bowl" assistant entry point in the top bar. Today it offers quick help (tour and help center); the panel is designed to host a chat conversation later.
  */
 export function AssistantMenu() {
   const { t } = useI18n();
   const { user } = useAuth();
   const tour = useTour();
   const navigate = useNavigate();
-  const quick = useQuickActions();
   const firstName = user?.name.split(' ')[0] ?? '';
 
   return (
@@ -88,14 +85,6 @@ export function AssistantMenu() {
               onClick={() => {
                 close();
                 navigate('/help');
-              }}
-            />
-            <Action
-              icon={<ReceiptText />}
-              label={t('assistant.newReceivable')}
-              onClick={() => {
-                close();
-                quick.open('receivable');
               }}
             />
             <p className="flex items-center gap-2 rounded-lg bg-surface-2 px-3 py-2 text-xs text-muted">

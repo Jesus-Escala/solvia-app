@@ -1535,7 +1535,6 @@ export const en: Messages = {
     intro: 'I look after your receivables and help you use Solvia. What do you need?',
     tour: 'Take the guided tour',
     helpCenter: 'Go to the help center',
-    newReceivable: 'Register a receivable',
     comingSoon: 'Soon you will be able to chat with me here.',
   },
   tour: {

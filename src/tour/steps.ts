@@ -22,9 +22,11 @@ export const TOUR_STEPS: ReadonlyArray<{
   route: string | null;
   target: string;
   module?: ModuleRequirement;
+  /** Only on phones (the "+" lives in the bottom bar there). */
+  phoneOnly?: boolean;
 }> = [
   { id: 'homeActions', route: '/', target: 'home-actions' },
-  { id: 'quickAdd', route: '/', target: 'quick-add' },
+  { id: 'quickAdd', route: '/', target: 'quick-add', phoneOnly: true },
   { id: 'homeToday', route: '/', target: 'home-today', module: 'collections' },
   { id: 'navigation', route: '/', target: 'nav' },
   { id: 'rowActions', route: '/receivables', target: 'receivables-table', module: 'collections' },
