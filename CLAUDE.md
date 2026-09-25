@@ -54,9 +54,14 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
 - **Modules** (enabled per business from solvia-admin, `me.tenant.modules`): `useModules()` →
   `{ sales, inventory, catalog }`. Nav items with `module` only show when enabled; a module page
   renders `ModuleOff` otherwise. Catalog: `ProductsPage` (`/products`) + `ProductFormModal`.
-  Sales (`SalesPage`, `SaleFormModal`): add products with `ProductPicker` (search or barcode;
-  Enter freezes the text and resolves it in order, so fast scans are never lost), cash or
-  credit, optional customer on cash. Stock shortages are traced (sale/line badges, "Sin stock"
+  Sales (`SalesPage`, `SaleFormModal`) and purchases (`PurchaseFormModal`) are **point-of-sale
+  screens** (`Modal size="screen"`, `components/pos/`): `PosLayout` (catalog left, ticket right;
+  phones: catalog + bottom bar that opens the ticket) and `ProductCatalog` (best sellers as tiles
+  from `/products/lookup?sort=popular`, search or barcode — Enter resolves scans in order, so fast
+  scans are never lost). The sale ticket (`SaleLines.tsx`, helpers in `saleMath.ts`) takes free
+  lines, a price for this sale only, a discount and "Cobrar" → checkout (cash with change, Yape,
+  Plin, transfer or credit with down payment), then the ticket (`saleTicket.ts`: print /
+  WhatsApp). Keyboard: F2 search, F4 charge/confirm, Esc back. Stock shortages are traced (sale/line badges, "Sin stock"
   filter, `KardexModal`) when the inventory module is on.
 - **Plan limits**: `components/plan/PlanUsage.tsx` — `PlanUsageCard` (Settings > Mi plan: automatic
   WhatsApp messages, users and customers of the month, from `GET /settings/plan`) and

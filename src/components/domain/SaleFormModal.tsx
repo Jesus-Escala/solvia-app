@@ -1,17 +1,17 @@
 import {
-  CheckCircle2,
+  ArrowLeft,
+  ChevronDown,
   FileText,
   HandCoins,
   MessageSquareText,
-  Pencil,
-  Plus,
-  Printer,
+  PackagePlus,
   ReceiptText,
   ShoppingBasket,
   Tag,
+  Trash2,
   X,
 } from 'lucide-react';
-import { useState, type FormEvent, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   Button,
   cx,
@@ -23,48 +23,28 @@ import {
   useErrorText,
   useErrorToast,
   useFeedback,
-  WhatsAppIcon,
 } from '@/ui';
+import { Kbd, PosLayout } from '../pos/PosLayout';
+import { ProductCatalog } from '../pos/ProductCatalog';
 import { CustomerPicker, type PickedCustomer } from './CustomerPicker';
 import { DueDateField } from './DueDateField';
 import { addDaysIso, todayIso } from './dueLabel';
 import { MoneyInput } from './MoneyInput';
 import { NewCustomerFields, type NewCustomer } from './NewCustomerFields';
-import { PaymentMethodPicker } from './PaymentMethods';
-import { ProductPicker } from './ProductPicker';
-import { isWeighed, roundQuantity, WEIGHED_PRESETS } from './quantity';
-import { QuantityStepper } from './QuantityStepper';
-import { type CashGiven, useSaleTicket } from './saleTicket';
+import { PaymentMethodMark } from './PaymentMethods';
+import { roundQuantity } from './quantity';
+import type { CashGiven } from './saleTicket';
+import { ChangeCalculator, FreeLineForm, LineRow, SaleDone } from './SaleLines';
+import { money, round2, stepFor, type Line } from './saleMath';
 import { useCreateSale, useSaveCustomer, type SaleInput } from '../../hooks/queries';
 import { useModules } from '../../hooks/useModules';
 import { useI18n } from '../../i18n/I18nProvider';
-import type { PaymentMethod, ProductOption, ProductUnit, Sale, SaleDocType } from '../../lib/types';
-
-/** A line of the sale: a catalog product, or a free line (a service, something not in the catalog). */
-interface Line {
-  key: string;
-  product: ProductOption | null;
-  description: string;
-  quantity: number;
-  /** Price charged for one; starts at the product's price and can be changed for this sale. */
-  price: number;
-}
+import type { PaymentMethod, ProductOption, Sale, SaleDocType } from '../../lib/types';
 
 const DOC_TYPES: SaleDocType[] = ['sale_note', 'receipt', 'invoice'];
-/** Bills a customer usually pays with (PEN), for the change. */
-const BILLS = [10, 20, 50, 100, 200];
-
-const round2 = (value: number) => Math.round(value * 100) / 100;
-const money = (text: string) => {
-  const value = Number(text.replace(',', '.'));
-  return Number.isFinite(value) && value > 0 ? round2(value) : 0;
-};
-
-/**
- * Whole units step by 1; kilos and liters by a quarter, meters by a half. Any amount can still be
- * typed (0.3 kg = 300 g).
- */
-const stepFor = (unit: ProductUnit) => (isWeighed(unit) ? 0.25 : unit === 'meter' ? 0.5 : 1);
+/** How the customer pays: the four methods of a cash sale, or on credit ("Fiado"). */
+type PayOption = PaymentMethod | 'credit';
+const PAY_OPTIONS: PaymentMethod[] = ['cash', 'yape', 'plin', 'bank_transfer'];
 
 export function SaleFormModal({
   open,
@@ -76,20 +56,44 @@ export function SaleFormModal({
   customer?: PickedCustomer;
 }) {
   const { t } = useI18n();
+  const { confirm } = useFeedback();
   // A new key starts an empty sale ("Nueva venta" after saving one).
   const [round, setRound] = useState(0);
+  // Whether the ticket has products that would be lost by closing.
+  const dirty = useRef(false);
+  const close = async () => {
+    if (dirty.current) {
+      const leave = await confirm({
+        title: t('sales.pos.leaveTitle'),
+        message: t('sales.pos.leaveMessage'),
+        confirmLabel: t('sales.pos.leave'),
+        cancelLabel: t('common.cancel'),
+      });
+      if (!leave) return;
+    }
+    dirty.current = false;
+    onClose();
+  };
   return (
     <Modal
       open={open}
-      size="lg"
+      size="screen"
+      flush
       title={t('sales.form.title')}
-      onClose={onClose}
+      description={<span className="hidden lg:inline">{t('sales.pos.keys')}</span>}
+      onClose={() => void close()}
       closeLabel={t('common.close')}
     >
       {open && (
-        <SaleForm
+        <SalePos
           key={round}
-          onClose={onClose}
+          onClose={() => {
+            dirty.current = false;
+            onClose();
+          }}
+          onDirty={(value) => {
+            dirty.current = value;
+          }}
           onAnother={() => setRound((value) => value + 1)}
           preset={customer}
         />
@@ -99,53 +103,60 @@ export function SaleFormModal({
 }
 
 /**
- * A sale like at the counter, for any kind of business: add products (search or scan) or a free
- * line (a service, something not in the catalog), adjust quantities and prices, an optional
- * discount, then "Al contado" (how they paid, with the change) or "Fiado" (who, when, and an
- * optional down payment). Receipt number and a note are optional. Stock never blocks a sale: it
- * only warns. Once saved: print the ticket, send it by WhatsApp or start another sale.
+ * A point of sale for any kind of business. Left: the catalog (best sellers as big tiles, search
+ * or scan). Right: the ticket — lines with − / + and prices that can be changed for this sale, a
+ * free line for services or things not in the catalog, an optional discount and a big "Cobrar".
+ * Charging asks how they pay in one row (cash with the change, Yape, Plin, transfer, or on
+ * credit with an optional down payment), with the customer, receipt number and a note at hand.
+ * Once saved: the change, the ticket (print or WhatsApp) and "Nueva venta". Keyboard: F2 search,
+ * F4 charge / confirm, Esc back. Stock never blocks a sale: it only warns.
  */
-function SaleForm({
+function SalePos({
   onClose,
+  onDirty,
   onAnother,
   preset,
 }: {
   onClose: () => void;
+  onDirty: (dirty: boolean) => void;
   onAnother: () => void;
   preset?: PickedCustomer;
 }) {
   const { t, fmt } = useI18n();
   const errors = useErrorText();
-  const { toast } = useFeedback();
+  const { toast, confirm } = useFeedback();
   const modules = useModules();
   const create = useCreateSale();
   const saveCustomer = useSaveCustomer();
   const today = todayIso();
+  const searchRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const [lines, setLines] = useState<Line[]>([]);
   const [freeCount, setFreeCount] = useState(0);
+  const [freeOpen, setFreeOpen] = useState(false);
+  const [step, setStep] = useState<'ticket' | 'checkout'>('ticket');
+  // Phones: the ticket is shown over the catalog.
+  const [panelOpen, setPanelOpen] = useState(false);
   // Selling on credit creates a debt in Cobranza: without that module every sale is cash.
-  const [paymentType, setPaymentType] = useState<'cash' | 'credit'>(
-    preset && modules.collections ? 'credit' : 'cash',
-  );
-  const [method, setMethod] = useState<PaymentMethod>('cash');
+  const [pay, setPay] = useState<PayOption>(preset && modules.collections ? 'credit' : 'cash');
   const [customer, setCustomer] = useState<PickedCustomer | null>(preset ?? null);
   const [newCustomer, setNewCustomer] = useState<NewCustomer | null>(null);
   const [dueDate, setDueDate] = useState(addDaysIso(today, 7));
-  const [showDoc, setShowDoc] = useState(false);
   const [docType, setDocType] = useState<SaleDocType>('sale_note');
   const [docNumber, setDocNumber] = useState('');
+  const [notes, setNotes] = useState('');
+  const [moreOpen, setMoreOpen] = useState(false);
   const [showDiscount, setShowDiscount] = useState(false);
   const [discountMode, setDiscountMode] = useState<'amount' | 'percent'>('amount');
   const [discountText, setDiscountText] = useState('');
   const [receivedText, setReceivedText] = useState('');
-  const [showDown, setShowDown] = useState(false);
   const [downText, setDownText] = useState('');
   const [downMethod, setDownMethod] = useState<PaymentMethod>('cash');
-  const [showNotes, setShowNotes] = useState(false);
-  const [notes, setNotes] = useState('');
   const [done, setDone] = useState<{ sale: Sale; cash: CashGiven | null } | null>(null);
 
+  const credit = pay === 'credit';
+  const method: PaymentMethod = credit ? 'cash' : pay;
   // Money, as the API computes it: each line rounded, then the discount.
   const subtotal = round2(lines.reduce((sum, line) => sum + round2(line.quantity * line.price), 0));
   const discountValue = showDiscount ? money(discountText) : 0;
@@ -155,10 +166,15 @@ function SaleForm({
       : discountValue;
   const discountTooHigh = discount > subtotal;
   const total = Math.max(0, round2(subtotal - discount));
-  const received = paymentType === 'cash' && method === 'cash' ? money(receivedText) : 0;
-  const down = paymentType === 'credit' && showDown ? money(downText) : 0;
+  const received = pay === 'cash' ? money(receivedText) : 0;
+  const down = credit ? money(downText) : 0;
   const downTooHigh = down > 0 && down >= total;
   const count = lines.reduce((sum, line) => sum + line.quantity, 0);
+  const inCart = new Map(
+    lines.flatMap((line) => (line.product ? [[line.product.id, line.quantity] as const] : [])),
+  );
+
+  useEffect(() => onDirty(lines.length > 0 && done === null), [lines.length, done, onDirty]);
 
   const add = (product: ProductOption) =>
     setLines((current) => {
@@ -181,12 +197,62 @@ function SaleForm({
       { key: `free-${freeCount}`, product: null, description, quantity: 1, price },
     ]);
     setFreeCount((value) => value + 1);
+    setFreeOpen(false);
   };
   const change = (key: string, changes: Partial<Line>) =>
     setLines((current) =>
       current.map((line) => (line.key === key ? { ...line, ...changes } : line)),
     );
   const remove = (key: string) => setLines((current) => current.filter((line) => line.key !== key));
+  const clear = async () => {
+    const ok = await confirm({
+      title: t('sales.pos.clearTitle'),
+      message: t('sales.pos.clearMessage'),
+      confirmLabel: t('sales.pos.clear'),
+      cancelLabel: t('common.cancel'),
+    });
+    if (ok) {
+      setLines([]);
+      setStep('ticket');
+      setPanelOpen(false);
+    }
+  };
+
+  const goCheckout = () => {
+    if (lines.length === 0) return;
+    if (discountTooHigh) {
+      toast.warning(t('sales.form.discountTooHigh'));
+      return;
+    }
+    setStep('checkout');
+    setPanelOpen(true);
+  };
+  const back = () => {
+    setStep('ticket');
+    window.setTimeout(() => searchRef.current?.focus(), 0);
+  };
+
+  // Keyboard, like a till: F2 search, F4 charge (then confirm), Esc back from charging.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (done) return;
+      if (event.key === 'F2') {
+        event.preventDefault();
+        setStep('ticket');
+        searchRef.current?.focus();
+      } else if (event.key === 'F4') {
+        event.preventDefault();
+        if (step === 'ticket') goCheckout();
+        else formRef.current?.requestSubmit();
+      } else if (event.key === 'Escape' && step === 'checkout') {
+        event.preventDefault();
+        event.stopPropagation();
+        back();
+      }
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  });
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -201,10 +267,6 @@ function SaleForm({
       toast.warning(t('sales.form.empty'));
       return;
     }
-    if (discountTooHigh) {
-      toast.warning(t('sales.form.discountTooHigh'));
-      return;
-    }
     if (downTooHigh) {
       toast.warning(t('sales.form.downTooHigh'));
       return;
@@ -216,18 +278,18 @@ function SaleForm({
       setCustomer({ id: created.id, name: created.name, phone: created.phone, outstanding: 0 });
       setNewCustomer(null);
     }
-    if (paymentType === 'credit' && customerId === null) {
+    if (credit && customerId === null) {
       toast.warning(t('receivables.form.pickCustomer'));
       return;
     }
     const result = await create.mutateAsync({
-      paymentType,
+      paymentType: credit ? 'credit' : 'cash',
       ...(customerId !== null && { customerId }),
-      ...(paymentType === 'cash' ? { method } : { dueDate }),
+      ...(credit ? { dueDate } : { method }),
       ...(down > 0 && { downPayment: down, downPaymentMethod: downMethod }),
       ...(discount > 0 && { discount }),
-      ...(showDoc && { docType, docNumber: docNumber.trim() || null }),
-      ...(showNotes && notes.trim() !== '' && { notes: notes.trim() }),
+      ...(docNumber.trim() !== '' && { docType, docNumber: docNumber.trim() }),
+      ...(notes.trim() !== '' && { notes: notes.trim() }),
       items,
     });
     if (modules.inventory && result.lowStock.length > 0) {
@@ -253,17 +315,43 @@ function SaleForm({
     return <SaleDone sale={done.sale} cash={done.cash} onAnother={onAnother} onClose={onClose} />;
   }
 
-  return (
-    <form onSubmit={(event) => void submit(event).catch(() => null)} className="space-y-5">
-      <div className="space-y-3">
-        <ProductPicker onPick={add} showStock={modules.inventory} autoFocus />
-        {lines.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-line-strong px-4 py-8 text-center text-sm text-muted">
-            <ShoppingBasket className="h-6 w-6 text-subtle" />
-            {t('sales.form.emptyCart')}
+  const ticket = (
+    <>
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-line px-4 py-3">
+        <div className="flex items-center gap-2">
+          <IconButton
+            size="sm"
+            label={t('sales.pos.backToCatalog')}
+            onClick={() => setPanelOpen(false)}
+            className="lg:hidden"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </IconButton>
+          <h3 className="font-semibold">{t('sales.pos.ticket')}</h3>
+          {lines.length > 0 && (
+            <span className="rounded-full bg-surface-3 px-2 py-0.5 text-xs font-semibold text-muted tabular-nums">
+              {fmt.number(count)}
+            </span>
+          )}
+        </div>
+        {lines.length > 0 && (
+          <TextButton size="sm" onClick={() => void clear()}>
+            <Trash2 className="h-4 w-4" />
+            {t('sales.pos.clear')}
+          </TextButton>
+        )}
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {freeOpen && <FreeLineForm onAdd={addFree} onCancel={() => setFreeOpen(false)} />}
+        {lines.length === 0 && !freeOpen ? (
+          <div className="flex h-full flex-col items-center justify-center gap-2 px-6 py-10 text-center text-sm text-muted">
+            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-2">
+              <ShoppingBasket className="h-7 w-7 text-subtle" />
+            </span>
+            {t('sales.pos.emptyTicket')}
           </div>
         ) : (
-          <ul className="divide-y divide-line rounded-xl border border-line">
+          <ul className="divide-y divide-line">
             {lines.map((line) => (
               <LineRow
                 key={line.key}
@@ -275,624 +363,340 @@ function SaleForm({
             ))}
           </ul>
         )}
-        <FreeLineForm onAdd={addFree} />
-
-        <div className="space-y-1.5 rounded-xl bg-surface-2 px-4 py-3">
-          {showDiscount && (
-            <>
-              <p className="flex items-baseline justify-between text-sm text-muted">
-                <span>{t('sales.form.subtotal')}</span>
-                <span className="tabular-nums">{fmt.money(subtotal)}</span>
+      </div>
+      <div className="shrink-0 space-y-2 border-t border-line bg-surface-2/60 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        {showDiscount ? (
+          <div className="space-y-1.5">
+            <p className="flex justify-between text-sm text-muted">
+              <span>{t('sales.form.subtotal')}</span>
+              <span className="tabular-nums">{fmt.money(subtotal)}</span>
+            </p>
+            <div className="flex items-center gap-2 text-sm">
+              <Tag className="h-4 w-4 shrink-0 text-primary" />
+              <SegmentedControl
+                label={t('sales.form.discount')}
+                value={discountMode}
+                onChange={setDiscountMode}
+                options={[
+                  { value: 'amount', label: 'S/' },
+                  { value: 'percent', label: '%' },
+                ]}
+              />
+              <input
+                aria-label={t('sales.form.discount')}
+                className={cx(
+                  'input h-9 w-20 text-right tabular-nums',
+                  discountTooHigh && 'border-danger',
+                )}
+                inputMode="decimal"
+                autoFocus
+                placeholder={discountMode === 'percent' ? '10' : '0.00'}
+                value={discountText}
+                onChange={(event) => setDiscountText(event.target.value)}
+              />
+              <span className="min-w-0 flex-1 text-right font-medium text-success-ink tabular-nums">
+                −{fmt.money(discount)}
+              </span>
+              <IconButton
+                size="sm"
+                label={t('sales.form.removeDiscount')}
+                onClick={() => {
+                  setShowDiscount(false);
+                  setDiscountText('');
+                }}
+              >
+                <X className="h-4 w-4" />
+              </IconButton>
+            </div>
+            {discountTooHigh && (
+              <p className="text-right text-xs text-danger-ink">
+                {t('sales.form.discountTooHigh')}
               </p>
-              <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                <span className="flex items-center gap-2">
-                  <Tag className="h-4 w-4 text-primary" />
-                  {t('sales.form.discount')}
-                  <SegmentedControl
-                    label={t('sales.form.discount')}
-                    value={discountMode}
-                    onChange={setDiscountMode}
-                    options={[
-                      { value: 'amount', label: 'S/' },
-                      { value: 'percent', label: '%' },
-                    ]}
-                  />
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <input
-                    aria-label={t('sales.form.discount')}
-                    className={cx(
-                      'input h-9 w-24 text-right tabular-nums',
-                      discountTooHigh && 'border-danger',
-                    )}
-                    inputMode="decimal"
-                    autoFocus
-                    placeholder={discountMode === 'percent' ? '10' : '0.00'}
-                    value={discountText}
-                    onChange={(event) => setDiscountText(event.target.value)}
-                  />
-                  <span className="w-24 text-right font-medium text-success-ink tabular-nums">
-                    −{fmt.money(discount)}
-                  </span>
-                  <IconButton
-                    size="sm"
-                    label={t('sales.form.removeDiscount')}
-                    onClick={() => {
-                      setShowDiscount(false);
-                      setDiscountText('');
-                    }}
-                  >
-                    <X className="h-4 w-4" />
-                  </IconButton>
-                </span>
-              </div>
-              {discountTooHigh && (
-                <p className="text-right text-xs text-danger-ink">
-                  {t('sales.form.discountTooHigh')}
-                </p>
-              )}
-            </>
-          )}
-          <p className="flex items-baseline justify-between">
-            <span className="text-sm text-muted">
-              {t('sales.form.total', { count: fmt.number(count) })}
-            </span>
-            <span className="font-display text-3xl font-semibold tabular-nums">
-              {fmt.money(total)}
-            </span>
-          </p>
-          {!showDiscount && lines.length > 0 && (
+            )}
+          </div>
+        ) : (
+          lines.length > 0 && (
             <TextButton size="sm" onClick={() => setShowDiscount(true)}>
               <Tag className="h-4 w-4" />
               {t('sales.form.addDiscount')}
             </TextButton>
-          )}
-        </div>
-      </div>
-
-      <div className={cx(!modules.collections && 'hidden')}>
-        <p className="label">{t('sales.form.howPays')}</p>
-        <div
-          className="grid grid-cols-2 gap-2"
-          role="radiogroup"
-          aria-label={t('sales.form.howPays')}
-        >
-          {(['cash', 'credit'] as const).map((type) => (
-            <button
-              key={type}
-              type="button"
-              role="radio"
-              aria-checked={paymentType === type}
-              onClick={() => setPaymentType(type)}
-              className={cx(
-                'flex items-center gap-2.5 rounded-xl border px-3 py-3 text-left transition',
-                paymentType === type
-                  ? 'border-primary bg-primary-soft ring-2 ring-primary/25'
-                  : 'border-line bg-surface hover:bg-surface-2',
-              )}
-            >
-              <span
-                className={cx(
-                  'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg [&>svg]:h-5 [&>svg]:w-5',
-                  paymentType === type ? 'bg-primary text-on-primary' : 'bg-surface-3 text-muted',
-                )}
-              >
-                {type === 'cash' ? <HandCoins /> : <ReceiptText />}
-              </span>
-              <span className="min-w-0">
-                <span className="block text-sm font-semibold">{t(`sales.types.${type}`)}</span>
-                <span className="block text-xs text-muted">{t(`sales.types.${type}Hint`)}</span>
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Always there: optional for a cash sale (who bought, for the history), required on credit. */}
-      <Field
-        label={t(paymentType === 'cash' ? 'sales.form.customer' : 'receivables.form.customer')}
-        {...(paymentType === 'cash' && { optionalLabel: t('common.optional') })}
-        error={errors.field(create.error, 'customerId')}
-      >
-        {(id) =>
-          newCustomer ? (
-            <NewCustomerFields
-              id={id}
-              value={newCustomer}
-              onChange={setNewCustomer}
-              onCancel={() => setNewCustomer(null)}
-            />
-          ) : (
-            <CustomerPicker
-              id={id}
-              value={customer}
-              disabled={Boolean(preset)}
-              onChange={setCustomer}
-              onCreate={(name) => setNewCustomer({ name, phone: '' })}
-            />
           )
-        }
-      </Field>
+        )}
+        <p className="flex items-baseline justify-between">
+          <span className="text-sm font-medium text-muted">{t('sales.columns.total')}</span>
+          <span className="font-display text-4xl font-semibold tabular-nums">
+            {fmt.money(total)}
+          </span>
+        </p>
+        <button
+          type="button"
+          onClick={goCheckout}
+          disabled={lines.length === 0 || discountTooHigh}
+          className="flex h-14 w-full items-center justify-center gap-3 rounded-2xl bg-primary text-lg font-semibold text-on-primary shadow-pop transition hover:brightness-110 active:scale-[0.99] disabled:bg-surface-3 disabled:text-muted disabled:shadow-none"
+        >
+          <HandCoins className="h-5 w-5" />
+          {t('sales.pos.charge', { amount: fmt.money(total) })}
+          <Kbd>F4</Kbd>
+        </button>
+      </div>
+    </>
+  );
 
-      {paymentType === 'cash' ? (
-        <div className="space-y-3">
-          <div>
-            <p className="label">{t('payment.method')}</p>
-            <PaymentMethodPicker label={t('payment.method')} value={method} onChange={setMethod} />
-          </div>
-          {method === 'cash' && total > 0 && (
-            <ChangeCalculator
-              total={total}
-              text={receivedText}
-              onChange={setReceivedText}
-              received={received}
-            />
-          )}
+  const payOptions: PayOption[] = modules.collections ? [...PAY_OPTIONS, 'credit'] : PAY_OPTIONS;
+  const checkout = (
+    <form
+      ref={formRef}
+      onSubmit={(event) => void submit(event).catch(() => null)}
+      className="flex h-full min-h-0 flex-col"
+    >
+      <div className="flex shrink-0 items-center gap-2 border-b border-line px-4 py-3">
+        <IconButton size="sm" label={t('sales.pos.back')} onClick={back}>
+          <ArrowLeft className="h-4 w-4" />
+        </IconButton>
+        <h3 className="font-semibold">{t('sales.pos.checkout')}</h3>
+      </div>
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
+        <div className="rounded-2xl bg-surface-2 px-4 py-3 text-center">
+          <p className="text-sm text-muted">
+            {t('sales.form.total', { count: fmt.number(count) })}
+          </p>
+          <p className="font-display text-4xl font-semibold tabular-nums">{fmt.money(total)}</p>
         </div>
-      ) : (
-        <div className="space-y-3">
-          <Field
-            label={t('receivables.form.dueDate')}
-            error={errors.field(create.error, 'dueDate')}
+
+        <div>
+          <p className="label">{t('sales.form.howPays')}</p>
+          <div
+            role="radiogroup"
+            aria-label={t('sales.form.howPays')}
+            className="grid grid-cols-3 gap-2"
           >
-            {(id) => <DueDateField id={id} from={today} value={dueDate} onChange={setDueDate} />}
-          </Field>
-          {showDown ? (
-            <div className="space-y-3 rounded-xl border border-line p-3">
-              <div className="flex flex-wrap items-end gap-3">
-                <div className="w-40">
-                  <Field label={t('sales.form.downPayment')}>
-                    {(id) => (
-                      <MoneyInput id={id} autoFocus value={downText} onChange={setDownText} />
-                    )}
-                  </Field>
-                </div>
-                <p
+            {payOptions.map((option) => {
+              const active = pay === option;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setPay(option)}
                   className={cx(
-                    'pb-2.5 text-sm font-medium tabular-nums',
-                    downTooHigh ? 'text-danger-ink' : 'text-ink',
+                    'flex flex-col items-center gap-1.5 rounded-xl border px-2 py-2.5 text-xs font-semibold transition active:scale-[0.97]',
+                    active
+                      ? 'border-primary bg-primary-soft text-primary-ink ring-2 ring-primary/25'
+                      : 'border-line text-muted hover:bg-surface-2 hover:text-ink',
                   )}
                 >
-                  {downTooHigh
-                    ? t('sales.form.downTooHigh')
-                    : t('sales.form.owes', { amount: fmt.money(Math.max(0, total - down)) })}
-                </p>
+                  {option === 'credit' ? (
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning-soft text-warning-ink">
+                      <ReceiptText className="h-[18px] w-[18px]" />
+                    </span>
+                  ) : (
+                    <PaymentMethodMark method={option} />
+                  )}
+                  {option === 'credit' ? t('sales.types.credit') : t(`methods.${option}`)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {pay === 'cash' && total > 0 && (
+          <ChangeCalculator
+            total={total}
+            text={receivedText}
+            onChange={setReceivedText}
+            received={received}
+          />
+        )}
+
+        <Field
+          label={t(credit ? 'receivables.form.customer' : 'sales.form.customer')}
+          {...(!credit && { optionalLabel: t('common.optional') })}
+          error={errors.field(create.error, 'customerId')}
+        >
+          {(id) =>
+            newCustomer ? (
+              <NewCustomerFields
+                id={id}
+                value={newCustomer}
+                onChange={setNewCustomer}
+                onCancel={() => setNewCustomer(null)}
+              />
+            ) : (
+              <CustomerPicker
+                id={id}
+                value={customer}
+                disabled={Boolean(preset)}
+                onChange={setCustomer}
+                onCreate={(name) => setNewCustomer({ name, phone: '' })}
+              />
+            )
+          }
+        </Field>
+
+        {credit && (
+          <div className="space-y-3 rounded-2xl border border-line p-3">
+            <Field
+              label={t('receivables.form.dueDate')}
+              error={errors.field(create.error, 'dueDate')}
+            >
+              {(id) => <DueDateField id={id} from={today} value={dueDate} onChange={setDueDate} />}
+            </Field>
+            <div className="flex items-end gap-3">
+              <div className="w-36">
+                <Field label={t('sales.form.downPayment')} optionalLabel={t('common.optional')}>
+                  {(id) => <MoneyInput id={id} value={downText} onChange={setDownText} />}
+                </Field>
               </div>
+              <p
+                className={cx(
+                  'min-w-0 flex-1 pb-2.5 text-right text-sm font-semibold tabular-nums',
+                  downTooHigh ? 'text-danger-ink' : 'text-ink',
+                )}
+              >
+                {downTooHigh
+                  ? t('sales.form.downTooHigh')
+                  : t('sales.form.owes', { amount: fmt.money(Math.max(0, total - down)) })}
+              </p>
+            </div>
+            {down > 0 && (
               <div>
                 <p className="label">{t('sales.form.downPaymentMethod')}</p>
-                <PaymentMethodPicker
-                  label={t('sales.form.downPaymentMethod')}
-                  value={downMethod}
-                  onChange={setDownMethod}
-                />
+                <div className="grid grid-cols-4 gap-1.5">
+                  {PAY_OPTIONS.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      aria-pressed={downMethod === option}
+                      onClick={() => setDownMethod(option)}
+                      className={cx(
+                        'flex flex-col items-center gap-1 rounded-xl border px-1 py-2 text-[11px] font-semibold transition',
+                        downMethod === option
+                          ? 'border-primary bg-primary-soft text-primary-ink'
+                          : 'border-line text-muted hover:bg-surface-2',
+                      )}
+                    >
+                      <PaymentMethodMark method={option} size="sm" />
+                      {t(`methods.${option}`)}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          ) : (
-            <TextButton size="sm" onClick={() => setShowDown(true)}>
-              <HandCoins className="h-4 w-4" />
-              {t('sales.form.addDownPayment')}
-            </TextButton>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        )}
 
-      {(showDoc || showNotes) && (
-        <div className="space-y-3">
-          {showDoc && (
-            <div className="grid gap-3 sm:grid-cols-[1fr_1.2fr]">
-              <Field label={t('sales.form.docType')}>
+        <div className="rounded-2xl border border-line">
+          <button
+            type="button"
+            aria-expanded={moreOpen}
+            onClick={() => setMoreOpen((value) => !value)}
+            className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-sm font-medium"
+          >
+            <span className="flex items-center gap-2 text-muted">
+              <FileText className="h-4 w-4" />
+              <MessageSquareText className="h-4 w-4" />
+              {t('sales.pos.more')}
+            </span>
+            <ChevronDown
+              className={cx('h-4 w-4 text-subtle transition', moreOpen && 'rotate-180')}
+            />
+          </button>
+          {moreOpen && (
+            <div className="space-y-3 border-t border-line px-3 py-3">
+              <div className="grid grid-cols-[1fr_1.2fr] gap-2">
+                <Field label={t('sales.form.docType')}>
+                  {(id) => (
+                    <select
+                      id={id}
+                      className="input"
+                      value={docType}
+                      onChange={(event) => setDocType(event.target.value as SaleDocType)}
+                    >
+                      {DOC_TYPES.map((type) => (
+                        <option key={type} value={type}>
+                          {t(`sales.docTypes.${type}`)}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </Field>
+                <Field label={t('sales.form.docNumber')} optionalLabel={t('common.optional')}>
+                  {(id) => (
+                    <input
+                      id={id}
+                      className="input"
+                      maxLength={40}
+                      placeholder="B001-000123"
+                      value={docNumber}
+                      onChange={(event) => setDocNumber(event.target.value)}
+                    />
+                  )}
+                </Field>
+              </div>
+              <Field label={t('sales.form.notes')} optionalLabel={t('common.optional')}>
                 {(id) => (
-                  <select
+                  <textarea
                     id={id}
-                    className="input"
-                    value={docType}
-                    onChange={(event) => setDocType(event.target.value as SaleDocType)}
-                  >
-                    {DOC_TYPES.map((type) => (
-                      <option key={type} value={type}>
-                        {t(`sales.docTypes.${type}`)}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </Field>
-              <Field label={t('sales.form.docNumber')} optionalLabel={t('common.optional')}>
-                {(id) => (
-                  <input
-                    id={id}
-                    className="input"
-                    maxLength={40}
-                    placeholder="B001-000123"
-                    value={docNumber}
-                    onChange={(event) => setDocNumber(event.target.value)}
+                    className="input min-h-16"
+                    maxLength={500}
+                    placeholder={t('sales.form.notesPlaceholder')}
+                    value={notes}
+                    onChange={(event) => setNotes(event.target.value)}
                   />
                 )}
               </Field>
             </div>
           )}
-          {showNotes && (
-            <Field label={t('sales.form.notes')} optionalLabel={t('common.optional')}>
-              {(id) => (
-                <textarea
-                  id={id}
-                  className="input min-h-20"
-                  maxLength={500}
-                  autoFocus
-                  placeholder={t('sales.form.notesPlaceholder')}
-                  value={notes}
-                  onChange={(event) => setNotes(event.target.value)}
-                />
-              )}
-            </Field>
-          )}
         </div>
-      )}
-      {(!showDoc || !showNotes) && (
-        <div className="flex flex-wrap gap-x-5 gap-y-2">
-          {!showDoc && (
-            <TextButton size="sm" onClick={() => setShowDoc(true)}>
-              <FileText className="h-4 w-4" />
-              {t('sales.form.addDoc')}
-            </TextButton>
-          )}
-          {!showNotes && (
-            <TextButton size="sm" onClick={() => setShowNotes(true)}>
-              <MessageSquareText className="h-4 w-4" />
-              {t('sales.form.addNotes')}
-            </TextButton>
-          )}
-        </div>
-      )}
-
-      <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
-        <Button variant="secondary" onClick={onClose}>
-          {t('common.cancel')}
-        </Button>
+      </div>
+      <div className="shrink-0 border-t border-line bg-surface-2/60 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <Button
           type="submit"
+          className="h-14 w-full text-lg"
           loading={create.isPending || saveCustomer.isPending}
-          disabled={lines.length === 0 || discountTooHigh || downTooHigh}
+          disabled={downTooHigh}
         >
-          {t(paymentType === 'cash' ? 'sales.form.submitCash' : 'sales.form.submitCredit', {
-            amount: fmt.money(total),
+          {t(credit ? 'sales.pos.confirmCredit' : 'sales.pos.confirm', {
+            amount: fmt.money(credit ? total - down : total),
           })}
+          <Kbd>F4</Kbd>
         </Button>
       </div>
     </form>
   );
-}
-
-/** Enter commits a small inline field instead of submitting the whole sale. */
-const onEnter = (action: () => void) => (event: KeyboardEvent) => {
-  if (event.key !== 'Enter') return;
-  event.preventDefault();
-  action();
-};
-
-/**
- * One line: name, price (tap it to charge another price this time), quantity and subtotal.
- * Kilos and liters get ¼ · ½ · 1 buttons, grams under a kilo, and "Por monto" to sell by amount
- * of money ("dame S/ 2 de arroz").
- */
-function LineRow({
-  line,
-  showStock,
-  onChange,
-  onRemove,
-}: {
-  line: Line;
-  showStock: boolean;
-  onChange: (changes: Partial<Line>) => void;
-  onRemove: () => void;
-}) {
-  const { t, fmt } = useI18n();
-  const [priceText, setPriceText] = useState<string | null>(null);
-  const [amountText, setAmountText] = useState<string | null>(null);
-  const product = line.product;
-  const unit = product?.unit ?? 'unit';
-  const weighed = isWeighed(unit);
-  const short =
-    showStock && product !== null && product.trackStock && line.quantity > product.stock;
-  /** Less than a kilo or liter in grams or milliliters: 0.3 kg → "300 g". */
-  const small = (quantity: number) =>
-    t(unit === 'liter' ? 'sales.form.milliliters' : 'sales.form.grams', {
-      count: fmt.number(Math.round(quantity * 1000)),
-    });
-  const commitPrice = () => {
-    if (priceText !== null) {
-      const value = Number(priceText.replace(',', '.'));
-      if (Number.isFinite(value) && value >= 0) onChange({ price: round2(value) });
-    }
-    setPriceText(null);
-  };
 
   return (
-    <li className="space-y-2 px-3 py-2.5">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <div className="min-w-0 flex-1 basis-40">
-          <p className="truncate text-sm font-semibold">
-            {line.description}
-            {product === null && (
-              <span className="ml-1.5 text-xs font-normal text-muted">
-                {t('sales.form.freeBadge')}
-              </span>
-            )}
-          </p>
-          <p className="flex flex-wrap items-center gap-x-1 text-xs text-muted">
-            {priceText === null ? (
-              <button
-                type="button"
-                onClick={() => setPriceText(String(line.price))}
-                title={t('sales.form.editPrice')}
-                className="inline-flex items-center gap-1 rounded font-medium text-ink hover:text-primary-ink"
-              >
-                {fmt.money(line.price)}
-                <Pencil className="h-3 w-3 text-subtle" />
-              </button>
-            ) : (
-              <input
-                aria-label={t('sales.form.editPrice')}
-                className="input h-7 w-24 text-xs tabular-nums"
-                inputMode="decimal"
-                autoFocus
-                value={priceText}
-                onChange={(event) => setPriceText(event.target.value)}
-                onBlur={commitPrice}
-                onKeyDown={onEnter(commitPrice)}
-              />
-            )}
-            {product !== null && line.price !== product.price && (
-              <span className="line-through">{fmt.money(product.price)}</span>
-            )}
-            {product !== null && <span>· {t(`products.units.${unit}`)}</span>}
-            {weighed && line.quantity > 0 && line.quantity < 1 && (
-              <span className="font-medium text-ink">· {small(line.quantity)}</span>
-            )}
-            {short && (
-              <span className="font-medium text-warning-ink">
-                {product.stock > 0
-                  ? t('sales.form.onlyLeft', { count: fmt.number(product.stock) })
-                  : t('sales.form.noStock')}
-              </span>
-            )}
-          </p>
-        </div>
-        <QuantityStepper
-          value={line.quantity}
-          step={stepFor(unit)}
-          onChange={(quantity) => onChange({ quantity: Math.max(0, roundQuantity(quantity)) })}
-          onRemove={onRemove}
+    <PosLayout
+      panelOpen={panelOpen}
+      onOpenPanel={() => setPanelOpen(true)}
+      count={count}
+      total={total}
+      barLabel={t('sales.pos.viewTicket')}
+      catalog={
+        <ProductCatalog
+          onPick={add}
+          amountOf={(product) => product.price}
+          showStock={modules.inventory}
+          inCart={inCart}
+          searchRef={searchRef}
+          extra={
+            <button
+              type="button"
+              onClick={() => {
+                setFreeOpen(true);
+                setStep('ticket');
+                setPanelOpen(true);
+              }}
+              className="flex h-full min-h-32 w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-line-strong p-3 text-center text-sm font-semibold text-muted transition hover:border-primary/50 hover:text-primary-ink"
+            >
+              <PackagePlus className="h-6 w-6" />
+              {t('sales.form.addFree')}
+            </button>
+          }
         />
-        <span className="w-24 text-right font-semibold tabular-nums">
-          {fmt.money(round2(line.quantity * line.price))}
-        </span>
-        <IconButton
-          size="sm"
-          label={t('sales.form.remove', { name: line.description })}
-          onClick={onRemove}
-          className="hover:text-danger-ink"
-        >
-          <X className="h-4 w-4" />
-        </IconButton>
-      </div>
-      {weighed && (
-        // Quick amounts: ¼, ½ and 1 kilo (or liter), or sell by an amount of money.
-        <div className="flex flex-wrap items-center gap-1">
-          {WEIGHED_PRESETS.map((amount) => (
-            <button
-              key={amount}
-              type="button"
-              aria-pressed={line.quantity === amount}
-              onClick={() => onChange({ quantity: amount })}
-              className={cx(
-                'h-8 rounded-lg border px-2.5 text-xs font-semibold tabular-nums transition',
-                line.quantity === amount
-                  ? 'border-primary bg-primary-soft text-primary-ink'
-                  : 'border-line text-muted hover:bg-surface-2 hover:text-ink',
-              )}
-            >
-              {amount < 1 ? small(amount) : `1 ${t(`products.unitsShort.${unit}`)}`}
-            </button>
-          ))}
-          {amountText === null ? (
-            <button
-              type="button"
-              onClick={() => setAmountText('')}
-              className="h-8 rounded-lg border border-line px-2.5 text-xs font-semibold text-muted transition hover:bg-surface-2 hover:text-ink"
-            >
-              {t('sales.form.byAmount')}
-            </button>
-          ) : (
-            <span className="flex items-center gap-1.5 text-xs text-muted">
-              <MoneyInput
-                className="w-28"
-                autoFocus
-                placeholder={t('sales.form.byAmountPlaceholder')}
-                value={amountText}
-                onChange={(text) => {
-                  setAmountText(text);
-                  const amount = money(text);
-                  if (amount > 0 && line.price > 0) {
-                    onChange({ quantity: roundQuantity(amount / line.price) });
-                  }
-                }}
-              />
-              <IconButton size="sm" label={t('common.close')} onClick={() => setAmountText(null)}>
-                <X className="h-4 w-4" />
-              </IconButton>
-            </span>
-          )}
-        </div>
-      )}
-    </li>
-  );
-}
-
-/** "Otro producto o servicio": something not in the catalog, with its name and price. */
-function FreeLineForm({ onAdd }: { onAdd: (description: string, price: number) => void }) {
-  const { t } = useI18n();
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [price, setPrice] = useState('');
-  const add = () => {
-    const value = money(price);
-    if (name.trim() === '' || value <= 0) return;
-    onAdd(name.trim(), value);
-    setName('');
-    setPrice('');
-    setOpen(false);
-  };
-  if (!open) {
-    return (
-      <TextButton size="sm" onClick={() => setOpen(true)}>
-        <Plus className="h-4 w-4" />
-        {t('sales.form.addFree')}
-      </TextButton>
-    );
-  }
-  return (
-    <div className="flex flex-wrap items-end gap-2 rounded-xl border border-dashed border-line-strong p-3">
-      <div className="min-w-44 flex-1">
-        <Field label={t('sales.form.freeName')}>
-          {(id) => (
-            <input
-              id={id}
-              className="input"
-              maxLength={120}
-              autoFocus
-              placeholder={t('sales.form.freeNamePlaceholder')}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              onKeyDown={onEnter(add)}
-            />
-          )}
-        </Field>
-      </div>
-      <div className="w-32" onKeyDown={onEnter(add)}>
-        <Field label={t('sales.form.freePrice')}>
-          {(id) => <MoneyInput id={id} value={price} onChange={setPrice} />}
-        </Field>
-      </div>
-      <Button onClick={add} disabled={name.trim() === '' || money(price) <= 0}>
-        {t('sales.form.freeAdd')}
-      </Button>
-      <IconButton label={t('common.cancel')} onClick={() => setOpen(false)}>
-        <X className="h-4 w-4" />
-      </IconButton>
-    </div>
-  );
-}
-
-/** "¿Con cuánto paga?": quick bills and the change to give back. */
-function ChangeCalculator({
-  total,
-  text,
-  onChange,
-  received,
-}: {
-  total: number;
-  text: string;
-  onChange: (text: string) => void;
-  received: number;
-}) {
-  const { t, fmt } = useI18n();
-  const bills = BILLS.filter((bill) => bill > total).slice(0, 3);
-  const difference = round2(received - total);
-  return (
-    <div className="rounded-xl border border-line p-3">
-      <p className="label">{t('sales.form.received')}</p>
-      <div className="flex flex-wrap items-center gap-2">
-        <MoneyInput className="w-32" value={text} onChange={onChange} />
-        {[total, ...bills].map((amount, index) => (
-          <button
-            key={amount}
-            type="button"
-            onClick={() => onChange(String(amount))}
-            className={cx(
-              'h-9 rounded-lg border px-3 text-sm font-semibold tabular-nums transition',
-              received === amount
-                ? 'border-primary bg-primary-soft text-primary-ink'
-                : 'border-line text-muted hover:bg-surface-2 hover:text-ink',
-            )}
-          >
-            {index === 0 ? t('sales.form.exact') : fmt.money(amount).replace(/[.,]00$/, '')}
-          </button>
-        ))}
-      </div>
-      {received > 0 && (
-        <p
-          className={cx(
-            'mt-2 text-sm font-semibold tabular-nums',
-            difference >= 0 ? 'text-success-ink' : 'text-danger-ink',
-          )}
-        >
-          {difference >= 0
-            ? t('sales.form.change', { amount: fmt.money(difference) })
-            : t('sales.form.missing', { amount: fmt.money(-difference) })}
-        </p>
-      )}
-    </div>
-  );
-}
-
-/** After saving: the amount, the change, and the ticket (print or WhatsApp). */
-function SaleDone({
-  sale,
-  cash,
-  onAnother,
-  onClose,
-}: {
-  sale: Sale;
-  cash: CashGiven | null;
-  onAnother: () => void;
-  onClose: () => void;
-}) {
-  const { t, fmt } = useI18n();
-  const ticket = useSaleTicket();
-  const whatsapp = ticket.whatsappUrl(sale);
-  return (
-    <div className="space-y-5">
-      <div className="flex flex-col items-center gap-1 text-center">
-        <CheckCircle2 className="h-12 w-12 text-success" />
-        <p className="text-lg font-semibold">{t('sales.done.title', { number: sale.number })}</p>
-        <p className="font-display text-4xl font-semibold tabular-nums">{fmt.money(sale.total)}</p>
-        {cash && cash.change > 0 && (
-          <p className="text-base font-semibold text-success-ink">
-            {t('sales.done.change', { amount: fmt.money(cash.change) })}
-          </p>
-        )}
-        {sale.receivable && (
-          <p className="text-sm text-muted">
-            {t('sales.done.owes', { amount: fmt.money(sale.receivable.outstanding) })}
-          </p>
-        )}
-      </div>
-      <div className="grid gap-2 sm:grid-cols-2">
-        <Button
-          variant="secondary"
-          icon={<Printer className="h-4 w-4" />}
-          onClick={() => ticket.print(sale, cash)}
-        >
-          {t('sales.done.print')}
-        </Button>
-        {whatsapp !== null && (
-          <Button
-            variant="secondary"
-            icon={<WhatsAppIcon className="h-4 w-4" />}
-            onClick={() => window.open(whatsapp, '_blank', 'noopener')}
-          >
-            {t('sales.done.whatsapp')}
-          </Button>
-        )}
-      </div>
-      <div className="flex flex-col-reverse gap-2 border-t border-line pt-4 sm:flex-row sm:justify-end">
-        <Button variant="secondary" onClick={onClose}>
-          {t('sales.done.close')}
-        </Button>
-        <Button icon={<Plus className="h-4 w-4" />} onClick={onAnother}>
-          {t('sales.done.another')}
-        </Button>
-      </div>
-    </div>
+      }
+      panel={step === 'ticket' ? ticket : checkout}
+    />
   );
 }

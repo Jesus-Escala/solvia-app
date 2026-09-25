@@ -9,8 +9,11 @@ export interface ModalProps {
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
-  /** `full`: almost the whole screen, with a fixed height (file viewers). */
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  /**
+   * `full`: almost the whole screen, with a fixed height (file viewers). `screen`: the whole
+   * screen on phones and almost all of it on larger screens (point of sale).
+   */
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full' | 'screen';
   /** The body has no padding (content that draws its own edges, like a viewer). */
   flush?: boolean;
   closeLabel?: string;
@@ -22,7 +25,15 @@ const SIZES = {
   lg: 'max-w-2xl',
   xl: 'max-w-6xl',
   full: 'max-w-[1400px] h-[calc(100dvh-1.5rem)] sm:h-[calc(100dvh-2rem)]',
+  screen: '',
 };
+
+/** Centered card on every screen size (phones get a 12px margin on each side). */
+const CARD =
+  'm-auto max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.5rem)] rounded-2xl border sm:max-h-[calc(100dvh-2rem)] sm:w-[calc(100%-2rem)]';
+/** Edge to edge on phones; a large card from `sm` up. */
+const SCREEN =
+  'm-0 h-dvh max-h-dvh w-full max-w-none sm:m-auto sm:h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-2rem)] sm:w-[calc(100%-2rem)] sm:max-w-[1500px] sm:rounded-2xl sm:border';
 
 /**
  * Accessible modal built on the native <dialog> (focus trap, Escape and top layer for free).
@@ -108,17 +119,20 @@ export function Modal({
         if (fromBackdrop && event.target === ref.current && phase === 'open') onClose();
       }}
       className={cx(
-        // Centered card on every screen size (phones get a 12px margin on each side).
         // One scroll only: the dialog itself never scrolls (the browser's default max-height would
         // make it scroll along with the body); the body below is the only scrolling area.
-        'modal m-auto max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.5rem)] overflow-hidden rounded-2xl border border-line bg-surface p-0 text-ink shadow-pop backdrop:bg-slate-950/50 backdrop:backdrop-blur-[2px] sm:max-h-[calc(100dvh-2rem)] sm:w-[calc(100%-2rem)]',
+        'modal overflow-hidden border-line bg-surface p-0 text-ink shadow-pop backdrop:bg-slate-950/50 backdrop:backdrop-blur-[2px]',
+        size === 'screen' ? SCREEN : CARD,
         SIZES[size],
       )}
     >
       {phase !== 'closed' && (
         <div
           className={cx(
-            'flex max-h-[calc(100dvh-1.5rem-2px)] flex-col sm:max-h-[calc(100dvh-2rem-2px)]',
+            'flex flex-col',
+            size === 'screen'
+              ? 'h-full max-h-dvh sm:max-h-[calc(100dvh-2rem-2px)]'
+              : 'max-h-[calc(100dvh-1.5rem-2px)] sm:max-h-[calc(100dvh-2rem-2px)]',
             size === 'full' && 'h-full',
           )}
         >
