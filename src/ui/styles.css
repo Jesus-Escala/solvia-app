@@ -443,16 +443,16 @@ html:has(dialog.modal[open]):not(:has(main.overflow-y-auto)) {
 }
 
 /* Modal (native <dialog>): a centered card that pops in, on every screen size. */
-/* `backwards` (not `both`): once the entrance ends no transform stays applied, so fixed-position
-   popovers inside the dialog are positioned against the viewport, not the dialog. */
+/* Opacity only, never a transform: a transformed dialog would become the reference of its
+   fixed-position children (menus, and the toasts shown over it), which would jump while it animates. */
 .modal[data-state='open'] {
-  animation: pop-in 260ms var(--ease-out) backwards;
+  animation: modal-in 220ms var(--ease-out) backwards;
 }
 .modal[data-state='open']::backdrop {
   animation: fade-in 260ms var(--ease-out) both;
 }
 .modal[data-state='closing'] {
-  animation: pop-out 170ms var(--ease-in) both;
+  animation: modal-out 160ms var(--ease-in) both;
 }
 .modal[data-state='closing']::backdrop {
   animation: fade-out 170ms var(--ease-in) both;
@@ -552,4 +552,15 @@ html:has(dialog.modal[open]):not(:has(main.overflow-y-auto)) {
 }
 .animate-toast-out {
   animation: toast-out 250ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes modal-out {
+  to {
+    opacity: 0;
+  }
 }

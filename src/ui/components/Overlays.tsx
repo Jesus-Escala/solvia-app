@@ -211,13 +211,40 @@ const TOAST_DURATION: Record<ToastTone, number> = {
   loading: 0, // stays until updated or dismissed
 };
 
-/** Solid colored cards, like the TSI component library: the color says what happened. */
-const TOAST_STYLES: Record<ToastTone, { card: string; icon: ReactNode }> = {
-  success: { card: 'bg-success text-white', icon: <CheckCircle2 /> },
-  error: { card: 'bg-danger text-white', icon: <XCircle /> },
-  info: { card: 'bg-info text-white', icon: <Info /> },
-  warning: { card: 'bg-warning text-white', icon: <AlertTriangle /> },
-  loading: { card: 'border border-line bg-surface text-ink', icon: <Spinner /> },
+const TOAST_STYLES: Record<
+  ToastTone,
+  { badge: string; bar: string; tint: string; icon: ReactNode }
+> = {
+  success: {
+    badge: 'bg-success text-white ring-success-soft',
+    bar: 'bg-success',
+    tint: 'var(--success-soft)',
+    icon: <CheckCircle2 />,
+  },
+  error: {
+    badge: 'bg-danger text-white ring-danger-soft',
+    bar: 'bg-danger',
+    tint: 'var(--danger-soft)',
+    icon: <XCircle />,
+  },
+  info: {
+    badge: 'bg-info text-white ring-info-soft',
+    bar: 'bg-info',
+    tint: 'var(--info-soft)',
+    icon: <Info />,
+  },
+  warning: {
+    badge: 'bg-warning text-white ring-warning-soft',
+    bar: 'bg-warning',
+    tint: 'var(--warning-soft)',
+    icon: <AlertTriangle />,
+  },
+  loading: {
+    badge: 'bg-primary-soft text-primary ring-transparent',
+    bar: 'bg-primary',
+    tint: 'var(--primary-soft)',
+    icon: <Spinner />,
+  },
 };
 
 /**
@@ -273,7 +300,7 @@ function Emphasized({ text, part }: { text: string; part?: string }) {
   return (
     <>
       {text.slice(0, at)}
-      <strong className="font-semibold">{part}</strong>
+      <strong className="font-semibold text-ink">{part}</strong>
       {text.slice(at + part.length)}
     </>
   );
@@ -310,8 +337,8 @@ function useToastHost(active: boolean) {
 
 /**
  * One notification: it slides in from the right, stays its time (the bar shows what is left) and
- * slides out to the right; the ones below move up. Always the same, like the TSI library: no
- * pause, no restart.
+ * slides out to the right; the ones below move up. The same every time (like the TSI library):
+ * no pause, no restart.
  */
 function ToastCard({
   item,
@@ -346,7 +373,6 @@ function ToastCard({
     return () => animation.cancel();
   }, [item.createdAt, item.duration, item.leaving, host]);
 
-  const loading = item.tone === 'loading';
   const style = TOAST_STYLES[item.tone];
   return (
     // The row collapses as the toast leaves, so the others glide up instead of jumping.
@@ -362,96 +388,76 @@ function ToastCard({
           onAnimationEnd={(event) => {
             if (event.target === event.currentTarget) setEntered(true);
           }}
+          style={{
+            backgroundImage: `radial-gradient(130% 160% at 0% 0%, color-mix(in srgb, ${style.tint} 85%, transparent) 0%, transparent 58%)`,
+          }}
           className={cx(
-            'pointer-events-auto relative ml-auto w-full overflow-hidden rounded-2xl shadow-pop transition-transform duration-200 hover:-translate-y-0.5 sm:w-[23rem]',
-            style.card,
+            'group pointer-events-auto relative w-full overflow-hidden rounded-2xl border border-line bg-surface text-ink shadow-pop',
             item.leaving ? 'animate-toast-out' : !entered && 'animate-toast-in',
           )}
         >
-          {/* Darker accent on the left edge. */}
-          {!loading && (
-            <span aria-hidden="true" className="absolute inset-y-0 left-0 w-[3px] bg-black/25" />
-          )}
-          <div className="flex items-start gap-3 py-3.5 pr-11 pl-5">
+          <div className="flex items-center gap-3 p-3.5 pr-3">
             <span
               className={cx(
-                'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] [&>svg]:h-[18px] [&>svg]:w-[18px]',
-                loading ? 'bg-primary-soft text-primary' : 'border border-white/35 bg-white/20',
+                'flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-4 [&>svg]:h-[17px] [&>svg]:w-[17px]',
+                style.badge,
               )}
             >
               {style.icon}
             </span>
             <div className="min-w-0 flex-1">
               {labels.kind && (
-                <p
-                  className={cx(
-                    'mb-0.5 flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.08em] uppercase',
-                    loading ? 'text-subtle' : 'text-white/75',
-                  )}
-                >
+                <p className="mb-0.5 flex items-center gap-1.5 text-[10.5px] font-semibold tracking-[0.08em] text-subtle uppercase">
                   {labels.kind}
                   {item.meta && (
-                    <span
-                      className={cx(
-                        'rounded px-1 font-mono text-[10px] tracking-normal normal-case',
-                        loading ? 'bg-surface-3' : 'bg-white/20',
-                      )}
-                    >
+                    <span className="rounded-md bg-surface-3 px-1 py-px font-mono text-[10px] tracking-normal text-muted normal-case">
                       {item.meta}
                     </span>
                   )}
                 </p>
               )}
-              <p className="text-[13.5px] leading-5 font-semibold break-words">{item.title}</p>
+              <p className="text-sm leading-5 font-semibold break-words">{item.title}</p>
               {item.description && (
-                <p
-                  className={cx(
-                    'mt-0.5 text-[12.5px] leading-5 break-words',
-                    loading ? 'text-muted' : 'text-white/85',
-                  )}
-                >
+                <p className="mt-0.5 text-[13px] leading-5 break-words text-muted">
                   <Emphasized text={item.description} part={item.emphasis} />
                 </p>
               )}
               {item.items && item.items.length > 0 && (
-                <ul className={cx('mt-1.5 space-y-0.5', loading ? 'text-muted' : 'text-white/90')}>
+                <ul className="mt-1.5 space-y-1">
                   {item.items.slice(0, TOAST_LIST_LIMIT).map((line) => (
                     <li
                       key={line}
-                      className="flex items-start gap-2 text-[12.5px] leading-5 break-words"
+                      className="flex items-start gap-2 text-[13px] leading-5 break-words text-muted"
                     >
                       <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-current" />
                       <span className="min-w-0">{line}</span>
                     </li>
                   ))}
                   {item.items.length > TOAST_LIST_LIMIT && (
-                    <li className="pl-3 text-[12px] font-semibold">
+                    <li className="pl-3 text-[12px] font-medium text-subtle">
                       +{item.items.length - TOAST_LIST_LIMIT}
                     </li>
                   )}
                 </ul>
               )}
             </div>
+            <button
+              type="button"
+              onClick={() => onDismiss(item.id)}
+              className="-mr-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-subtle transition group-hover:opacity-100 hover:bg-surface-3 hover:text-ink focus-visible:opacity-100 sm:opacity-0 [@media(hover:none)]:opacity-100"
+              aria-label={labels.close}
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => onDismiss(item.id)}
-            aria-label={labels.close}
-            className={cx(
-              'absolute top-2.5 right-3 flex h-6 w-6 items-center justify-center rounded-lg border transition',
-              loading
-                ? 'border-line bg-surface-2 text-muted hover:text-ink'
-                : 'border-white/30 bg-white/15 text-white/85 hover:bg-white/30 hover:text-white',
-            )}
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
           {item.duration > 0 && (
-            <span
-              ref={bar}
-              aria-hidden="true"
-              className="absolute inset-x-0 bottom-0 h-[3px] origin-left bg-white/70"
-            />
+            <span className="absolute inset-x-3 bottom-1 h-[3px] overflow-hidden rounded-full bg-surface-3/70">
+              <span
+                ref={bar}
+                aria-hidden="true"
+                className={cx('block h-full origin-left rounded-full', style.bar)}
+              />
+            </span>
           )}
         </div>
       </div>
