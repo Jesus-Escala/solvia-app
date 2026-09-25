@@ -2,23 +2,23 @@ import { Download, Printer } from 'lucide-react';
 import QRCode from 'qrcode';
 import { useEffect, useState } from 'react';
 import { Button, Modal, Skeleton } from '@/ui';
-import { useMe } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { Product } from '../../lib/types';
 
-const escape = (text: string) => text.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
-
 /**
  * The QR code of a product: its unique code (its own barcode, or the internal one Solvia gave
- * it), ready to download or to print as a label with the name and the price. Any scanner that
+ * it), ready to download or to print as labels (the label printer). Any scanner that
  * reads QR codes adds the product to a sale or a purchase.
  */
 export function ProductQrModal({
   product,
   onClose,
+  onPrint,
 }: {
   product: Product | null;
   onClose: () => void;
+  /** Opens the label printer with this product. */
+  onPrint: (product: Product) => void;
 }) {
   const { t } = useI18n();
   return (
@@ -29,14 +29,13 @@ export function ProductQrModal({
       onClose={onClose}
       closeLabel={t('common.close')}
     >
-      {product && <QrLabel product={product} />}
+      {product && <QrLabel product={product} onPrint={() => onPrint(product)} />}
     </Modal>
   );
 }
 
-function QrLabel({ product }: { product: Product }) {
+function QrLabel({ product, onPrint }: { product: Product; onPrint: () => void }) {
   const { t, fmt } = useI18n();
-  const { data: me } = useMe();
   const code = product.code ?? '';
   const [image, setImage] = useState<string | null>(null);
 
@@ -51,44 +50,6 @@ function QrLabel({ product }: { product: Product }) {
       alive = false;
     };
   }, [code]);
-
-  /** A 50 × 30 mm label (thermal label printers or any printer) through a hidden frame. */
-  const print = () => {
-    if (!image) return;
-    const frame = document.createElement('iframe');
-    Object.assign(frame.style, { position: 'fixed', width: '0', height: '0', border: '0' });
-    document.body.appendChild(frame);
-    const doc = frame.contentDocument;
-    const view = frame.contentWindow;
-    if (!doc || !view) return frame.remove();
-    doc.open();
-    doc.write(`<!doctype html><html><head><meta charset="utf-8"><title>${escape(product.name)}</title>
-      <style>
-        @page { size: 50mm 30mm; margin: 1.5mm; }
-        body { margin: 0; font: 9px/1.2 system-ui, sans-serif; color: #000; }
-        .label { display: flex; gap: 2mm; align-items: center; height: 27mm; }
-        img { width: 25mm; height: 25mm; }
-        .name { font-weight: 700; font-size: 10px; max-height: 3.6em; overflow: hidden; }
-        .price { font-size: 14px; font-weight: 800; margin-top: 1.5mm; }
-        .meta { color: #333; margin-top: 1mm; }
-      </style></head><body><div class="label">
-        <img src="${image}" alt="">
-        <div><div class="name">${escape(product.name)}</div>
-        <div class="price">${escape(fmt.money(product.price))}</div>
-        <div class="meta">${escape(code)}</div>
-        ${me?.tenant ? `<div class="meta">${escape(me.tenant.name)}</div>` : ''}</div>
-      </div></body></html>`);
-    doc.close();
-    // Wait for the QR picture before printing.
-    const img = doc.querySelector('img');
-    const go = () => {
-      view.focus();
-      view.print();
-      window.setTimeout(() => frame.remove(), 60_000);
-    };
-    if (img && !img.complete) img.onload = go;
-    else go();
-  };
 
   return (
     <div className="space-y-5">
@@ -112,7 +73,7 @@ function QrLabel({ product }: { product: Product }) {
         </div>
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
-        <Button variant="secondary" icon={<Printer className="h-4 w-4" />} onClick={print}>
+        <Button icon={<Printer className="h-4 w-4" />} onClick={onPrint}>
           {t('products.qr.print')}
         </Button>
         {image ? (

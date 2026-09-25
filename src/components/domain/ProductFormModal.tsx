@@ -39,6 +39,7 @@ export function ProductFormModal({
   return (
     <Modal
       open={open}
+      size="lg"
       title={product ? t('products.form.titleEdit') : t('products.form.titleNew')}
       {...(!product && { description: t('products.form.intro') })}
       onClose={onClose}
@@ -80,7 +81,6 @@ function ProductForm({
     name: product?.name ?? '',
     price: product ? String(product.price) : '',
     unit: product?.unit ?? ('unit' as ProductUnit),
-    code: product?.code ?? '',
     cost: (product?.cost ?? null) === null ? '' : String(product?.cost),
     trackStock: product?.trackStock ?? true,
     minStock: (product?.minStock ?? null) === null ? '' : String(product?.minStock),
@@ -115,8 +115,6 @@ function ProductForm({
       name: form.name,
       price,
       unit: service ? 'unit' : form.unit,
-      // Empty: Solvia gives it a unique code.
-      code: form.code.trim() || null,
       cost,
       trackStock: !service && form.trackStock,
       minStock: !service && form.trackStock && form.minStock !== '' ? Number(form.minStock) : null,
@@ -155,7 +153,7 @@ function ProductForm({
         ]}
       />
 
-      <div className="flex items-start gap-4">
+      <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
         {/* Picture: tap to choose; shown in the point of sale and the list. */}
         <div className="flex shrink-0 flex-col items-center gap-1.5">
           <button
@@ -165,11 +163,20 @@ function ProductForm({
             className="group relative rounded-2xl focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
           >
             {imageUrl ? (
-              <ProductThumb name={form.name || '?'} imageUrl={imageUrl} size={88} />
+              <span className="relative block">
+                <ProductThumb name={form.name || '?'} imageUrl={imageUrl} size={144} />
+                <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 rounded-b-xl bg-ink/60 py-1 text-[11px] font-medium text-surface opacity-0 transition group-hover:opacity-100">
+                  <Camera className="h-3.5 w-3.5" />
+                  {t('products.form.changeImage')}
+                </span>
+              </span>
             ) : (
-              <span className="flex h-[88px] w-[88px] flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-line-strong text-[11px] font-medium text-muted transition group-hover:border-primary/50 group-hover:text-primary-ink">
-                <Camera className="h-5 w-5" />
+              <span className="flex h-36 w-36 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-line-strong px-2 text-center text-xs font-medium text-muted transition group-hover:border-primary/50 group-hover:bg-primary-soft/40 group-hover:text-primary-ink">
+                <Camera className="h-7 w-7" />
                 {t('products.form.addImage')}
+                <span className="text-[10px] font-normal text-subtle">
+                  {t('products.form.imageHint')}
+                </span>
               </span>
             )}
           </button>
@@ -190,7 +197,7 @@ function ProductForm({
             }}
           />
         </div>
-        <div className="min-w-0 flex-1 space-y-4">
+        <div className="w-full min-w-0 flex-1 space-y-4">
           <Field label={t('products.form.name')} error={errors.field(save.error, 'name')}>
             {(id) => (
               <input
@@ -263,32 +270,25 @@ function ProductForm({
         )}
       </Field>
 
-      <Field
-        label={t('products.form.code')}
-        optionalLabel={t('common.optional')}
-        hint={t('products.form.codeAutoHint')}
-        error={errors.field(save.error, 'code')}
-      >
-        {(id, describedBy) => (
-          <div className="flex gap-2">
-            <input
-              id={id}
-              aria-describedby={describedBy}
-              className="input tabular-nums"
-              maxLength={40}
-              inputMode="numeric"
-              placeholder={t('products.form.codeAutoPlaceholder')}
-              value={form.code}
-              onChange={(event) => update('code', event.target.value)}
-            />
-            {onShowQr && product?.code && (
-              <Button variant="secondary" icon={<QrCode className="h-4 w-4" />} onClick={onShowQr}>
-                {t('products.qr.short')}
-              </Button>
-            )}
-          </div>
+      {/* The code is Solvia's own (its QR): nothing to type. */}
+      <div className="flex items-center gap-3 rounded-xl border border-line bg-surface-2 px-3 py-2.5">
+        <QrCode className="h-5 w-5 shrink-0 text-primary" />
+        <div className="min-w-0 flex-1 text-sm">
+          {product?.code ? (
+            <>
+              <p className="font-medium">{t('products.form.qrCode')}</p>
+              <p className="font-mono text-xs tracking-wider text-muted">{product.code}</p>
+            </>
+          ) : (
+            <p className="text-muted">{t('products.form.qrAuto')}</p>
+          )}
+        </div>
+        {onShowQr && product?.code && (
+          <Button variant="secondary" onClick={onShowQr}>
+            {t('products.form.qrShow')}
+          </Button>
         )}
-      </Field>
+      </div>
 
       {!service && (
         <>

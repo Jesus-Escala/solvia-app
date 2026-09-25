@@ -1,34 +1,12 @@
 import { useMe } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
+import { escapeHtml as escape, printHtml } from '../../lib/print';
 import type { Sale } from '../../lib/types';
 
 /** What the customer handed over for a cash sale (only known right after selling). */
 export interface CashGiven {
   received: number;
   change: number;
-}
-
-const escape = (text: string) => text.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
-
-/** Prints an HTML document through a hidden frame, so the page itself is not printed. */
-function printHtml(html: string) {
-  const frame = document.createElement('iframe');
-  frame.setAttribute('aria-hidden', 'true');
-  Object.assign(frame.style, { position: 'fixed', width: '0', height: '0', border: '0' });
-  document.body.appendChild(frame);
-  const doc = frame.contentDocument;
-  const view = frame.contentWindow;
-  if (!doc || !view) {
-    frame.remove();
-    return;
-  }
-  doc.open();
-  doc.write(html);
-  doc.close();
-  view.focus();
-  view.print();
-  // Some browsers print asynchronously: keep the frame a moment before removing it.
-  window.setTimeout(() => frame.remove(), 60_000);
 }
 
 /**

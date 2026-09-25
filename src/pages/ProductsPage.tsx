@@ -8,6 +8,7 @@ import {
   Package,
   PackagePlus,
   Pencil,
+  Printer,
   QrCode,
   Trash2,
   Wrench,
@@ -37,6 +38,7 @@ import { AdjustStockModal } from '../components/domain/AdjustStockModal';
 import { KardexModal } from '../components/domain/KardexModal';
 import { ProductFormModal } from '../components/domain/ProductFormModal';
 import { ProductQrModal } from '../components/domain/ProductQrModal';
+import { LabelPrintModal } from '../components/labels/LabelPrintModal';
 import { ProductThumb } from '../components/domain/ProductThumb';
 import { ModulesOffer } from '../components/modules/ModulesOffer';
 import {
@@ -92,6 +94,8 @@ function ProductsList() {
   const [kardex, setKardex] = useState<Product | null>(null);
   const [adjusting, setAdjusting] = useState<Product | null>(null);
   const [qr, setQr] = useState<Product | null>(null);
+  // Label printer: null closed, otherwise the products it starts with.
+  const [labels, setLabels] = useState<Product[] | null>(null);
   const remove = useDeleteProduct();
   const setActive = useSetProductActive();
 
@@ -245,9 +249,18 @@ function ProductsList() {
         title={t('products.title')}
         description={t('products.subtitle')}
         actions={
-          <Button icon={<PackagePlus className="h-4 w-4" />} onClick={() => setCreating(true)}>
-            {t('products.new')}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="secondary"
+              icon={<Printer className="h-4 w-4" />}
+              onClick={() => setLabels([])}
+            >
+              {t('labels.button')}
+            </Button>
+            <Button icon={<PackagePlus className="h-4 w-4" />} onClick={() => setCreating(true)}>
+              {t('products.new')}
+            </Button>
+          </div>
         }
       />
       <DataTable
@@ -315,6 +328,11 @@ function ProductsList() {
                   { label: t('common.edit'), icon: <Pencil />, onSelect: () => setEditing(row) },
                   { label: t('products.qr.action'), icon: <QrCode />, onSelect: () => setQr(row) },
                   {
+                    label: t('labels.printOne'),
+                    icon: <Printer />,
+                    onSelect: () => setLabels([row]),
+                  },
+                  {
                     label: t('adjust.open'),
                     icon: <ClipboardCheck />,
                     onSelect: () => setAdjusting(row),
@@ -373,7 +391,19 @@ function ProductsList() {
         onClose={() => setEditing(null)}
         onShowQr={setQr}
       />
-      <ProductQrModal product={qr} onClose={() => setQr(null)} />
+      <ProductQrModal
+        product={qr}
+        onClose={() => setQr(null)}
+        onPrint={(product) => {
+          setQr(null);
+          setLabels([product]);
+        }}
+      />
+      <LabelPrintModal
+        open={labels !== null}
+        products={labels ?? []}
+        onClose={() => setLabels(null)}
+      />
     </Page>
   );
 }
