@@ -58,9 +58,9 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
   `pos/SalePos`) and `/purchases/new` (`PurchasePosPage` → `pos/PurchasePos`), outside the app
   shell (`PosScreen`: slim top bar, back asks before losing a ticket); `quick.open('sale' |
   'purchase')` navigates there. `components/pos/`: `PosLayout` (catalog left, ticket right;
-  phones: catalog + bottom bar that opens the ticket) and `ProductCatalog` (best sellers as tiles
-  from `/products/lookup?sort=popular`, search or barcode — Enter resolves scans in order, so fast
-  scans are never lost). A product that is not in the catalog is created right there (`pos/NewProductForm`,
+  phones: catalog + bottom bar that opens the ticket) and `ProductCatalog` (without a search only the 20
+  best sellers, "Recomendados", from `/products/lookup?sort=popular`; the rest by search or barcode — Enter resolves scans in order, so fast
+  scans are never lost). A product that is not in the catalog is created right there in a dialog (`pos/NewProductForm` → `NewProductModal`,
   also from "Crear «texto»" when a search finds nothing), so every line is a catalog product. The
   sale ticket (`pos/SaleLines.tsx`, helpers in `pos/saleMath.ts`) takes a price for this sale
   only, a discount and "Cobrar" → checkout (cash with change, Yape, Plin, transfer or credit with

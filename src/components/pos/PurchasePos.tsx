@@ -12,7 +12,7 @@ import {
 } from '@/ui';
 import { isSaveKey, isSearchKey, SAVE_KEY_LABEL } from './keys';
 import { Kbd, PosLayout } from './PosLayout';
-import { NewProductForm } from './NewProductForm';
+import { NewProductModal } from './NewProductForm';
 import { ProductCatalog } from './ProductCatalog';
 import { roundQuantity } from '../domain/quantity';
 import { QuantityStepper } from '../domain/QuantityStepper';
@@ -148,6 +148,8 @@ export function PurchasePos({
   // Keyboard: Alt+S (Option+S on a Mac) save, Alt+B search.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      // Not while a product is being created in its dialog.
+      if (newName !== null) return;
       if (isSearchKey(event)) {
         event.preventDefault();
         searchRef.current?.focus();
@@ -158,7 +160,7 @@ export function PurchasePos({
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, []);
+  }, [newName]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -226,19 +228,7 @@ export function PurchasePos({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {newName !== null && (
-          <NewProductForm
-            mode="purchase"
-            initialName={newName}
-            onCreated={(product) => {
-              add(product);
-              setNewName(null);
-              searchRef.current?.focus();
-            }}
-            onCancel={() => setNewName(null)}
-          />
-        )}
-        {lines.length === 0 && newName === null ? (
+        {lines.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 px-6 py-10 text-center text-sm text-muted">
             <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-2">
               <Truck className="h-7 w-7 text-subtle" />
@@ -428,28 +418,37 @@ export function PurchasePos({
   );
 
   return (
-    <PosLayout
-      panelOpen={panelOpen}
-      onOpenPanel={() => setPanelOpen(true)}
-      count={count}
-      total={total}
-      barLabel={t('purchases.pos.viewTicket')}
-      catalog={
-        <ProductCatalog
-          onPick={add}
-          amountOf={(product) => product.cost}
-          amountLabel={t('purchases.pos.cost')}
-          showStock
-          purchase
-          inCart={inCart}
-          searchRef={searchRef}
-          onCreate={(name) => {
-            setNewName(name);
-            setPanelOpen(true);
-          }}
-        />
-      }
-      panel={panel}
-    />
+    <>
+      <NewProductModal
+        mode="purchase"
+        name={newName}
+        onCreated={(product) => {
+          add(product);
+          setNewName(null);
+          window.setTimeout(() => searchRef.current?.focus(), 0);
+        }}
+        onClose={() => setNewName(null)}
+      />
+      <PosLayout
+        panelOpen={panelOpen}
+        onOpenPanel={() => setPanelOpen(true)}
+        count={count}
+        total={total}
+        barLabel={t('purchases.pos.viewTicket')}
+        catalog={
+          <ProductCatalog
+            onPick={add}
+            amountOf={(product) => product.cost}
+            amountLabel={t('purchases.pos.cost')}
+            showStock
+            purchase
+            inCart={inCart}
+            searchRef={searchRef}
+            onCreate={setNewName}
+          />
+        }
+        panel={panel}
+      />
+    </>
   );
 }

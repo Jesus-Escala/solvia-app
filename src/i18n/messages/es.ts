@@ -836,12 +836,20 @@ export const es = {
     },
   },
   pos: {
+    recommended: 'Recomendados · tus {count} más vendidos',
+    yourProducts: 'Tus productos',
+    searchMore: '¿Buscas otro? Escribe su nombre o escanea su código arriba.',
     top: 'Más vendido',
     newTile: 'Producto o servicio nuevo',
     create: 'Crear «{text}»',
     noCatalog: 'Aún no tienes productos. Crea el primero aquí mismo.',
     newProduct: {
-      title: 'Producto nuevo (se guarda en tus productos)',
+      title: 'Producto nuevo',
+      introSale: 'Se guarda en tus productos y se agrega a esta venta.',
+      introPurchase: 'Se guarda en tus productos y se agrega a esta compra.',
+      priceHint: 'Lo que cobras a tu cliente.',
+      costHint: 'Lo que pagaste a tu proveedor por uno.',
+      later: 'Luego puedes completarlo (código de barras, aviso de stock) en «Productos».',
       price: 'Precio de venta',
       cost: 'Te costó',
       service: 'Es un servicio (no lleva stock)',
@@ -877,9 +885,7 @@ export const es = {
     },
     pos: {
       keys: '{save} cobrar · {search} buscar · Esc volver',
-      popular: 'Lo que más vendes',
       results: 'Resultados para «{text}»',
-      searchMore: '¿No está aquí? Búscalo por nombre o escanea su código.',
       noCatalog:
         'Aún no tienes productos. Agrégalos en «Productos», o vende un servicio con «Otro producto o servicio».',
       clearSearch: 'Borrar búsqueda',
@@ -1015,7 +1021,6 @@ export const es = {
       items: 'Qué llegó',
     },
     pos: {
-      catalog: 'Tus productos (los que más vendes primero)',
       keys: '{save} guardar · {search} buscar',
       ticket: 'Lo que llegó',
       emptyTicket: 'Toca o escanea los productos que te llegaron.',

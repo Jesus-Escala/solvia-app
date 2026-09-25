@@ -831,12 +831,20 @@ export const en: Messages = {
     },
   },
   pos: {
+    recommended: 'Recommended · your {count} best sellers',
+    yourProducts: 'Your products',
+    searchMore: 'Looking for another one? Type its name or scan its code above.',
     top: 'Best seller',
     newTile: 'New product or service',
     create: 'Create “{text}”',
     noCatalog: 'You have no products yet. Create the first one right here.',
     newProduct: {
-      title: 'New product (saved to your products)',
+      title: 'New product',
+      introSale: 'It is saved to your products and added to this sale.',
+      introPurchase: 'It is saved to your products and added to this purchase.',
+      priceHint: 'What you charge your customer.',
+      costHint: 'What you paid your supplier for one.',
+      later: 'You can complete it later (barcode, stock alert) in “Products”.',
       price: 'Sale price',
       cost: 'It cost you',
       service: 'It is a service (no stock)',
@@ -872,9 +880,7 @@ export const en: Messages = {
     },
     pos: {
       keys: '{save} charge · {search} search · Esc back',
-      popular: 'Your best sellers',
       results: 'Results for “{text}”',
-      searchMore: 'Not here? Search it by name or scan its code.',
       noCatalog:
         'You have no products yet. Add them in “Products”, or sell a service with “Another product or service”.',
       clearSearch: 'Clear search',
@@ -1010,7 +1016,6 @@ export const en: Messages = {
       items: 'What arrived',
     },
     pos: {
-      catalog: 'Your products (best sellers first)',
       keys: '{save} save · {search} search',
       ticket: 'What arrived',
       emptyTicket: 'Tap or scan the products that arrived.',

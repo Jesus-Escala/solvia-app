@@ -52,7 +52,12 @@ export function ProductCatalog({
   const typed = text.trim();
   const debounced = useDebouncedValue(typed);
   const catalog = useProductCatalog(debounced);
-  const products = catalog.data?.data ?? [];
+  const found = catalog.data?.data ?? [];
+  // Without a search only the recommended ones: what has sold (the rest is one search away). A
+  // business that has not sold yet sees its first products instead of an empty screen.
+  const sold = found.filter((product) => (product.sold ?? 0) > 0);
+  const recommended = typed === '' && sold.length > 0;
+  const products = recommended ? sold : found;
   const fresh = !catalog.isPlaceholderData && debounced === typed && catalog.data !== undefined;
   const queryClient = useQueryClient();
   // Enters resolve in order, even when a scanner sends the next code before the first answer.
@@ -130,9 +135,9 @@ export function ProductCatalog({
           <span className="font-semibold tracking-[0.08em] uppercase">
             {typed !== ''
               ? t('sales.pos.results', { text: typed })
-              : purchase
-                ? t('purchases.pos.catalog')
-                : t('sales.pos.popular')}
+              : recommended
+                ? t('pos.recommended', { count: products.length })
+                : t('pos.yourProducts')}
           </span>
           {notFound !== null && (
             <span className="font-medium text-danger-ink">
@@ -211,7 +216,7 @@ export function ProductCatalog({
           </div>
         )}
         {products.length > 0 && typed === '' && (
-          <p className="mt-3 text-center text-xs text-subtle">{t('sales.pos.searchMore')}</p>
+          <p className="mt-3 text-center text-sm text-muted">{t('pos.searchMore')}</p>
         )}
       </div>
     </div>

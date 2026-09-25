@@ -423,14 +423,17 @@ export function useProductLookup(search: string) {
   return useQuery({ ...productLookupQuery(search), placeholderData: keepPreviousData });
 }
 
-/** Point-of-sale catalog: the best sellers first (up to 48), or what matches the search. */
+/**
+ * Point-of-sale catalog: without a search, the 20 best sellers (the recommended ones); with a
+ * search, what matches it (up to 48, best sellers first).
+ */
 export function useProductCatalog(search: string) {
   return useQuery({
     queryKey: ['products', 'lookup', search, 'popular'] as const,
     queryFn: ({ signal }) =>
       api.get<{ data: ProductOption[] }>(
         '/products/lookup',
-        { search, limit: 48, sort: 'popular' },
+        { search, limit: search === '' ? 20 : 48, sort: 'popular' },
         { signal },
       ),
     staleTime: LOOKUP_STALE_MS,
