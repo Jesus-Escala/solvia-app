@@ -1,6 +1,6 @@
 import { CheckCircle2, Pencil, Plus, Printer, X } from 'lucide-react';
 import { useState } from 'react';
-import { Button, cx, Field, IconButton, WhatsAppIcon } from '@/ui';
+import { Button, cx, IconButton, WhatsAppIcon } from '@/ui';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { Sale } from '../../lib/types';
 import { MoneyInput } from '../domain/MoneyInput';
@@ -169,55 +169,6 @@ export function LineRow({
         </div>
       )}
     </li>
-  );
-}
-
-/** "Otro producto o servicio": something not in the catalog, with its name and price. */
-export function FreeLineForm({
-  onAdd,
-  onCancel,
-}: {
-  onAdd: (description: string, price: number) => void;
-  onCancel: () => void;
-}) {
-  const { t } = useI18n();
-  const [name, setName] = useState('');
-  const [price, setPrice] = useState('');
-  const add = () => {
-    const value = money(price);
-    if (name.trim() === '' || value <= 0) return;
-    onAdd(name.trim(), value);
-  };
-  return (
-    <div className="animate-page-in space-y-3 border-b border-line bg-primary-soft/40 px-4 py-3">
-      <Field label={t('sales.form.freeName')}>
-        {(id) => (
-          <input
-            id={id}
-            className="input"
-            maxLength={120}
-            autoFocus
-            placeholder={t('sales.form.freeNamePlaceholder')}
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            onKeyDown={onEnter(add)}
-          />
-        )}
-      </Field>
-      <div className="flex items-end gap-2" onKeyDown={onEnter(add)}>
-        <div className="w-32">
-          <Field label={t('sales.form.freePrice')}>
-            {(id) => <MoneyInput id={id} value={price} onChange={setPrice} />}
-          </Field>
-        </div>
-        <Button onClick={add} disabled={name.trim() === '' || money(price) <= 0}>
-          {t('sales.form.freeAdd')}
-        </Button>
-        <Button variant="ghost" onClick={onCancel}>
-          {t('common.cancel')}
-        </Button>
-      </div>
-    </div>
   );
 }
 

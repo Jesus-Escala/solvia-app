@@ -23,6 +23,11 @@ export interface DataTableColumn<T> {
   align?: 'left' | 'right' | 'center';
   /** Minimum column width in px (the table scrolls horizontally when needed). */
   minWidth?: number;
+  /**
+   * Widest the cell content gets in px before it is cut with "…" (default 320). Every row keeps
+   * the same height: cells never wrap to more lines.
+   */
+  maxWidth?: number;
   sortable?: boolean;
   /**
    * Value to sort by in the browser, for tables whose rows are all loaded (no `onSortChange`):
@@ -36,6 +41,8 @@ export interface DataTableColumn<T> {
   mobile?: 'title' | 'subtitle' | 'aside' | 'field' | 'hidden';
   className?: string;
 }
+
+const DEFAULT_CELL_MAX_WIDTH = 320;
 
 export interface DataTableSort {
   id: string;
@@ -452,7 +459,7 @@ export function DataTable<T>({
               Array.from({ length: SKELETON_ROWS }, (_, index) => (
                 <tr key={index}>
                   {visibleColumns.map((column) => (
-                    <td key={column.id} className="border-b border-line px-4 py-3">
+                    <td key={column.id} className="h-14 border-b border-line px-4 py-1.5">
                       <Skeleton
                         className={cx('h-4', column.align === 'right' ? 'ml-auto w-16' : 'w-3/4')}
                       />
@@ -485,13 +492,19 @@ export function DataTable<T>({
                     <td
                       key={column.id}
                       className={cx(
-                        'h-12 border-b border-line px-4 py-2 align-middle',
+                        // Fixed height and one line per text: rows never change size.
+                        'h-14 border-b border-line px-4 py-1.5 align-middle whitespace-nowrap',
                         alignClass(column.align),
                         column.align === 'right' && 'tabular-nums',
                         column.className,
                       )}
                     >
-                      {column.cell(row)}
+                      <div
+                        className="truncate [&>*]:truncate"
+                        style={{ maxWidth: column.maxWidth ?? DEFAULT_CELL_MAX_WIDTH }}
+                      >
+                        {column.cell(row)}
+                      </div>
                     </td>
                   ))}
                   {rowActions && (

@@ -10,7 +10,9 @@ import {
   useErrorToast,
   useFeedback,
 } from '@/ui';
+import { isSaveKey, isSearchKey, SAVE_KEY_LABEL } from './keys';
 import { Kbd, PosLayout } from './PosLayout';
+import { NewProductForm } from './NewProductForm';
 import { ProductCatalog } from './ProductCatalog';
 import { roundQuantity } from '../domain/quantity';
 import { QuantityStepper } from '../domain/QuantityStepper';
@@ -66,7 +68,7 @@ const DOC_TYPES: SaleDocType[] = ['receipt', 'invoice', 'sale_note'];
  * Goods that arrived, like at a point of sale: tap or scan the products on the left (with their
  * last cost and stock), and on the right say how many and what each one cost — in sacks/boxes
  * when the product is bought that way. The stock goes up and the product costs are updated.
- * Supplier and invoice are optional. Keyboard: F2 search, F4 save.
+ * Supplier and invoice are optional. Keyboard: Alt+S (Option+S on a Mac) save, Alt+B search.
  */
 export function PurchasePos({
   onClose,
@@ -83,6 +85,8 @@ export function PurchasePos({
   const formRef = useRef<HTMLFormElement>(null);
   const [lines, setLines] = useState<Line[]>([]);
   const [panelOpen, setPanelOpen] = useState(false);
+  // A product being created on the spot (its name so far), or null.
+  const [newName, setNewName] = useState<string | null>(null);
   const [supplier, setSupplier] = useState<SupplierOption | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const [docType, setDocType] = useState<SaleDocType>('invoice');
@@ -141,13 +145,13 @@ export function PurchasePos({
     }
   };
 
-  // Keyboard: F2 search, F4 save.
+  // Keyboard: Alt+S (Option+S on a Mac) save, Alt+B search.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'F2') {
+      if (isSearchKey(event)) {
         event.preventDefault();
         searchRef.current?.focus();
-      } else if (event.key === 'F4') {
+      } else if (isSaveKey(event)) {
         event.preventDefault();
         formRef.current?.requestSubmit();
       }
@@ -222,7 +226,19 @@ export function PurchasePos({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {lines.length === 0 ? (
+        {newName !== null && (
+          <NewProductForm
+            mode="purchase"
+            initialName={newName}
+            onCreated={(product) => {
+              add(product);
+              setNewName(null);
+              searchRef.current?.focus();
+            }}
+            onCancel={() => setNewName(null)}
+          />
+        )}
+        {lines.length === 0 && newName === null ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 px-6 py-10 text-center text-sm text-muted">
             <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-2">
               <Truck className="h-7 w-7 text-subtle" />
@@ -405,7 +421,7 @@ export function PurchasePos({
         >
           <Truck className="h-5 w-5" />
           {t('purchases.form.submit', { amount: fmt.money(total) })}
-          <Kbd>F4</Kbd>
+          <Kbd>{SAVE_KEY_LABEL}</Kbd>
         </button>
       </div>
     </form>
@@ -427,6 +443,10 @@ export function PurchasePos({
           purchase
           inCart={inCart}
           searchRef={searchRef}
+          onCreate={(name) => {
+            setNewName(name);
+            setPanelOpen(true);
+          }}
         />
       }
       panel={panel}

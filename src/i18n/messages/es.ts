@@ -835,6 +835,20 @@ export const es = {
       save: 'Guardar cambios',
     },
   },
+  pos: {
+    top: 'Más vendido',
+    newTile: 'Producto o servicio nuevo',
+    create: 'Crear «{text}»',
+    noCatalog: 'Aún no tienes productos. Crea el primero aquí mismo.',
+    newProduct: {
+      title: 'Producto nuevo (se guarda en tus productos)',
+      price: 'Precio de venta',
+      cost: 'Te costó',
+      service: 'Es un servicio (no lleva stock)',
+      serviceHint: 'Por ejemplo delivery, instalación o una reparación.',
+      create: 'Crear y agregar',
+    },
+  },
   sales: {
     title: 'Ventas',
     subtitle: 'Todo lo que vendiste. Toca una venta para ver el detalle o anularla.',
@@ -862,7 +876,7 @@ export const es = {
       invoice: 'Factura',
     },
     pos: {
-      keys: 'F2 buscar · F4 cobrar · Esc volver',
+      keys: '{save} cobrar · {search} buscar · Esc volver',
       popular: 'Lo que más vendes',
       results: 'Resultados para «{text}»',
       searchMore: '¿No está aquí? Búscalo por nombre o escanea su código.',
@@ -969,6 +983,9 @@ export const es = {
     saved: 'Venta #{number} registrada.',
     savedCredit: 'Quedó anotada en «Cobranza».',
     lowStock: 'Te quedan pocos',
+    lowStockHint: 'Compra pronto estos productos:',
+    lowStockOut: '{name} — sin stock',
+    lowStockLeft: '{name} — quedan {count}',
     void: 'Anular venta',
     voidTitle: '¿Anular la venta #{number}?',
     voidMessage: 'Los productos vuelven al stock. Esto no se puede deshacer.',
@@ -999,7 +1016,7 @@ export const es = {
     },
     pos: {
       catalog: 'Tus productos (los que más vendes primero)',
-      keys: 'F2 buscar · F4 guardar',
+      keys: '{save} guardar · {search} buscar',
       ticket: 'Lo que llegó',
       emptyTicket: 'Toca o escanea los productos que te llegaron.',
       cost: 'Último costo',

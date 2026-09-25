@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { PackageOpen, ScanBarcode, X } from 'lucide-react';
-import { useRef, useState, type ReactNode, type RefObject } from 'react';
+import { Flame, PackageOpen, PackagePlus, Plus, ScanBarcode, X } from 'lucide-react';
+import { useRef, useState, type RefObject } from 'react';
 import { cx, Skeleton } from '@/ui';
 import { productLookupQuery, useProductCatalog } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -29,7 +29,7 @@ export function ProductCatalog({
   showStock,
   inCart,
   searchRef,
-  extra,
+  onCreate,
   purchase = false,
 }: {
   onPick: (product: ProductOption) => void;
@@ -41,8 +41,8 @@ export function ProductCatalog({
   /** Quantity of each product already in the ticket. */
   inCart: ReadonlyMap<string, number>;
   searchRef: RefObject<HTMLInputElement | null>;
-  /** A last tile (e.g. "Otro producto o servicio"). */
-  extra?: ReactNode;
+  /** Create a product that is not in the catalog yet (with what was searched as its name). */
+  onCreate: (name: string) => void;
   /** A purchase adds stock: the tiles show what there is plus what arrives. */
   purchase?: boolean;
 }) {
@@ -158,9 +158,11 @@ export function ProductCatalog({
               !fresh && 'opacity-70',
             )}
           >
-            {products.map((product) => (
+            {products.map((product, index) => (
               <li key={product.id}>
                 <ProductTile
+                  // The three best sellers get a mark (only in the default list).
+                  top={typed === '' && index < 3 && (product.sold ?? 0) > 0}
                   product={product}
                   amount={amountOf(product)}
                   amountLabel={amountLabel}
@@ -174,13 +176,38 @@ export function ProductCatalog({
                 />
               </li>
             ))}
-            {extra && <li>{extra}</li>}
+            {products.length > 0 && (
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onCreate(typed);
+                    setText('');
+                  }}
+                  className="flex h-full min-h-32 w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-line-strong p-3 text-center text-sm font-semibold text-muted transition hover:border-primary/50 hover:text-primary-ink"
+                >
+                  <PackagePlus className="h-6 w-6" />
+                  {typed === '' ? t('pos.newTile') : t('pos.create', { text: typed })}
+                </button>
+              </li>
+            )}
           </ul>
         )}
         {!catalog.isLoading && products.length === 0 && (
-          <div className="mt-2 flex flex-col items-center gap-2 rounded-2xl border border-dashed border-line-strong px-4 py-8 text-center text-sm text-muted">
+          <div className="mt-2 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line-strong px-4 py-8 text-center text-sm text-muted">
             <PackageOpen className="h-6 w-6 text-subtle" />
-            {typed === '' ? t('sales.pos.noCatalog') : t('sales.form.noProducts')}
+            {typed === '' ? t('pos.noCatalog') : t('sales.form.noProducts')}
+            <button
+              type="button"
+              onClick={() => {
+                onCreate(typed);
+                setText('');
+              }}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 font-semibold text-on-primary shadow-sm transition hover:brightness-110"
+            >
+              <Plus className="h-4 w-4" />
+              {typed === '' ? t('pos.newTile') : t('pos.create', { text: typed })}
+            </button>
           </div>
         )}
         {products.length > 0 && typed === '' && (
@@ -198,6 +225,7 @@ function ProductTile({
   showStock,
   purchase,
   quantity,
+  top,
   onPick,
 }: {
   product: ProductOption;
@@ -206,6 +234,7 @@ function ProductTile({
   showStock: boolean;
   purchase: boolean;
   quantity: number;
+  top: boolean;
   onPick: () => void;
 }) {
   const { t, fmt } = useI18n();
@@ -242,8 +271,14 @@ function ProductTile({
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-xs font-bold text-primary-ink">
           {initials(product.name)}
         </span>
-        <span className="line-clamp-2 min-w-0 text-sm leading-snug font-semibold">
-          {product.name}
+        <span className="min-w-0">
+          <span className="line-clamp-2 text-sm leading-snug font-semibold">{product.name}</span>
+          {top && (
+            <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-[10px] font-bold text-ink">
+              <Flame className="h-3 w-3" />
+              {t('pos.top')}
+            </span>
+          )}
         </span>
       </span>
       <span className="mt-auto flex items-end justify-between gap-2 pt-3">

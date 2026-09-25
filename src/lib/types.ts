@@ -328,7 +328,10 @@ export type ProductOption = Pick<
   | 'stock'
   | 'minStock'
   | 'packSize'
->;
+> & {
+  /** Sale lines of the last 90 days (the point-of-sale catalog only; null elsewhere). */
+  sold?: number | null;
+};
 
 /** What a customer picker needs (from `GET /customers/lookup`). */
 export interface CustomerOption {

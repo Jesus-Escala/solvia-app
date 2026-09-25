@@ -175,6 +175,8 @@ interface ToastContent {
   tone: ToastTone;
   title: string;
   description?: string;
+  /** Several things of the same kind (e.g. products running low), shown as a tidy list. */
+  items?: string[];
   kind?: ToastKind;
   /** Short technical reference next to the kind label, e.g. "409". */
   meta?: string;
@@ -196,6 +198,8 @@ interface ToastItem extends ToastContent {
 
 const TOAST_EXIT_MS = 260;
 const TOAST_LIMIT = 5;
+/** Lines of a toast list shown before "+N". */
+const TOAST_LIST_LIMIT = 5;
 const TOAST_GAP = 10;
 const TOAST_SWIPE_PX = 70;
 const TOAST_DURATION: Record<ToastTone, number> = {
@@ -242,8 +246,11 @@ const TOAST_STYLES: Record<
   },
 };
 
-/** Shows a notification; `description` adds a second, quieter line. Returns the toast id. */
-type ToastFn = (title: string, description?: string) => number;
+/**
+ * Shows a notification; `description` adds a second, quieter line and `items` a short list under
+ * it (the first ones, then "+N"). Returns the toast id.
+ */
+type ToastFn = (title: string, description?: string, items?: string[]) => number;
 
 export interface ToastApi {
   success: ToastFn;
@@ -475,6 +482,24 @@ function ToastCard({
               <Emphasized text={item.description} part={item.emphasis} />
             </p>
           )}
+          {item.items && item.items.length > 0 && (
+            <ul className="mt-1.5 space-y-1">
+              {item.items.slice(0, TOAST_LIST_LIMIT).map((line) => (
+                <li
+                  key={line}
+                  className="flex items-start gap-2 text-[13px] leading-5 break-words text-muted"
+                >
+                  <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-current" />
+                  <span className="min-w-0">{line}</span>
+                </li>
+              ))}
+              {item.items.length > TOAST_LIST_LIMIT && (
+                <li className="pl-3 text-[12px] font-medium text-subtle">
+                  +{item.items.length - TOAST_LIST_LIMIT}
+                </li>
+              )}
+            </ul>
+          )}
         </div>
         <button
           type="button"
@@ -597,7 +622,8 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
         !item.leaving &&
         item.tone === content.tone &&
         item.title === content.title &&
-        item.description === content.description,
+        item.description === content.description &&
+        item.items?.join('|') === content.items?.join('|'),
     );
     // The same message twice in a row (a double submit) refreshes the visible toast.
     if (same) {
@@ -624,8 +650,8 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
   const value = useMemo<FeedbackContextValue>(() => {
     const of =
       (tone: ToastTone): ToastFn =>
-      (title, description) =>
-        push({ tone, title, description });
+      (title, description, items) =>
+        push({ tone, title, description, ...(items && { items }) });
     return {
       toast: {
         success: of('success'),

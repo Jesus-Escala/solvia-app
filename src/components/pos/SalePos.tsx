@@ -4,7 +4,6 @@ import {
   FileText,
   HandCoins,
   MessageSquareText,
-  PackagePlus,
   ReceiptText,
   ShoppingBasket,
   Tag,
@@ -23,6 +22,7 @@ import {
   useErrorToast,
   useFeedback,
 } from '@/ui';
+import { isSaveKey, isSearchKey, SAVE_KEY_LABEL } from './keys';
 import { Kbd, PosLayout } from './PosLayout';
 import { ProductCatalog } from './ProductCatalog';
 import { CustomerPicker, type PickedCustomer } from '../domain/CustomerPicker';
@@ -33,7 +33,8 @@ import { NewCustomerFields, type NewCustomer } from '../domain/NewCustomerFields
 import { PaymentMethodMark } from '../domain/PaymentMethods';
 import { roundQuantity } from '../domain/quantity';
 import type { CashGiven } from './saleTicket';
-import { ChangeCalculator, FreeLineForm, LineRow, SaleDone } from './SaleLines';
+import { NewProductForm } from './NewProductForm';
+import { ChangeCalculator, LineRow, SaleDone } from './SaleLines';
 import { money, round2, stepFor, type Line } from './saleMath';
 import { useCreateSale, useSaveCustomer, type SaleInput } from '../../hooks/queries';
 import { useModules } from '../../hooks/useModules';
@@ -51,8 +52,8 @@ const PAY_OPTIONS: PaymentMethod[] = ['cash', 'yape', 'plin', 'bank_transfer'];
  * free line for services or things not in the catalog, an optional discount and a big "Cobrar".
  * Charging asks how they pay in one row (cash with the change, Yape, Plin, transfer, or on
  * credit with an optional down payment), with the customer, receipt number and a note at hand.
- * Once saved: the change, the ticket (print or WhatsApp) and "Nueva venta". Keyboard: F2 search,
- * F4 charge / confirm, Esc back. Stock never blocks a sale: it only warns.
+ * Once saved: the change, the ticket (print or WhatsApp) and "Nueva venta". Keyboard: Alt+S (Option+S on a
+ * Mac) charge / confirm, Alt+B search, Esc back. Stock never blocks a sale: it only warns.
  */
 export function SalePos({
   onClose,
@@ -76,8 +77,8 @@ export function SalePos({
   const formRef = useRef<HTMLFormElement>(null);
 
   const [lines, setLines] = useState<Line[]>([]);
-  const [freeCount, setFreeCount] = useState(0);
-  const [freeOpen, setFreeOpen] = useState(false);
+  // A product being created on the spot (its name so far), or null.
+  const [newName, setNewName] = useState<string | null>(null);
   const [step, setStep] = useState<'ticket' | 'checkout'>('ticket');
   // Phones: the ticket is shown over the catalog.
   const [panelOpen, setPanelOpen] = useState(false);
@@ -134,14 +135,6 @@ export function SalePos({
         { key: product.id, product, description: product.name, quantity: 1, price: product.price },
       ];
     });
-  const addFree = (description: string, price: number) => {
-    setLines((current) => [
-      ...current,
-      { key: `free-${freeCount}`, product: null, description, quantity: 1, price },
-    ]);
-    setFreeCount((value) => value + 1);
-    setFreeOpen(false);
-  };
   const change = (key: string, changes: Partial<Line>) =>
     setLines((current) =>
       current.map((line) => (line.key === key ? { ...line, ...changes } : line)),
@@ -175,15 +168,15 @@ export function SalePos({
     window.setTimeout(() => searchRef.current?.focus(), 0);
   };
 
-  // Keyboard, like a till: F2 search, F4 charge (then confirm), Esc back from charging.
+  // Keyboard, like a till: Alt+S charge (then confirm), Alt+B search, Esc back from charging.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (done) return;
-      if (event.key === 'F2') {
+      if (isSearchKey(event)) {
         event.preventDefault();
         setStep('ticket');
         searchRef.current?.focus();
-      } else if (event.key === 'F4') {
+      } else if (isSaveKey(event)) {
         event.preventDefault();
         if (step === 'ticket') goCheckout();
         else formRef.current?.requestSubmit();
@@ -236,11 +229,17 @@ export function SalePos({
       items,
     });
     if (modules.inventory && result.lowStock.length > 0) {
+      // One line per product, the ones already without stock first.
       toast.warning(
         t('sales.lowStock'),
-        result.lowStock
-          .map((product) => `${product.name}: ${fmt.number(product.stock)}`)
-          .join(' · '),
+        t('sales.lowStockHint'),
+        [...result.lowStock]
+          .sort((a, b) => a.stock - b.stock)
+          .map((product) =>
+            product.stock <= 0
+              ? t('sales.lowStockOut', { name: product.name })
+              : t('sales.lowStockLeft', { name: product.name, count: fmt.number(product.stock) }),
+          ),
       );
     }
     setDone({
@@ -285,8 +284,19 @@ export function SalePos({
         )}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {freeOpen && <FreeLineForm onAdd={addFree} onCancel={() => setFreeOpen(false)} />}
-        {lines.length === 0 && !freeOpen ? (
+        {newName !== null && (
+          <NewProductForm
+            mode="sale"
+            initialName={newName}
+            onCreated={(product) => {
+              add(product);
+              setNewName(null);
+              searchRef.current?.focus();
+            }}
+            onCancel={() => setNewName(null)}
+          />
+        )}
+        {lines.length === 0 && newName === null ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 px-6 py-10 text-center text-sm text-muted">
             <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-2">
               <ShoppingBasket className="h-7 w-7 text-subtle" />
@@ -379,7 +389,7 @@ export function SalePos({
         >
           <HandCoins className="h-5 w-5" />
           {t('sales.pos.charge', { amount: fmt.money(total) })}
-          <Kbd>F4</Kbd>
+          <Kbd>{SAVE_KEY_LABEL}</Kbd>
         </button>
       </div>
     </>
@@ -603,7 +613,7 @@ export function SalePos({
           {t(credit ? 'sales.pos.confirmCredit' : 'sales.pos.confirm', {
             amount: fmt.money(credit ? total - down : total),
           })}
-          <Kbd>F4</Kbd>
+          <Kbd>{SAVE_KEY_LABEL}</Kbd>
         </Button>
       </div>
     </form>
@@ -623,20 +633,11 @@ export function SalePos({
           showStock={modules.inventory}
           inCart={inCart}
           searchRef={searchRef}
-          extra={
-            <button
-              type="button"
-              onClick={() => {
-                setFreeOpen(true);
-                setStep('ticket');
-                setPanelOpen(true);
-              }}
-              className="flex h-full min-h-32 w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-line-strong p-3 text-center text-sm font-semibold text-muted transition hover:border-primary/50 hover:text-primary-ink"
-            >
-              <PackagePlus className="h-6 w-6" />
-              {t('sales.form.addFree')}
-            </button>
-          }
+          onCreate={(name) => {
+            setNewName(name);
+            setStep('ticket');
+            setPanelOpen(true);
+          }}
         />
       }
       panel={step === 'ticket' ? ticket : checkout}

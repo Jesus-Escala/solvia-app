@@ -830,6 +830,20 @@ export const en: Messages = {
       save: 'Save changes',
     },
   },
+  pos: {
+    top: 'Best seller',
+    newTile: 'New product or service',
+    create: 'Create “{text}”',
+    noCatalog: 'You have no products yet. Create the first one right here.',
+    newProduct: {
+      title: 'New product (saved to your products)',
+      price: 'Sale price',
+      cost: 'It cost you',
+      service: 'It is a service (no stock)',
+      serviceHint: 'For example delivery, installation or a repair.',
+      create: 'Create and add',
+    },
+  },
   sales: {
     title: 'Sales',
     subtitle: 'Everything you sold. Tap a sale to see it or void it.',
@@ -857,7 +871,7 @@ export const en: Messages = {
       invoice: 'Invoice',
     },
     pos: {
-      keys: 'F2 search · F4 charge · Esc back',
+      keys: '{save} charge · {search} search · Esc back',
       popular: 'Your best sellers',
       results: 'Results for “{text}”',
       searchMore: 'Not here? Search it by name or scan its code.',
@@ -964,6 +978,9 @@ export const en: Messages = {
     saved: 'Sale #{number} recorded.',
     savedCredit: 'It was added to “Collections”.',
     lowStock: 'Running low',
+    lowStockHint: 'Buy these products soon:',
+    lowStockOut: '{name} — out of stock',
+    lowStockLeft: '{name} — {count} left',
     void: 'Void sale',
     voidTitle: 'Void sale #{number}?',
     voidMessage: 'The products go back to stock. This cannot be undone.',
@@ -994,7 +1011,7 @@ export const en: Messages = {
     },
     pos: {
       catalog: 'Your products (best sellers first)',
-      keys: 'F2 search · F4 save',
+      keys: '{save} save · {search} search',
       ticket: 'What arrived',
       emptyTicket: 'Tap or scan the products that arrived.',
       cost: 'Last cost',

@@ -70,7 +70,7 @@ export function PosLayout({
   );
 }
 
-/** Keyboard hint shown on large screens ("F4"). */
+/** Keyboard hint shown on large screens ("Alt S"). */
 export function Kbd({ children }: { children: ReactNode }) {
   return (
     <kbd className="hidden rounded border border-current/30 px-1.5 py-0.5 font-sans text-[10px] font-semibold opacity-80 lg:inline">

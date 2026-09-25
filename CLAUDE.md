@@ -60,10 +60,12 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
   'purchase')` navigates there. `components/pos/`: `PosLayout` (catalog left, ticket right;
   phones: catalog + bottom bar that opens the ticket) and `ProductCatalog` (best sellers as tiles
   from `/products/lookup?sort=popular`, search or barcode — Enter resolves scans in order, so fast
-  scans are never lost). The sale ticket (`pos/SaleLines.tsx`, helpers in `pos/saleMath.ts`) takes free
-  lines, a price for this sale only, a discount and "Cobrar" → checkout (cash with change, Yape,
-  Plin, transfer or credit with down payment), then the ticket (`saleTicket.ts`: print /
-  WhatsApp). Keyboard: F2 search, F4 charge/confirm, Esc back. Stock shortages are traced (sale/line badges, "Sin stock"
+  scans are never lost). A product that is not in the catalog is created right there (`pos/NewProductForm`,
+  also from "Crear «texto»" when a search finds nothing), so every line is a catalog product. The
+  sale ticket (`pos/SaleLines.tsx`, helpers in `pos/saleMath.ts`) takes a price for this sale
+  only, a discount and "Cobrar" → checkout (cash with change, Yape, Plin, transfer or credit with
+  down payment), then the ticket (`saleTicket.ts`: print / WhatsApp). Keyboard (`pos/keys.ts`):
+  Alt+S charge/confirm/save, Alt+B search (Option on a Mac), Esc back. Stock shortages are traced (sale/line badges, "Sin stock"
   filter, `KardexModal`) when the inventory module is on.
 - **Plan limits**: `components/plan/PlanUsage.tsx` — `PlanUsageCard` (Settings > Mi plan: automatic
   WhatsApp messages, users and customers of the month, from `GET /settings/plan`) and
@@ -88,7 +90,7 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
   button; both libraries load only when a file is opened. Used by Reports and the customer
   statement. Fetch files with `api.file(path, query)` (keeps the server's file name).
 - **Tables**: every column sorts (`sortable` + server `sortBy` for paginated lists, spread
-  `urlSort(state, update)` from `@/ui`; `sortValue` for tables with all rows). `onRowEdit` (right-click / long press) and `onRowDelete` (double-click, the page
+  `urlSort(state, update)` from `@/ui`; `sortValue` for tables with all rows). Rows have a fixed height: cells stay on one line and cut long text with "…" (`maxWidth`, default 320). `onRowEdit` (right-click / long press) and `onRowDelete` (double-click, the page
   confirms) shortcuts on `DataTable`; single click waits 260 ms when a delete shortcut exists.
 - Code style: absent values are `null`, not `undefined`; omit optional props with a conditional
   spread instead of passing `undefined`.
@@ -109,7 +111,7 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
   `<Modal>`; confirmations: `useFeedback().confirm`; notifications: `useFeedback().toast`.
   Errors from forms/actions are **toasts, not inline alerts**: `useErrorToast(mutation.error)` in the
   form, or `toast.apiError(err)` in a catch. `toast.success/error/info/warning(title, description?)`,
-  `toast.loading()` + `toast.update(id, …)`. Field errors still render under each input; inline
+  `toast.loading()` + `toast.update(id, …)`; several things of one kind go as a list: `toast.warning(title, description, items)`. Field errors still render under each input; inline
   `<Alert>` is only for persistent states (a list that failed to load, informational notes).
   Toasts carry a _kind_ label so users can tell origins apart: `validation` (interface rules —
   native `required`/`min`/`max` are intercepted globally and toasted), `service` (4xx from the API),

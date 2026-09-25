@@ -1,3 +1,4 @@
+import { SAVE_KEY_LABEL, SEARCH_KEY_LABEL } from '../components/pos/keys';
 import { useLocation } from 'react-router';
 import type { PickedCustomer } from '../components/domain/CustomerPicker';
 import { PosScreen } from '../components/pos/PosScreen';
@@ -18,7 +19,7 @@ export function SalePosPage() {
       title={t('sales.form.title')}
       backTo="/sales"
       backLabel={t('nav.sales')}
-      keys={t('sales.pos.keys')}
+      keys={t('sales.pos.keys', { save: SAVE_KEY_LABEL, search: SEARCH_KEY_LABEL })}
     >
       {({ onDirty, leave }) => (
         <SalePos
