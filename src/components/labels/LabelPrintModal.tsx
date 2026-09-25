@@ -60,7 +60,22 @@ function LabelPrinter({ initial, onClose }: { initial: Product[]; onClose: () =>
   const [loadingAll, setLoadingAll] = useState(false);
   const [printing, setPrinting] = useState(false);
 
-  const rows = list.data?.data ?? [];
+  const listed = list.data?.data ?? [];
+  // First the products it opened with (e.g. the one whose QR was open) and chosen ones that are
+  // not on this page of the list; then the list. Ticking others does not move them around.
+  const pinned = debounced
+    ? []
+    : [
+        ...initial,
+        ...[...picked.values()]
+          .map((item) => item.product)
+          .filter(
+            (product) =>
+              !initial.some((first) => first.id === product.id) &&
+              !listed.some((row) => row.id === product.id),
+          ),
+      ];
+  const rows = [...pinned, ...listed.filter((row) => !pinned.some((top) => top.id === row.id))];
   const total = [...picked.values()].reduce((sum, item) => sum + item.copies, 0);
   const business = me?.tenant.name ?? null;
 
@@ -114,7 +129,7 @@ function LabelPrinter({ initial, onClose }: { initial: Product[]; onClose: () =>
   // How many of what the search finds are chosen (all of them when nothing is searched).
   const found = list.data?.meta.total ?? 0;
   const chosenHere = debounced
-    ? rows.filter((product) => picked.has(product.id)).length
+    ? listed.filter((product) => picked.has(product.id)).length
     : Math.min(picked.size, found);
   const allChosen = found > 0 && chosenHere >= found;
   const someChosen = chosenHere > 0 && !allChosen;
@@ -124,7 +139,7 @@ function LabelPrinter({ initial, onClose }: { initial: Product[]; onClose: () =>
     setPicked((current) => {
       if (!debounced) return new Map();
       const next = new Map(current);
-      rows.forEach((product) => next.delete(product.id));
+      listed.forEach((product) => next.delete(product.id));
       return next;
     });
 
@@ -270,9 +285,9 @@ function LabelPrinter({ initial, onClose }: { initial: Product[]; onClose: () =>
             <li className="px-4 py-8 text-center text-sm text-muted">{t('labels.noProducts')}</li>
           )}
         </ul>
-        {(list.data?.meta.total ?? 0) > rows.length && (
+        {(list.data?.meta.total ?? 0) > listed.length && (
           <p className="text-xs text-subtle">
-            {t('labels.more', { count: (list.data?.meta.total ?? 0) - rows.length })}
+            {t('labels.more', { count: (list.data?.meta.total ?? 0) - listed.length })}
           </p>
         )}
       </div>
