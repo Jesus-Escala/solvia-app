@@ -347,11 +347,6 @@ function ProductsList() {
                   { label: t('common.edit'), icon: <Pencil />, onSelect: () => setEditing(row) },
                   { label: t('products.qr.action'), icon: <QrCode />, onSelect: () => setQr(row) },
                   {
-                    label: t('labels.printOne'),
-                    icon: <Printer />,
-                    onSelect: () => setLabels([row]),
-                  },
-                  {
                     label: t('adjust.open'),
                     icon: <ClipboardCheck />,
                     onSelect: () => setAdjusting(row),

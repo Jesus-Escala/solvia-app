@@ -1,15 +1,6 @@
-import { CheckSquare, Printer, Search, Square, Tag, X } from 'lucide-react';
-import { useState } from 'react';
-import {
-  Button,
-  cx,
-  IconButton,
-  Modal,
-  SegmentedControl,
-  Skeleton,
-  TextButton,
-  useFeedback,
-} from '@/ui';
+import { CheckSquare, Loader2, MinusSquare, Printer, Search, Square } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Button, cx, Modal, SegmentedControl, Skeleton, useFeedback } from '@/ui';
 import { ProductThumb } from '../domain/ProductThumb';
 import { useDebouncedValue } from '../domain/useSearchBox';
 import { useMe, useProducts } from '../../hooks/queries';
@@ -71,6 +62,39 @@ function LabelPrinter({ initial, onClose }: { initial: Product[]; onClose: () =>
 
   const rows = list.data?.data ?? [];
   const total = [...picked.values()].reduce((sum, item) => sum + item.copies, 0);
+  const business = me?.tenant.name ?? null;
+
+  /** What a label shows for a product. */
+  const toItem = (product: Product, copies: number) => ({
+    name: product.name,
+    price: product.price,
+    code: product.code ?? '',
+    unit:
+      product.kind === 'service' || product.unit === 'unit'
+        ? null
+        : t('labels.per', { unit: t(`products.unitsShort.${product.unit}`) }),
+    copies,
+  });
+
+  // Live preview: the first chosen product (or an example), exactly as it prints.
+  const first = [...picked.values()][0]?.product ?? null;
+  const [preview, setPreview] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const item = first
+      ? toItem(first, 1)
+      : { name: t('labels.sample'), price: 12.9, code: '20000001', unit: null, copies: 1 };
+    void buildLabelsHtml({ items: [item], size, paper, business, title: '', preview: true }).then(
+      (html) => {
+        if (alive) setPreview(html);
+      },
+    );
+    return () => {
+      alive = false;
+    };
+    // `toItem` and `t` are stable enough: the preview follows the product, size and business.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [first?.id, first?.price, first?.name, size, paper, business]);
 
   const toggle = (product: Product) =>
     setPicked((current) => {
@@ -84,6 +108,23 @@ function LabelPrinter({ initial, onClose }: { initial: Product[]; onClose: () =>
       const next = new Map(current);
       const item = next.get(id);
       if (item) next.set(id, { ...item, copies: Math.max(1, Math.min(99, copies)) });
+      return next;
+    });
+
+  // How many of what the search finds are chosen (all of them when nothing is searched).
+  const found = list.data?.meta.total ?? 0;
+  const chosenHere = debounced
+    ? rows.filter((product) => picked.has(product.id)).length
+    : Math.min(picked.size, found);
+  const allChosen = found > 0 && chosenHere >= found;
+  const someChosen = chosenHere > 0 && !allChosen;
+
+  /** Deselects what the search finds (everything when nothing is searched). */
+  const unpickFound = () =>
+    setPicked((current) => {
+      if (!debounced) return new Map();
+      const next = new Map(current);
+      rows.forEach((product) => next.delete(product.id));
       return next;
     });
 
@@ -121,18 +162,9 @@ function LabelPrinter({ initial, onClose }: { initial: Product[]; onClose: () =>
       const html = await buildLabelsHtml({
         size,
         paper,
-        business: me?.tenant.name ?? null,
+        business,
         title: t('labels.title'),
-        items: items.map(({ product, copies }) => ({
-          name: product.name,
-          price: fmt.money(product.price),
-          code: product.code!,
-          unit:
-            product.kind === 'service' || product.unit === 'unit'
-              ? null
-              : t('labels.per', { unit: t(`products.unitsShort.${product.unit}`) }),
-          copies,
-        })),
+        items: items.map(({ product, copies }) => toItem(product, copies)),
       });
       printHtml(html);
     } finally {
@@ -154,16 +186,38 @@ function LabelPrinter({ initial, onClose }: { initial: Product[]; onClose: () =>
               onChange={(event) => setSearch(event.target.value)}
             />
           </div>
-          <Button
-            variant="secondary"
-            icon={<CheckSquare className="h-4 w-4" />}
-            loading={loadingAll}
-            onClick={() => void pickAll()}
-          >
-            {debounced ? t('labels.pickFound') : t('labels.pickAll')}
-          </Button>
         </div>
-        <ul className="max-h-[52vh] divide-y divide-line overflow-y-auto rounded-xl border border-line">
+        <ul className="max-h-[calc(100dvh-17rem)] min-h-64 divide-y divide-line overflow-y-auto rounded-xl border border-line lg:h-[calc(100dvh-17rem)]">
+          {/* Select all / deselect all (of what the search finds). */}
+          {found > 0 && (
+            <li className="sticky top-0 z-10 bg-surface-2">
+              <button
+                type="button"
+                onClick={() => (allChosen || someChosen ? unpickFound() : void pickAll())}
+                disabled={loadingAll}
+                aria-pressed={allChosen}
+                className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm font-semibold"
+              >
+                {loadingAll ? (
+                  <Loader2 className="h-5 w-5 shrink-0 animate-spin text-primary" />
+                ) : allChosen ? (
+                  <CheckSquare className="h-5 w-5 shrink-0 text-primary" />
+                ) : someChosen ? (
+                  <MinusSquare className="h-5 w-5 shrink-0 text-primary" />
+                ) : (
+                  <Square className="h-5 w-5 shrink-0 text-subtle" />
+                )}
+                <span className="min-w-0 flex-1">
+                  {allChosen || someChosen
+                    ? t('labels.unpickAll')
+                    : t(debounced ? 'labels.pickFound' : 'labels.pickAll', { count: found })}
+                </span>
+                <span className="text-xs font-normal text-muted">
+                  {t('labels.chosenOf', { chosen: chosenHere, count: found })}
+                </span>
+              </button>
+            </li>
+          )}
           {list.isLoading &&
             Array.from({ length: 6 }, (_, index) => (
               <li key={index} className="p-3">
@@ -223,8 +277,24 @@ function LabelPrinter({ initial, onClose }: { initial: Product[]; onClose: () =>
         )}
       </div>
 
-      {/* Settings and the chosen ones */}
+      {/* Preview, settings and the chosen ones */}
       <div className="space-y-4">
+        <div>
+          <p className="label">{t('labels.preview')}</p>
+          {/* The label drawn to scale (96 px per inch), in its own document like the print. */}
+          <div className="overflow-hidden rounded-xl border border-line">
+            {preview ? (
+              <iframe
+                title={t('labels.preview')}
+                srcDoc={preview}
+                className="block w-full border-0"
+                style={{ height: size === 'shelf' ? 220 : 170 }}
+              />
+            ) : (
+              <Skeleton className="h-40 w-full" />
+            )}
+          </div>
+        </div>
         <div>
           <p className="label">{t('labels.size')}</p>
           <div className="grid grid-cols-2 gap-2">
@@ -277,34 +347,6 @@ function LabelPrinter({ initial, onClose }: { initial: Product[]; onClose: () =>
             ]}
           />
           <p className="mt-1.5 text-xs text-muted">{t(`labels.papers.${paper}Hint`)}</p>
-        </div>
-
-        <div className="rounded-xl border border-line">
-          <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2">
-            <span className="flex items-center gap-2 text-sm font-semibold">
-              <Tag className="h-4 w-4 text-primary" />
-              {t('labels.chosen', { count: picked.size })}
-            </span>
-            {picked.size > 0 && (
-              <TextButton size="sm" onClick={() => setPicked(new Map())}>
-                {t('labels.clear')}
-              </TextButton>
-            )}
-          </div>
-          <ul className="max-h-40 overflow-y-auto">
-            {[...picked.values()].map(({ product, copies }) => (
-              <li key={product.id} className="flex items-center gap-2 px-3 py-1.5 text-sm">
-                <span className="min-w-0 flex-1 truncate">{product.name}</span>
-                <span className="text-xs text-muted tabular-nums">×{copies}</span>
-                <IconButton size="sm" label={t('common.delete')} onClick={() => toggle(product)}>
-                  <X className="h-3.5 w-3.5" />
-                </IconButton>
-              </li>
-            ))}
-            {picked.size === 0 && (
-              <li className="px-3 py-4 text-center text-xs text-muted">{t('labels.none')}</li>
-            )}
-          </ul>
         </div>
 
         <div className="flex flex-col gap-2">
