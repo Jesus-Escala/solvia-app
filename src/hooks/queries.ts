@@ -1,13 +1,17 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import type {
+  AdjustmentReason,
+  AnalyticsGranularity,
+  AuthConfig,
   CashFlow,
-  DebtConcentration,
   Customer,
   CustomerDetail,
   CustomerListItem,
   CustomerOption,
+  DashboardAnalytics,
   DashboardSummary,
+  DebtConcentration,
   Me,
   MessageTemplate,
   MonthlyReport,
@@ -15,32 +19,29 @@ import type {
   NotificationLogItem,
   Paginated,
   Payment,
-  Product,
-  ProductOption,
-  ProductUnit,
   PaymentLink,
   PaymentMethod,
   PlanUsage,
+  Product,
+  ProductKind,
+  ProductOption,
+  ProductUnit,
+  Purchase,
   Receivable,
   ReceivableStatus,
   ReminderRules,
+  ReminderRunSummary,
   ReportId,
   ReportPeriod,
   ReportTypes,
+  RiskLevel,
   Sale,
   SaleDocType,
-  ReminderRunSummary,
-  RiskLevel,
   SortDir,
+  StockMovement,
   Supplier,
   SupplierOption,
-  Purchase,
-  AdjustmentReason,
-  StockMovement,
   TemplateType,
-  AuthConfig,
-  AnalyticsGranularity,
-  DashboardAnalytics,
   TenantUser,
   UserRole,
 } from '../lib/types';
@@ -380,6 +381,7 @@ export interface ProductListParams {
   status?: 'active' | 'archived' | 'all' | null;
   /** Only counted products at or below their alert level. */
   lowStock?: boolean | null;
+  kind?: ProductKind | null;
   page: number;
   pageSize?: number | null;
   sortBy?:
@@ -452,6 +454,7 @@ export function useCustomerLookup(search: string) {
 }
 
 export interface ProductInput {
+  kind?: ProductKind;
   name: string;
   code?: string | null;
   unit?: ProductUnit;
@@ -468,6 +471,20 @@ export function useSaveProduct(id?: string) {
   return useMutation({
     mutationFn: (input: ProductInput) =>
       id ? api.patch<Product>(`/products/${id}`, input) : api.post<Product>('/products', input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
+  });
+}
+
+/** Sets (`file`) or removes (`null`) the picture of a product. */
+export function useProductImage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File | null }) => {
+      if (file === null) return api.delete<Product>(`/products/${id}/image`);
+      const form = new FormData();
+      form.set('image', file);
+      return api.put<Product>(`/products/${id}/image`, form);
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
   });
 }

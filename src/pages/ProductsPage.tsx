@@ -8,7 +8,9 @@ import {
   Package,
   PackagePlus,
   Pencil,
+  QrCode,
   Trash2,
+  Wrench,
 } from 'lucide-react';
 import { useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
@@ -34,6 +36,8 @@ import { useAuth } from '../auth/AuthContext';
 import { AdjustStockModal } from '../components/domain/AdjustStockModal';
 import { KardexModal } from '../components/domain/KardexModal';
 import { ProductFormModal } from '../components/domain/ProductFormModal';
+import { ProductQrModal } from '../components/domain/ProductQrModal';
+import { ProductThumb } from '../components/domain/ProductThumb';
 import { ModulesOffer } from '../components/modules/ModulesOffer';
 import {
   useDeleteProduct,
@@ -43,11 +47,12 @@ import {
 } from '../hooks/queries';
 import { useModules } from '../hooks/useModules';
 import { useI18n } from '../i18n/I18nProvider';
-import type { Product, SortDir } from '../lib/types';
+import type { Product, ProductKind, SortDir } from '../lib/types';
 
 const DEFAULTS = {
   search: '',
   status: 'all',
+  kind: '',
   page: '1',
   pageSize: '20',
   sortBy: '',
@@ -86,6 +91,7 @@ function ProductsList() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [kardex, setKardex] = useState<Product | null>(null);
   const [adjusting, setAdjusting] = useState<Product | null>(null);
+  const [qr, setQr] = useState<Product | null>(null);
   const remove = useDeleteProduct();
   const setActive = useSetProductActive();
 
@@ -93,6 +99,7 @@ function ProductsList() {
     search: state.search || null,
     status: (state.status === 'low' ? 'active' : state.status) as ProductListParams['status'],
     lowStock: state.status === 'low' ? true : null,
+    kind: (state.kind || null) as ProductKind | null,
     page: Number(state.page) || 1,
     pageSize: Number(state.pageSize) || 20,
     sortBy: (state.sortBy || null) as ProductListParams['sortBy'],
@@ -135,16 +142,24 @@ function ProductsList() {
       minWidth: 220,
       mobile: 'title',
       cell: (row) => (
-        <div className="min-w-0">
-          <p className="truncate font-medium">
-            {row.name}
-            {!row.active && (
-              <span className="ml-2 align-middle">
-                <Badge tone="neutral">{t('products.archivedBadge')}</Badge>
-              </span>
-            )}
-          </p>
-          {row.code && <p className="text-xs text-subtle tabular-nums">{row.code}</p>}
+        <div className="flex min-w-0 items-center gap-3">
+          <ProductThumb name={row.name} imageUrl={row.imageUrl} size={36} />
+          <div className="min-w-0">
+            <p className="truncate font-medium">
+              {row.name}
+              {row.kind === 'service' && (
+                <span className="ml-2 align-middle">
+                  <Badge tone="info">{t('products.kinds.service')}</Badge>
+                </span>
+              )}
+              {!row.active && (
+                <span className="ml-2 align-middle">
+                  <Badge tone="neutral">{t('products.archivedBadge')}</Badge>
+                </span>
+              )}
+            </p>
+            {row.code && <p className="text-xs text-subtle tabular-nums">{row.code}</p>}
+          </div>
         </div>
       ),
     },
@@ -258,6 +273,16 @@ function ProductsList() {
                 { value: 'archived', label: t('products.filters.archived'), icon: <Archive /> },
               ]}
             />
+            <SegmentedControl
+              label={t('products.form.kind')}
+              value={state.kind}
+              onChange={(kind) => update({ kind, page: '1' })}
+              options={[
+                { value: '', label: t('common.all'), icon: <Layers /> },
+                { value: 'product', label: t('products.kinds.products'), icon: <Package /> },
+                { value: 'service', label: t('products.kinds.services'), icon: <Wrench /> },
+              ]}
+            />
           </>
         }
         columns={columns}
@@ -288,6 +313,7 @@ function ProductsList() {
                 close={close}
                 items={[
                   { label: t('common.edit'), icon: <Pencil />, onSelect: () => setEditing(row) },
+                  { label: t('products.qr.action'), icon: <QrCode />, onSelect: () => setQr(row) },
                   {
                     label: t('adjust.open'),
                     icon: <ClipboardCheck />,
@@ -345,7 +371,9 @@ function ProductsList() {
         open={editing !== null}
         {...(editing !== null && { product: editing })}
         onClose={() => setEditing(null)}
+        onShowQr={setQr}
       />
+      <ProductQrModal product={qr} onClose={() => setQr(null)} />
     </Page>
   );
 }

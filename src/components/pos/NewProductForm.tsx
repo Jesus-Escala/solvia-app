@@ -71,6 +71,7 @@ function NewProductForm({
       name: name.trim(),
       price: money(price),
       unit,
+      kind: service ? 'service' : 'product',
       trackStock: !service,
       ...(money(cost) > 0 && { cost: money(cost) }),
     });

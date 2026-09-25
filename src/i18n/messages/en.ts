@@ -1141,6 +1141,22 @@ export const en: Messages = {
     },
   },
   products: {
+    createdCode: 'Its code is {code}. You can print its QR from the list.',
+    kinds: {
+      product: 'Product',
+      service: 'Service',
+      products: 'Products',
+      services: 'Services',
+    },
+    qr: {
+      title: 'QR code',
+      description: 'Print it and stick it on the product: scanning it adds it to the sale.',
+      action: 'QR code',
+      short: 'QR',
+      alt: 'QR code of {name}',
+      print: 'Print label',
+      download: 'Download picture',
+    },
     title: 'Products',
     subtitle: 'What you sell, with its price. Tap one to change it.',
     new: 'New product',
@@ -1195,6 +1211,18 @@ export const en: Messages = {
     emptyFiltered: 'No products like that',
     emptyFilteredDescription: 'Try another name or change the filter.',
     form: {
+      kind: 'What it is',
+      image: 'Product picture',
+      addImage: 'Add picture',
+      removeImage: 'Remove',
+      imageTooLarge: 'The picture is too large (5 MB max).',
+      servicePlaceholder: 'E.g. Kitchen installation',
+      serviceCostHint:
+        'What it costs you to provide it (materials, fares…). So you know what you earn.',
+      serviceNote: 'A service has no stock: sell it as many times as you like.',
+      codeAutoHint:
+        'The product barcode. Leave it empty and Solvia gives it a unique code for its QR.',
+      codeAutoPlaceholder: 'Generated automatically',
       packSize: 'You buy it in a sack or box of',
       packSizePlaceholder: 'E.g. 10',
       packSizeHint:

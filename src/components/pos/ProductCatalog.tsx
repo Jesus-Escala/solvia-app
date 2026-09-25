@@ -5,16 +5,8 @@ import { cx, Skeleton } from '@/ui';
 import { productLookupQuery, useProductCatalog } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { ProductOption } from '../../lib/types';
+import { ProductThumb } from '../domain/ProductThumb';
 import { useDebouncedValue } from '../domain/useSearchBox';
-
-/** Two letters for the tile of a product without a picture ("Arroz Costeño" → "AC"). */
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0]!.toUpperCase())
-    .join('');
 
 /**
  * The catalog of a point of sale: a search box that also takes a barcode scanner (Enter adds
@@ -273,9 +265,11 @@ function ProductTile({
         </span>
       )}
       <span className="flex items-start gap-2">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-xs font-bold text-primary-ink">
-          {initials(product.name)}
-        </span>
+        <ProductThumb
+          name={product.name}
+          imageUrl={product.imageUrl}
+          size={product.imageUrl ? 48 : 36}
+        />
         <span className="min-w-0">
           <span className="line-clamp-2 text-sm leading-snug font-semibold">{product.name}</span>
           {top && (
@@ -292,7 +286,11 @@ function ProductTile({
           <span className="block font-display text-lg leading-none font-semibold tabular-nums">
             {amount === null ? '—' : fmt.money(amount)}
           </span>
-          <span className="text-[11px] text-muted">{t(`products.unitsShort.${product.unit}`)}</span>
+          <span className="text-[11px] text-muted">
+            {product.kind === 'service'
+              ? t('products.kinds.service')
+              : t(`products.unitsShort.${product.unit}`)}
+          </span>
         </span>
         {tone && (
           <span className={cx('rounded-full px-2 py-0.5 text-[11px] font-semibold', tone)}>

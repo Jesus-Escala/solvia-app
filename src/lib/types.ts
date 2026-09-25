@@ -59,10 +59,17 @@ export interface Tenant {
 
 export type ProductUnit = 'unit' | 'kg' | 'liter' | 'box' | 'pack' | 'dozen' | 'meter';
 
+/** A product (can be counted in stock) or a service (never counted). */
+export type ProductKind = 'product' | 'service';
+
 export interface Product {
   id: string;
+  kind: ProductKind;
   name: string;
+  /** Its own barcode, or the internal code Solvia gave it (printed as its QR). */
   code: string | null;
+  /** Picture (`/files/products/...`). */
+  imageUrl: string | null;
   unit: ProductUnit;
   price: number;
   cost: number | null;
@@ -319,8 +326,10 @@ export interface Purchase {
 export type ProductOption = Pick<
   Product,
   | 'id'
+  | 'kind'
   | 'name'
   | 'code'
+  | 'imageUrl'
   | 'unit'
   | 'price'
   | 'cost'

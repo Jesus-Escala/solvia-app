@@ -1146,6 +1146,22 @@ export const es = {
     },
   },
   products: {
+    createdCode: 'Su código es {code}. Puedes imprimir su QR desde la lista.',
+    kinds: {
+      product: 'Producto',
+      service: 'Servicio',
+      products: 'Productos',
+      services: 'Servicios',
+    },
+    qr: {
+      title: 'Código QR',
+      description: 'Imprímelo y pégalo en el producto: al escanearlo se agrega a la venta.',
+      action: 'Código QR',
+      short: 'QR',
+      alt: 'Código QR de {name}',
+      print: 'Imprimir etiqueta',
+      download: 'Descargar imagen',
+    },
     title: 'Productos',
     subtitle: 'Lo que vendes, con su precio. Toca uno para cambiarlo.',
     new: 'Nuevo producto',
@@ -1199,6 +1215,17 @@ export const es = {
     emptyFiltered: 'No hay productos así',
     emptyFilteredDescription: 'Prueba con otro nombre o cambia el filtro.',
     form: {
+      kind: 'Qué es',
+      image: 'Foto del producto',
+      addImage: 'Agregar foto',
+      removeImage: 'Quitar',
+      imageTooLarge: 'La foto es muy pesada (máximo 5 MB).',
+      servicePlaceholder: 'Ej.: Instalación de cocina',
+      serviceCostHint: 'Lo que te cuesta darlo (materiales, pasaje…). Así sabes cuánto ganas.',
+      serviceNote: 'Un servicio no lleva stock: se vende las veces que quieras.',
+      codeAutoHint:
+        'El código de barras del producto. Si lo dejas vacío, Solvia le pone un código único para su QR.',
+      codeAutoPlaceholder: 'Se genera solo',
       packSize: 'Lo compras en saco o caja de',
       packSizePlaceholder: 'Ej. 10',
       packSizeHint:

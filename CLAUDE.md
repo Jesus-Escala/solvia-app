@@ -53,7 +53,7 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
 - `src/hooks/queries.ts` — every API call as a TanStack Query hook (query keys + invalidation).
 - **Modules** (enabled per business from solvia-admin, `me.tenant.modules`): `useModules()` →
   `{ sales, inventory, catalog }`. Nav items with `module` only show when enabled; a module page
-  renders `ModuleOff` otherwise. Catalog: `ProductsPage` (`/products`) + `ProductFormModal`.
+  renders `ModuleOff` otherwise. Catalog: `ProductsPage` (`/products`) + `ProductFormModal` (product or service — a service has no unit, stock or sack; a picture via `useProductImage`; the code is optional: without one the API assigns a unique internal code) + `ProductQrModal` (the code as a QR: print a 50×30 mm label or download it; `qrcode` package). `ProductThumb` shows the picture or the initials.
   Selling and buying are **point-of-sale screens of their own** at `/sales/new` (`SalePosPage` →
   `pos/SalePos`) and `/purchases/new` (`PurchasePosPage` → `pos/PurchasePos`), outside the app
   shell (`PosScreen`: slim top bar, back asks before losing a ticket); `quick.open('sale' |
