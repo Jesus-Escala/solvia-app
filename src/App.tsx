@@ -1,5 +1,6 @@
 import { Compass } from 'lucide-react';
 import { Link, Route, Routes } from 'react-router';
+import { ModuleRoute } from './components/modules/ModuleRoute';
 import { PublicOnly, RequireAuth } from './auth/RequireAuth';
 import { AppShell } from './components/layout/AppShell';
 import { Page } from '@/ui';
@@ -47,11 +48,15 @@ export function App() {
         <Route path="change-password" element={<ChangePasswordPage />} />
         <Route element={<AppShell />}>
           <Route index element={<HomePage />} />
-          <Route path="dashboard" element={<DashboardPage />} />
+          <Route element={<ModuleRoute need="collections" />}>
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="receivables" element={<ReceivablesPage />} />
+          </Route>
           <Route path="reports" element={<ReportsPage />} />
-          <Route path="customers" element={<CustomersPage />} />
-          <Route path="customers/:id" element={<CustomerDetailPage />} />
-          <Route path="receivables" element={<ReceivablesPage />} />
+          <Route element={<ModuleRoute need="customers" />}>
+            <Route path="customers" element={<CustomersPage />} />
+            <Route path="customers/:id" element={<CustomerDetailPage />} />
+          </Route>
           <Route path="products" element={<ProductsPage />} />
           <Route path="sales" element={<SalesPage />} />
           <Route path="purchases" element={<PurchasesPage />} />

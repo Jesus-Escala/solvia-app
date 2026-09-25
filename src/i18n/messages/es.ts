@@ -92,6 +92,12 @@ export const es = {
     typeToSearch: 'Escribe para buscar.',
   },
   home: {
+    salesMonth: 'Vendiste este mes',
+    salesMonthCount: '{count|# venta|# ventas}',
+    salesLink: 'Ver mis ventas',
+    stockValue: 'Tu inventario vale',
+    stockValueHint: '{count|# producto|# productos} (a precio de costo)',
+    stockLink: 'Ver mis productos',
     lowStock: '{count|# producto se está acabando|# productos se están acabando}',
     lowStockHint: 'Revísalos y compra antes de que te falten.',
     greeting: 'Hola, {name}',
@@ -685,6 +691,11 @@ export const es = {
       'Se eliminarán {name} y todas sus deudas, pagos y mensajes. Esta acción no se puede deshacer.',
   },
   customerDetail: {
+    noCollections: {
+      title: 'Sus compras están en Ventas',
+      description: 'Mira todo lo que te compró este cliente.',
+      link: 'Ver sus ventas',
+    },
     back: 'Clientes',
     newReceivable: 'Anotar fiado',
     viewStatement: 'Ver resumen de deuda',
@@ -1129,6 +1140,12 @@ export const es = {
       price: '+{amount} al mes',
       cta: 'Quiero sumarlo',
       note: 'Pago adicional a tu plan. Puedes quitarlo cuando quieras.',
+      collections: {
+        name: 'Cobranza',
+        a: 'Anota lo que te deben y quién te pagó',
+        b: 'Recordatorios por WhatsApp y estados de cuenta',
+        c: 'Dashboard y reporte de cobros',
+      },
       sales: {
         name: 'Ventas',
         a: 'Registra ventas en segundos, al contado o fiadas',

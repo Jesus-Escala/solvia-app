@@ -29,7 +29,7 @@ import { PeriodPicker } from '../components/dashboard/PeriodPicker';
 import { FileViewer, type ViewerKind, type ViewerRequest } from '../components/files/FileViewer';
 import { useReport } from '../hooks/queries';
 import { api } from '../lib/api';
-import { useModules } from '../hooks/useModules';
+import { type Modules, useModules } from '../hooks/useModules';
 import { useI18n, type TranslationKey } from '../i18n/I18nProvider';
 import type {
   CollectionsByCustomerRow,
@@ -42,13 +42,11 @@ import type {
   StockStatus,
 } from '../lib/types';
 
-type Modules = ReturnType<typeof useModules>;
-
 interface ReportDef {
   id: ReportId;
   icon: ReactNode;
-  /** Business module the report needs (the collections report is always there). */
-  module: 'sales' | 'catalog' | null;
+  /** Business module the report needs. */
+  module: 'sales' | 'catalog' | 'collections';
   /** The stock report is a snapshot of today: no date range. */
   dated: boolean;
 }
@@ -64,7 +62,9 @@ const GROUPS: Array<{ title: TranslationKey; reports: ReportDef[] }> = [
   },
   {
     title: 'reports.groups.collections',
-    reports: [{ id: 'collections-by-customer', icon: <HandCoins />, module: null, dated: true }],
+    reports: [
+      { id: 'collections-by-customer', icon: <HandCoins />, module: 'collections', dated: true },
+    ],
   },
   {
     title: 'reports.groups.inventory',
@@ -81,7 +81,7 @@ const DEFAULTS = { report: '', from: '', to: '' };
 function availableGroups(modules: Modules) {
   return GROUPS.map((group) => ({
     ...group,
-    reports: group.reports.filter((report) => !report.module || modules[report.module]),
+    reports: group.reports.filter((report) => modules[report.module]),
   })).filter((group) => group.reports.length > 0);
 }
 

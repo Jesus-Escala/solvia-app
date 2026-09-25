@@ -47,7 +47,7 @@ export interface AuthResponse {
 }
 
 /** Optional modules enabled from the backoffice (the product catalog comes with any of them). */
-export type TenantModule = 'sales' | 'inventory';
+export type TenantModule = 'collections' | 'sales' | 'inventory';
 
 export interface Tenant {
   id: string;

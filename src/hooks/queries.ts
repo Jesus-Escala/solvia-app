@@ -142,27 +142,32 @@ export function useResetUserPassword() {
 
 // --- Dashboard -------------------------------------------------------------
 
-export function useDashboardSummary() {
+export function useDashboardSummary(enabled = true) {
   return useQuery({
     queryKey: queryKeys.dashboard,
     queryFn: () => api.get<DashboardSummary>('/dashboard/summary'),
+    enabled,
   });
 }
 
 /** Period analytics (keeps the previous period's data on screen while the next one loads). */
-export function useDashboardAnalytics(params: {
-  from: string;
-  to: string;
-  granularity?: AnalyticsGranularity;
-  /** Cross-filters (omitted when undefined). */
-  method?: PaymentMethod;
-  customerId?: string;
-  weekday?: number;
-}) {
+export function useDashboardAnalytics(
+  params: {
+    from: string;
+    to: string;
+    granularity?: AnalyticsGranularity;
+    /** Cross-filters (omitted when undefined). */
+    method?: PaymentMethod;
+    customerId?: string;
+    weekday?: number;
+  },
+  enabled = true,
+) {
   return useQuery({
     queryKey: [...queryKeys.dashboard, 'analytics', params],
     queryFn: () => api.get<DashboardAnalytics>('/dashboard/analytics', { ...params }),
     placeholderData: keepPreviousData,
+    enabled,
   });
 }
 
@@ -281,11 +286,12 @@ export interface ReceivableListParams {
   sortDir?: SortDir;
 }
 
-export function useReceivables(params: ReceivableListParams) {
+export function useReceivables(params: ReceivableListParams, enabled = true) {
   return useQuery({
     queryKey: queryKeys.receivableList(params),
     queryFn: () => api.get<Paginated<Receivable>>('/receivables', { ...params }),
     placeholderData: keepPreviousData,
+    enabled,
   });
 }
 
@@ -713,29 +719,38 @@ export function useRunReminders() {
   });
 }
 
-export function useNotifications(params: {
-  page: number;
-  pageSize?: number;
-  receivableId?: string;
-  customerId?: string;
-  sortBy?: 'sentAt' | 'customer' | 'type' | 'status' | 'content' | null;
-  sortDir?: SortDir | null;
-}) {
+export function useNotifications(
+  params: {
+    page: number;
+    pageSize?: number;
+    receivableId?: string;
+    customerId?: string;
+    sortBy?: 'sentAt' | 'customer' | 'type' | 'status' | 'content' | null;
+    sortDir?: SortDir | null;
+  },
+  enabled = true,
+) {
   return useQuery({
     queryKey: queryKeys.notifications(params),
     queryFn: () => api.get<Paginated<NotificationLogItem>>('/notifications', { ...params }),
     placeholderData: keepPreviousData,
+    enabled,
   });
 }
 
 // --- Tabular reports -------------------------------------------------------------
 
 /** One tabular report; the stock report ignores the period (it is a snapshot of today). */
-export function useReport<R extends ReportId>(report: R, period: ReportPeriod | null) {
+export function useReport<R extends ReportId>(
+  report: R,
+  period: ReportPeriod | null,
+  enabled = true,
+) {
   return useQuery({
     queryKey: ['reports', report, period] as const,
     queryFn: ({ signal }) =>
       api.get<ReportTypes[R]>(`/reports/${report}`, { ...period }, { signal }),
     placeholderData: keepPreviousData,
+    enabled,
   });
 }

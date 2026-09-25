@@ -1,4 +1,4 @@
-import { ArrowUpRight, Boxes, Check, ScanBarcode, Sparkles } from 'lucide-react';
+import { ArrowUpRight, Boxes, Check, ReceiptText, ScanBarcode, Sparkles } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { cx } from '@/ui';
 import { useModules } from '../../hooks/useModules';
@@ -10,8 +10,12 @@ import type { TenantModule } from '../../lib/types';
  * Reference extra price per month of each module (PEN): the same as the landing page
  * (solvia-landing `sections/plans.ts`) and the backoffice.
  */
-const MODULE_PRICES: Record<TenantModule, number> = { sales: 29, inventory: 29 };
-const ICONS: Record<TenantModule, ReactNode> = { sales: <ScanBarcode />, inventory: <Boxes /> };
+const MODULE_PRICES: Record<TenantModule, number> = { collections: 39, sales: 29, inventory: 29 };
+const ICONS: Record<TenantModule, ReactNode> = {
+  collections: <ReceiptText />,
+  sales: <ScanBarcode />,
+  inventory: <Boxes />,
+};
 const POINTS = ['a', 'b', 'c'] as const;
 
 /**
@@ -22,7 +26,9 @@ export function ModulesOffer({ className }: { className?: string }) {
   const { t, fmt } = useI18n();
   const modules = useModules();
   if (modules.loading) return null;
-  const missing = (['sales', 'inventory'] as const).filter((module) => !modules[module]);
+  const missing = (['collections', 'sales', 'inventory'] as const).filter(
+    (module) => !modules[module],
+  );
   if (missing.length === 0) return null;
 
   return (
@@ -44,7 +50,13 @@ export function ModulesOffer({ className }: { className?: string }) {
           <p className="text-sm text-muted">{t('modules.offer.subtitle')}</p>
         </div>
       </div>
-      <ul className={cx('mt-4 grid gap-3', missing.length > 1 && 'sm:grid-cols-2')}>
+      <ul
+        className={cx(
+          'mt-4 grid gap-3',
+          missing.length > 1 && 'sm:grid-cols-2',
+          missing.length > 2 && 'lg:grid-cols-3',
+        )}
+      >
         {missing.map((module) => (
           <li key={module} className="rounded-xl border border-line bg-surface p-4">
             <div className="flex items-center justify-between gap-3">
@@ -70,7 +82,7 @@ export function ModulesOffer({ className }: { className?: string }) {
         ))}
       </ul>
       <a
-        // One module: the request form with it checked; both: the plan builder of the landing.
+        // One module: the request form with it checked; more: the plan builder of the landing.
         href={
           missing.length > 1
             ? `${LANDING_URL}/#pricing`

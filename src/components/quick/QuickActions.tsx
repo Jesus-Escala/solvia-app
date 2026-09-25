@@ -193,18 +193,22 @@ export function QuickAddMenu({ variant = 'button' }: { variant?: 'button' | 'fab
           },
         ]
       : []),
-    {
-      action: 'receivable',
-      icon: <ReceiptText />,
-      label: t('quick.receivable'),
-      hint: t('quick.receivableHint'),
-    },
-    {
-      action: 'payment',
-      icon: <HandCoins />,
-      label: t('quick.payment.label'),
-      hint: t('quick.paymentHint'),
-    },
+    ...(modules.collections
+      ? [
+          {
+            action: 'receivable' as const,
+            icon: <ReceiptText />,
+            label: t('quick.receivable'),
+            hint: t('quick.receivableHint'),
+          },
+          {
+            action: 'payment' as const,
+            icon: <HandCoins />,
+            label: t('quick.payment.label'),
+            hint: t('quick.paymentHint'),
+          },
+        ]
+      : []),
     ...(modules.inventory
       ? [
           {
@@ -215,12 +219,16 @@ export function QuickAddMenu({ variant = 'button' }: { variant?: 'button' | 'fab
           },
         ]
       : []),
-    {
-      action: 'customer',
-      icon: <UserPlus />,
-      label: t('quick.customer'),
-      hint: t('quick.customerHint'),
-    },
+    ...(modules.customers
+      ? [
+          {
+            action: 'customer' as const,
+            icon: <UserPlus />,
+            label: t('quick.customer'),
+            hint: t('quick.customerHint'),
+          },
+        ]
+      : []),
   ];
 
   return (

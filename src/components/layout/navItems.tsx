@@ -13,9 +13,7 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { TranslationKey } from '../../i18n/I18nProvider';
-import type { useModules } from '../../hooks/useModules';
-
-type Modules = ReturnType<typeof useModules>;
+import type { ModuleRequirement, Modules } from '../../hooks/useModules';
 
 export interface NavItem {
   to: string;
@@ -23,7 +21,7 @@ export interface NavItem {
   icon: ReactNode;
   end?: boolean;
   /** Only shown when the business has this module (see `useModules`). */
-  module?: 'catalog' | 'sales' | 'inventory';
+  module?: ModuleRequirement;
 }
 
 export interface NavSection {
@@ -34,8 +32,8 @@ export interface NavSection {
 
 /**
  * The whole navigation, grouped by area of the business: Comercial (selling, customers),
- * Cuentas por cobrar (what is owed), Inventario (products, purchases, suppliers) and Resultados
- * (dashboard charts and tabular reports). Settings and help go at the bottom.
+ * Cobranza (what is owed), Inventario (products, purchases, suppliers) and Resultados
+ * (dashboard charts, with Cobranza, and tabular reports). Settings and help go at the bottom.
  * Items of a module the business does not have are left out (see `visibleSections`).
  */
 export const NAV_SECTIONS: NavSection[] = [
@@ -44,12 +42,19 @@ export const NAV_SECTIONS: NavSection[] = [
     title: 'nav.groups.commercial',
     items: [
       { to: '/sales', label: 'nav.sales', icon: <ShoppingCart />, module: 'sales' },
-      { to: '/customers', label: 'nav.customers', icon: <Users /> },
+      { to: '/customers', label: 'nav.customers', icon: <Users />, module: 'customers' },
     ],
   },
   {
     title: 'nav.groups.receivables',
-    items: [{ to: '/receivables', label: 'nav.receivables', icon: <ReceiptText /> }],
+    items: [
+      {
+        to: '/receivables',
+        label: 'nav.receivables',
+        icon: <ReceiptText />,
+        module: 'collections',
+      },
+    ],
   },
   {
     title: 'nav.groups.inventory',
@@ -62,7 +67,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     title: 'nav.groups.numbers',
     items: [
-      { to: '/dashboard', label: 'nav.dashboard', icon: <BarChart3 /> },
+      { to: '/dashboard', label: 'nav.dashboard', icon: <BarChart3 />, module: 'collections' },
       { to: '/reports', label: 'nav.reports', icon: <FileSpreadsheet /> },
     ],
   },
@@ -83,13 +88,18 @@ export function visibleSections(modules: Modules): NavSection[] {
 }
 
 /**
- * The four places of the phone bar (the "+" goes in the middle and "Más" holds the rest).
- * With the sales module, selling comes first; otherwise what is owed and the customers.
+ * The three places of the phone bar (the "+" goes in the middle and "Más" holds the rest): home
+ * and the two most used pages of the modules the business has.
  */
 export function mobileItems(modules: Modules): NavItem[] {
   const all = NAV_SECTIONS.flatMap((section) => section.items);
   const pick = (to: string) => all.find((item) => item.to === to)!;
-  return modules.sales
-    ? [pick('/'), pick('/sales'), pick('/receivables')]
-    : [pick('/'), pick('/receivables'), pick('/customers')];
+  const main = [
+    modules.sales && '/sales',
+    modules.collections && '/receivables',
+    modules.inventory && !modules.sales && '/products',
+    modules.inventory && !modules.sales && '/purchases',
+    '/customers',
+  ].filter((to): to is string => Boolean(to) && (to !== '/customers' || modules.customers));
+  return [pick('/'), ...main.slice(0, 2).map(pick)];
 }

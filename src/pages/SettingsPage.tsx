@@ -49,6 +49,7 @@ import {
 } from '../hooks/queries';
 import { useUrlState } from '@/ui';
 import { useI18n, type TranslationKey } from '../i18n/I18nProvider';
+import { useModules } from '../hooks/useModules';
 import { UsersTab } from './UsersTab';
 import type { MessageTemplate, NotificationLogItem, ReminderRules } from '../lib/types';
 import { PlanUsageCard } from '../components/plan/PlanUsage';
@@ -592,9 +593,16 @@ function PreferencesTab() {
 export function SettingsPage() {
   const { t } = useI18n();
   const { isAdmin } = useAuth();
-  const [state, update] = useUrlState({ tab: 'reminders' });
+  const modules = useModules();
+  // Reminders, messages and their log belong to Cobranza; without it the plan comes first.
+  const first = modules.collections || modules.loading ? 'reminders' : 'plan';
+  const [state, update] = useUrlState({ tab: '' });
+  const asked = (state.tab || first) as TabKey;
   // Only admins manage the team; anyone else asking for ?tab=users lands on the first tab.
-  const tab = (state.tab === 'users' && !isAdmin ? 'reminders' : state.tab) as TabKey;
+  const hidden =
+    (asked === 'users' && !isAdmin) ||
+    (!modules.collections && (asked === 'reminders' || asked === 'templates' || asked === 'log'));
+  const tab = (hidden ? first : asked) as TabKey;
 
   return (
     <Page fill={tab === 'log'}>
@@ -604,9 +612,21 @@ export function SettingsPage() {
         value={tab}
         onChange={(value) => update({ tab: value })}
         items={[
-          { value: 'reminders', label: t('settings.tabs.reminders'), icon: <SlidersHorizontal /> },
-          { value: 'templates', label: t('settings.tabs.templates'), icon: <MessageSquareText /> },
-          { value: 'log', label: t('settings.tabs.log'), icon: <History /> },
+          ...(modules.collections
+            ? [
+                {
+                  value: 'reminders' as const,
+                  label: t('settings.tabs.reminders'),
+                  icon: <SlidersHorizontal />,
+                },
+                {
+                  value: 'templates' as const,
+                  label: t('settings.tabs.templates'),
+                  icon: <MessageSquareText />,
+                },
+                { value: 'log' as const, label: t('settings.tabs.log'), icon: <History /> },
+              ]
+            : []),
           ...(isAdmin
             ? [{ value: 'users' as const, label: t('settings.tabs.users'), icon: <Users /> }]
             : []),

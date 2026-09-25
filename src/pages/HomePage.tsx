@@ -6,6 +6,7 @@ import {
   ReceiptText,
   ShoppingCart,
   UserPlus,
+  Warehouse,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
@@ -21,10 +22,49 @@ import {
   useDashboardSummary,
   useProducts,
   useReceivables,
+  useReport,
 } from '../hooks/queries';
 import { useModules } from '../hooks/useModules';
 import { useI18n } from '../i18n/I18nProvider';
 import { presetRange } from '../components/dashboard/period';
+
+/** Products running low (inventory module), with a link to them. */
+function LowStockNotice({ count }: { count: number }) {
+  const { t } = useI18n();
+  return (
+    <Link
+      to="/products?status=low"
+      className="flex items-center gap-3 rounded-2xl border border-warning/40 bg-warning-soft px-5 py-3.5 text-sm transition hover:brightness-95"
+    >
+      <AlertTriangle className="h-5 w-5 shrink-0 text-warning-ink" />
+      <span className="min-w-0 flex-1">
+        <span className="block font-semibold text-warning-ink">
+          {t('home.lowStock', { count })}
+        </span>
+        <span className="block text-muted">{t('home.lowStockHint')}</span>
+      </span>
+      <ChevronRight className="h-4 w-4 shrink-0 text-warning-ink" />
+    </Link>
+  );
+}
+
+/** The way to the reports, at the end of the page. */
+function ReportsLink() {
+  const { t } = useI18n();
+  return (
+    <Link
+      to="/reports"
+      className="flex items-center gap-3 rounded-2xl border border-dashed border-line-strong px-5 py-4 text-sm transition hover:border-primary/50 hover:bg-surface"
+    >
+      <BarChart3 className="h-5 w-5 shrink-0 text-primary-ink" />
+      <span className="min-w-0 flex-1">
+        <span className="block font-semibold">{t('home.reports.title')}</span>
+        <span className="block text-muted">{t('home.reports.hint')}</span>
+      </span>
+      <ChevronRight className="h-4 w-4 shrink-0 text-subtle" />
+    </Link>
+  );
+}
 
 /** A big, labelled button for one of the everyday actions. */
 function ActionTile({
@@ -127,9 +167,10 @@ function Figure({
 }
 
 /**
- * Home: what to do today, in plain words. Three big actions, how much you are owed and were paid
- * this month, and who to collect from now (late or due in the next days), each with "Me pagó"
- * and "WhatsApp" at hand. The charts live in Reportes.
+ * Home: what to do today, in plain words. The big actions of the business's modules; with
+ * Cobranza, how much you are owed and were paid this month and who to collect from now (late or
+ * due in the next days), each with "Me pagó" and "WhatsApp" at hand; without it, what you sold
+ * this month and what your stock is worth. The charts live in Resultados.
  */
 export function HomePage() {
   const { t, fmt } = useI18n();
@@ -137,18 +178,26 @@ export function HomePage() {
   const quick = useQuickActions();
   const modules = useModules();
   const actions = useReceivableActions();
-  const summary = useDashboardSummary();
-  const month = useDashboardAnalytics({ ...presetRange('thisMonth'), granularity: 'day' });
+  const collections = modules.collections;
+  const summary = useDashboardSummary(collections);
+  const thisMonth = presetRange('thisMonth');
+  const month = useDashboardAnalytics({ ...thisMonth, granularity: 'day' }, collections);
   const today = todayIso();
   // Late ones first (oldest due date), then the ones due in the next 3 days.
-  const toCollect = useReceivables({
-    status: 'pending,partial,overdue',
-    dueTo: addDaysIso(today, 3),
-    page: 1,
-    pageSize: 8,
-    sortBy: 'dueDate',
-    sortDir: 'asc',
-  });
+  const toCollect = useReceivables(
+    {
+      status: 'pending,partial,overdue',
+      dueTo: addDaysIso(today, 3),
+      page: 1,
+      pageSize: 8,
+      sortBy: 'dueDate',
+      sortDir: 'asc',
+    },
+    collections,
+  );
+  // Without Cobranza the figures come from the sales and stock reports.
+  const salesMonth = useReport('sales-by-customer', thisMonth, modules.sales && !collections);
+  const stock = useReport('stock', null, modules.inventory && !collections);
   const firstName = user?.name.split(' ')[0] ?? '';
   const totals = summary.data?.totals;
   const openCount = summary.data
@@ -162,6 +211,65 @@ export function HomePage() {
   const low = useProducts({ page: 1, pageSize: 1, lowStock: true }, modules.inventory);
   const lowCount = modules.inventory ? (low.data?.meta.total ?? 0) : 0;
   const more = (toCollect.data?.meta.total ?? 0) - rows.length;
+  const tiles: Array<{
+    key: string;
+    icon: ReactNode;
+    label: string;
+    hint: string;
+    open: () => void;
+  }> = [
+    ...(modules.sales
+      ? [
+          {
+            key: 'sale',
+            icon: <ShoppingCart />,
+            label: t('quick.sale'),
+            hint: t('quick.saleHint'),
+            open: () => quick.open('sale'),
+          },
+        ]
+      : []),
+    ...(collections
+      ? [
+          {
+            key: 'receivable',
+            icon: <ReceiptText />,
+            label: t('quick.receivable'),
+            hint: t('quick.receivableHint'),
+            open: () => quick.open('receivable'),
+          },
+          {
+            key: 'payment',
+            icon: <HandCoins />,
+            label: t('quick.payment.label'),
+            hint: t('quick.paymentHint'),
+            open: () => quick.open('payment'),
+          },
+        ]
+      : []),
+    ...(modules.inventory && !(modules.sales && collections)
+      ? [
+          {
+            key: 'purchase',
+            icon: <Warehouse />,
+            label: t('quick.purchase'),
+            hint: t('quick.purchaseHint'),
+            open: () => quick.open('purchase'),
+          },
+        ]
+      : []),
+    ...(modules.customers
+      ? [
+          {
+            key: 'customer',
+            icon: <UserPlus />,
+            label: t('quick.customer'),
+            hint: t('quick.customerHint'),
+            open: () => quick.open('customer'),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <Page>
@@ -178,42 +286,60 @@ export function HomePage() {
       <div
         className={cx(
           'grid grid-cols-2 gap-3',
-          modules.sales ? 'lg:grid-cols-4' : 'sm:grid-cols-3',
+          tiles.length === 4 && 'lg:grid-cols-4',
+          tiles.length === 3 && 'sm:grid-cols-3',
         )}
         data-tour="home-actions"
       >
-        {modules.sales && (
+        {tiles.map((tile, index) => (
           <ActionTile
-            primary
-            icon={<ShoppingCart />}
-            label={t('quick.sale')}
-            hint={t('quick.saleHint')}
-            onClick={() => quick.open('sale')}
+            key={tile.key}
+            primary={index === 0}
+            // An odd number of tiles: the first one takes the whole row on phones.
+            wide={index === 0 && tiles.length % 2 === 1}
+            icon={tile.icon}
+            label={tile.label}
+            hint={tile.hint}
+            onClick={tile.open}
           />
-        )}
-        <ActionTile
-          primary={!modules.sales}
-          wide={!modules.sales}
-          icon={<ReceiptText />}
-          label={t('quick.receivable')}
-          hint={t('quick.receivableHint')}
-          onClick={() => quick.open('receivable')}
-        />
-        <ActionTile
-          icon={<HandCoins />}
-          label={t('quick.payment.label')}
-          hint={t('quick.paymentHint')}
-          onClick={() => quick.open('payment')}
-        />
-        <ActionTile
-          icon={<UserPlus />}
-          label={t('quick.customer')}
-          hint={t('quick.customerHint')}
-          onClick={() => quick.open('customer')}
-        />
+        ))}
       </div>
 
-      {!hasAnyDebt ? (
+      {!collections ? (
+        <>
+          {(modules.sales || modules.inventory) && (
+            <div
+              className={cx('grid gap-3', modules.sales && modules.inventory && 'sm:grid-cols-2')}
+            >
+              {modules.sales && (
+                <Figure
+                  label={t('home.salesMonth')}
+                  value={fmt.money(salesMonth.data?.totals.total ?? 0)}
+                  loading={!salesMonth.data}
+                  tone="success"
+                  hint={t('home.salesMonthCount', { count: salesMonth.data?.totals.sales ?? 0 })}
+                  to="/sales"
+                  linkLabel={t('home.salesLink')}
+                />
+              )}
+              {modules.inventory && (
+                <Figure
+                  label={t('home.stockValue')}
+                  value={fmt.money(stock.data?.totals.value ?? 0)}
+                  loading={!stock.data}
+                  hint={t('home.stockValueHint', { count: stock.data?.totals.products ?? 0 })}
+                  to="/products"
+                  linkLabel={t('home.stockLink')}
+                />
+              )}
+            </div>
+          )}
+          {isAdmin && <PlanLimitNotice />}
+          {lowCount > 0 && <LowStockNotice count={lowCount} />}
+          {isAdmin && <ModulesOffer />}
+          <ReportsLink />
+        </>
+      ) : !hasAnyDebt ? (
         <Card>
           <EmptyState
             icon={<Mascot size={44} mood="happy" />}
@@ -257,21 +383,7 @@ export function HomePage() {
 
           {isAdmin && <PlanLimitNotice />}
 
-          {lowCount > 0 && (
-            <Link
-              to="/products?status=low"
-              className="flex items-center gap-3 rounded-2xl border border-warning/40 bg-warning-soft px-5 py-3.5 text-sm transition hover:brightness-95"
-            >
-              <AlertTriangle className="h-5 w-5 shrink-0 text-warning-ink" />
-              <span className="min-w-0 flex-1">
-                <span className="block font-semibold text-warning-ink">
-                  {t('home.lowStock', { count: lowCount })}
-                </span>
-                <span className="block text-muted">{t('home.lowStockHint')}</span>
-              </span>
-              <ChevronRight className="h-4 w-4 shrink-0 text-warning-ink" />
-            </Link>
-          )}
+          {lowCount > 0 && <LowStockNotice count={lowCount} />}
 
           <Card
             data-tour="home-today"
@@ -344,18 +456,7 @@ export function HomePage() {
           </Card>
 
           {isAdmin && <ModulesOffer />}
-
-          <Link
-            to="/reports"
-            className="flex items-center gap-3 rounded-2xl border border-dashed border-line-strong px-5 py-4 text-sm transition hover:border-primary/50 hover:bg-surface"
-          >
-            <BarChart3 className="h-5 w-5 shrink-0 text-primary-ink" />
-            <span className="min-w-0 flex-1">
-              <span className="block font-semibold">{t('home.reports.title')}</span>
-              <span className="block text-muted">{t('home.reports.hint')}</span>
-            </span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-subtle" />
-          </Link>
+          <ReportsLink />
         </>
       )}
       {actions.modals}

@@ -1,5 +1,6 @@
 import {
   ArrowLeft,
+  ChevronRight,
   CheckCircle2,
   Clock3,
   FileText,
@@ -29,6 +30,7 @@ import {
   Avatar,
   Badge,
   Button,
+  Card,
   DataTable,
   IconButton,
   KpiCard,
@@ -50,6 +52,7 @@ import {
   useNotifications,
   useSendStatement,
 } from '../hooks/queries';
+import { useModules } from '../hooks/useModules';
 import { useI18n } from '../i18n/I18nProvider';
 import { api } from '../lib/api';
 import type { CustomerDetail, NotificationLogItem } from '../lib/types';
@@ -75,7 +78,10 @@ export function CustomerDetailPage() {
   const deleteCustomer = useDeleteCustomer();
   const actions = useReceivableActions();
   const receivableColumns = useReceivableColumns({ showCustomer: false });
-  const messages = useNotifications({ page: 1, pageSize: 100, customerId: id });
+  const modules = useModules();
+  // Without Cobranza a customer is who bought (Ventas): no debts, statements or reminders.
+  const collections = modules.collections;
+  const messages = useNotifications({ page: 1, pageSize: 100, customerId: id }, collections);
 
   if (isLoading) return <LoadingState label={t('common.loading')} />;
   if (error || !customer) {
@@ -244,7 +250,7 @@ export function CustomerDetailPage() {
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="truncate text-2xl font-semibold sm:text-[2rem]">{customer.name}</h1>
-                <RiskBadge risk={customer.risk} />
+                {collections && <RiskBadge risk={customer.risk} />}
               </div>
               <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
                 <span className="inline-flex items-center gap-1.5 tabular-nums">
@@ -257,28 +263,35 @@ export function CustomerDetailPage() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button icon={<Plus className="h-4 w-4" />} onClick={() => setAddingReceivable(true)}>
-              {t('customerDetail.newReceivable')}
-            </Button>
-            <Button
-              variant="secondary"
-              icon={<FileText className="h-4 w-4" />}
-              onClick={openStatement}
-              title={t('customerDetail.viewStatement')}
-              aria-label={t('customerDetail.viewStatement')}
-            >
-              <span className="hidden sm:inline">{t('customerDetail.viewStatement')}</span>
-            </Button>
-            <Button
-              variant="secondary"
-              icon={<Send className="h-4 w-4" />}
-              loading={sendStatement.isPending}
-              onClick={() => void sendStatementNow()}
-              title={t('customerDetail.sendStatement')}
-              aria-label={t('customerDetail.sendStatement')}
-            >
-              <span className="hidden sm:inline">{t('customerDetail.sendStatement')}</span>
-            </Button>
+            {collections && (
+              <>
+                <Button
+                  icon={<Plus className="h-4 w-4" />}
+                  onClick={() => setAddingReceivable(true)}
+                >
+                  {t('customerDetail.newReceivable')}
+                </Button>
+                <Button
+                  variant="secondary"
+                  icon={<FileText className="h-4 w-4" />}
+                  onClick={openStatement}
+                  title={t('customerDetail.viewStatement')}
+                  aria-label={t('customerDetail.viewStatement')}
+                >
+                  <span className="hidden sm:inline">{t('customerDetail.viewStatement')}</span>
+                </Button>
+                <Button
+                  variant="secondary"
+                  icon={<Send className="h-4 w-4" />}
+                  loading={sendStatement.isPending}
+                  onClick={() => void sendStatementNow()}
+                  title={t('customerDetail.sendStatement')}
+                  aria-label={t('customerDetail.sendStatement')}
+                >
+                  <span className="hidden sm:inline">{t('customerDetail.sendStatement')}</span>
+                </Button>
+              </>
+            )}
             <Popover
               trigger={({ toggle, ref }) => (
                 <IconButton
@@ -317,84 +330,102 @@ export function CustomerDetailPage() {
           </Alert>
         )}
 
-        <KpiRow>
-          <KpiCard
-            fetching={refreshing}
-            label={t('customerDetail.kpi.outstanding')}
-            value={fmt.money(customer.summary.totalOutstanding)}
-            hint={t('customerDetail.kpi.outstandingHint', {
-              count: customer.summary.openReceivables,
-            })}
-            icon={<Wallet />}
-          />
-          <KpiCard
-            fetching={refreshing}
-            label={t('customerDetail.kpi.paid')}
-            value={fmt.money(customer.summary.totalPaid)}
-            tone="success"
-            gauge={
-              customer.summary.totalBilled > 0
-                ? customer.summary.totalPaid / customer.summary.totalBilled
-                : 0
-            }
-            hint={t('customerDetail.kpi.paidHint', {
-              amount: fmt.money(customer.summary.totalBilled),
-            })}
-            icon={<HandCoins />}
-          />
-          <KpiCard
-            fetching={refreshing}
-            label={t('customerDetail.kpi.onTime')}
-            value={metrics.onTimeRate === null ? '—' : fmt.percent(metrics.onTimeRate)}
-            gauge={metrics.onTimeRate ?? undefined}
-            tone={metrics.onTimeRate !== null && metrics.onTimeRate < 0.5 ? 'danger' : 'default'}
-            hint={
-              metrics.evaluatedReceivables === 0
-                ? t('risk.noHistory')
-                : t('customerDetail.kpi.onTimeHint', { count: metrics.evaluatedReceivables })
-            }
-            icon={<CheckCircle2 />}
-          />
-          <KpiCard
-            fetching={refreshing}
-            label={t('customerDetail.kpi.avgLate')}
-            value={t('customerDetail.kpi.avgLateValue', {
-              days: fmt.number(metrics.averageDaysOverdue),
-            })}
-            tone={metrics.currentOverdueCount > 0 ? 'danger' : 'default'}
-            hint={t('customerDetail.kpi.avgLateHint', { count: metrics.currentOverdueCount })}
-            icon={<Clock3 />}
-          />
-        </KpiRow>
+        {!collections && (
+          <Card>
+            <p className="font-semibold">{t('customerDetail.noCollections.title')}</p>
+            <p className="text-sm text-muted">{t('customerDetail.noCollections.description')}</p>
+            <Link
+              to={`/sales?search=${encodeURIComponent(customer.name)}`}
+              className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary-ink hover:underline"
+            >
+              {t('customerDetail.noCollections.link')}
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </Card>
+        )}
 
-        <Tabs
-          label={customer.name}
-          value={tab}
-          onChange={setTab}
-          items={[
-            {
-              value: 'receivables',
-              label: t('customerDetail.tabs.receivables'),
-              icon: <ReceiptText />,
-              count: receivables.length,
-            },
-            {
-              value: 'payments',
-              label: t('customerDetail.tabs.payments'),
-              icon: <HandCoins />,
-              count: customer.payments.length,
-            },
-            {
-              value: 'messages',
-              label: t('customerDetail.tabs.messages'),
-              icon: <WhatsAppIcon />,
-              count: messages.data?.meta.total,
-            },
-          ]}
-        />
+        {collections && (
+          <KpiRow>
+            <KpiCard
+              fetching={refreshing}
+              label={t('customerDetail.kpi.outstanding')}
+              value={fmt.money(customer.summary.totalOutstanding)}
+              hint={t('customerDetail.kpi.outstandingHint', {
+                count: customer.summary.openReceivables,
+              })}
+              icon={<Wallet />}
+            />
+            <KpiCard
+              fetching={refreshing}
+              label={t('customerDetail.kpi.paid')}
+              value={fmt.money(customer.summary.totalPaid)}
+              tone="success"
+              gauge={
+                customer.summary.totalBilled > 0
+                  ? customer.summary.totalPaid / customer.summary.totalBilled
+                  : 0
+              }
+              hint={t('customerDetail.kpi.paidHint', {
+                amount: fmt.money(customer.summary.totalBilled),
+              })}
+              icon={<HandCoins />}
+            />
+            <KpiCard
+              fetching={refreshing}
+              label={t('customerDetail.kpi.onTime')}
+              value={metrics.onTimeRate === null ? '—' : fmt.percent(metrics.onTimeRate)}
+              gauge={metrics.onTimeRate ?? undefined}
+              tone={metrics.onTimeRate !== null && metrics.onTimeRate < 0.5 ? 'danger' : 'default'}
+              hint={
+                metrics.evaluatedReceivables === 0
+                  ? t('risk.noHistory')
+                  : t('customerDetail.kpi.onTimeHint', { count: metrics.evaluatedReceivables })
+              }
+              icon={<CheckCircle2 />}
+            />
+            <KpiCard
+              fetching={refreshing}
+              label={t('customerDetail.kpi.avgLate')}
+              value={t('customerDetail.kpi.avgLateValue', {
+                days: fmt.number(metrics.averageDaysOverdue),
+              })}
+              tone={metrics.currentOverdueCount > 0 ? 'danger' : 'default'}
+              hint={t('customerDetail.kpi.avgLateHint', { count: metrics.currentOverdueCount })}
+              icon={<Clock3 />}
+            />
+          </KpiRow>
+        )}
+
+        {collections && (
+          <Tabs
+            label={customer.name}
+            value={tab}
+            onChange={setTab}
+            items={[
+              {
+                value: 'receivables',
+                label: t('customerDetail.tabs.receivables'),
+                icon: <ReceiptText />,
+                count: receivables.length,
+              },
+              {
+                value: 'payments',
+                label: t('customerDetail.tabs.payments'),
+                icon: <HandCoins />,
+                count: customer.payments.length,
+              },
+              {
+                value: 'messages',
+                label: t('customerDetail.tabs.messages'),
+                icon: <WhatsAppIcon />,
+                count: messages.data?.meta.total,
+              },
+            ]}
+          />
+        )}
       </div>
 
-      {tab === 'receivables' && (
+      {collections && tab === 'receivables' && (
         <DataTable
           columnsStorageKey="customer-receivables"
           columns={receivableColumns}
@@ -412,7 +443,7 @@ export function CustomerDetailPage() {
           }}
         />
       )}
-      {tab === 'payments' && (
+      {collections && tab === 'payments' && (
         <DataTable
           columns={paymentColumns}
           rows={customer.payments}
@@ -420,7 +451,7 @@ export function CustomerDetailPage() {
           empty={{ title: t('customerDetail.payments.empty') }}
         />
       )}
-      {tab === 'messages' && (
+      {collections && tab === 'messages' && (
         <DataTable
           columns={messageColumns}
           rows={messages.data?.data}

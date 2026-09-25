@@ -73,7 +73,10 @@ function SaleForm({ onClose, preset }: { onClose: () => void; preset?: PickedCus
   const today = todayIso();
 
   const [lines, setLines] = useState<Line[]>([]);
-  const [paymentType, setPaymentType] = useState<'cash' | 'credit'>(preset ? 'credit' : 'cash');
+  // Selling on credit creates a debt in Cobranza: without that module every sale is cash.
+  const [paymentType, setPaymentType] = useState<'cash' | 'credit'>(
+    preset && modules.collections ? 'credit' : 'cash',
+  );
   const [method, setMethod] = useState<PaymentMethod>('cash');
   const [customer, setCustomer] = useState<PickedCustomer | null>(preset ?? null);
   const [newCustomer, setNewCustomer] = useState<NewCustomer | null>(null);
@@ -216,7 +219,7 @@ function SaleForm({ onClose, preset }: { onClose: () => void; preset?: PickedCus
         </div>
       </div>
 
-      <div>
+      <div className={cx(!modules.collections && 'hidden')}>
         <p className="label">{t('sales.form.howPays')}</p>
         <div
           className="grid grid-cols-2 gap-2"

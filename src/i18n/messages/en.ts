@@ -90,6 +90,12 @@ export const en: Messages = {
     typeToSearch: 'Type to search.',
   },
   home: {
+    salesMonth: 'You sold this month',
+    salesMonthCount: '{count|# sale|# sales}',
+    salesLink: 'See my sales',
+    stockValue: 'Your stock is worth',
+    stockValueHint: '{count|# product|# products} (at cost price)',
+    stockLink: 'See my products',
     lowStock: '{count|# product is running low|# products are running low}',
     lowStockHint: 'Check them and buy before you run out.',
     greeting: 'Hi, {name}',
@@ -680,6 +686,11 @@ export const en: Messages = {
       '{name} and all their receivables, payments and messages will be deleted. This cannot be undone.',
   },
   customerDetail: {
+    noCollections: {
+      title: 'Their purchases are in Sales',
+      description: 'See everything this customer bought from you.',
+      link: 'See their sales',
+    },
     back: 'Customers',
     newReceivable: 'New receivable',
     viewStatement: 'View statement',
@@ -1125,6 +1136,12 @@ export const en: Messages = {
       price: '+{amount} a month',
       cta: 'I want it',
       note: 'An extra charge on your plan. You can remove it whenever you want.',
+      collections: {
+        name: 'Collections',
+        a: 'Note what you are owed and who paid you',
+        b: 'WhatsApp reminders and account statements',
+        c: 'Dashboard and payments report',
+      },
       sales: {
         name: 'Sales',
         a: 'Record sales in seconds, cash or on credit',

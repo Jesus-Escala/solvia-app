@@ -15,6 +15,7 @@ import { useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
 import { Mascot, Button, cx, Modal, IconButton } from '@/ui';
 import { useI18n } from '../i18n/I18nProvider';
+import { useModules } from '../hooks/useModules';
 import { TOUR_STEPS } from './steps';
 
 interface TourContextValue {
@@ -212,12 +213,15 @@ function TourOverlay({
   const { t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
-  const step = TOUR_STEPS[index]!;
+  const modules = useModules();
+  // Only the steps of the modules this business has.
+  const steps = TOUR_STEPS.filter((item) => !item.module || modules[item.module]);
+  const step = steps[Math.min(index, steps.length - 1)]!;
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [ready, setReady] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const [cardHeight, setCardHeight] = useState(200);
-  const isLast = index === TOUR_STEPS.length - 1;
+  const isLast = index >= steps.length - 1;
 
   // Navigate to the step's page, then find and focus its target.
   useEffect(() => {
@@ -332,7 +336,7 @@ function TourOverlay({
           <span className="flex items-center gap-2">
             <Mascot variant="avatar" size={28} mood="happy" />
             <span className="rounded-full bg-primary-soft px-2.5 py-0.5 text-[11px] font-semibold text-primary-ink tabular-nums">
-              {t('tour.progress', { current: index + 1, total: TOUR_STEPS.length })}
+              {t('tour.progress', { current: index + 1, total: steps.length })}
             </span>
           </span>
           <IconButton size="sm" label={t('tour.skip')} onClick={onClose}>
@@ -346,7 +350,7 @@ function TourOverlay({
           {t(`tour.steps.${step.id}.body`)}
         </p>
         <div className="mt-4 flex items-center gap-1" aria-hidden="true">
-          {TOUR_STEPS.map((item, dot) => (
+          {steps.map((item, dot) => (
             <span
               key={item.id}
               className={cx(
