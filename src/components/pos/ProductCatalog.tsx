@@ -1,11 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  Camera,
   Flame,
   PackageOpen,
   PackagePlus,
   Plus,
-  ScanBarcode,
+  ScanQrCode,
+  Search,
   Sparkles,
   Tag,
   X,
@@ -118,7 +118,7 @@ export function ProductCatalog({
       <div className="shrink-0 space-y-2 px-3 pt-3 pb-1 sm:px-4 sm:pt-4">
         <div className="flex gap-2">
           <div className="relative min-w-0 flex-1">
-            <ScanBarcode className="pointer-events-none absolute top-1/2 left-3.5 h-5 w-5 -translate-y-1/2 text-subtle" />
+            <Search className="pointer-events-none absolute top-1/2 left-3.5 h-5 w-5 -translate-y-1/2 text-subtle" />
             <input
               ref={searchRef}
               className="input h-12 pr-10 pl-11 text-base"
@@ -164,7 +164,7 @@ export function ProductCatalog({
             aria-label={t('scanner.open')}
             className="flex h-12 shrink-0 items-center gap-2 rounded-xl border border-line bg-surface px-3.5 text-sm font-semibold text-ink shadow-xs transition hover:border-primary/40 hover:bg-primary-soft/40 [&>svg]:h-5 [&>svg]:w-5"
           >
-            <Camera />
+            <ScanQrCode />
             <span className="hidden sm:inline">{t('scanner.button')}</span>
           </button>
         </div>
