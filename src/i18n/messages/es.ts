@@ -959,6 +959,8 @@ export const es = {
       customer: 'Cliente',
       items: 'Qué se llevó',
       payment: 'Cómo pagó',
+      paymentType: 'Tipo de pago',
+      method: 'Medio de pago',
       total: 'Total',
     },
     types: {
@@ -1553,6 +1555,7 @@ export const es = {
       log: 'Mensajes enviados',
       users: 'Usuarios',
       preferences: 'Preferencias',
+      business: 'Empresa',
     },
     reminders: {
       title: 'Recordatorios automáticos',
@@ -1600,14 +1603,14 @@ export const es = {
     preferences: {
       title: 'Preferencias',
       description: 'Se guardan en este navegador.',
-      language: 'Idioma',
+      language: 'Idioma en este equipo',
       theme: 'Apariencia',
     },
     business: {
-      title: 'Idioma de los mensajes a tus clientes',
+      title: 'Idioma de la empresa',
       description:
-        'Los recordatorios que Solvia manda solo por WhatsApp se escriben en este idioma. Es para todo el negocio.',
-      saved: 'Idioma de los mensajes guardado',
+        'El idioma en que Solvia se muestra a todo tu equipo y en que se escriben los tickets, reportes y mensajes de WhatsApp para tus clientes. Cada persona puede cambiarlo solo en su equipo con el botón ES / EN de arriba.',
+      saved: 'Idioma de la empresa guardado',
     },
   },
   help: {

@@ -1,5 +1,6 @@
 import {
   BellRing,
+  Building2,
   CalendarCheck2,
   CalendarClock,
   CheckCircle2,
@@ -18,7 +19,7 @@ import {
   Users,
   XCircle,
 } from 'lucide-react';
-import { useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import {
   Alert,
@@ -52,6 +53,7 @@ import {
 } from '../hooks/queries';
 import { useUrlState } from '@/ui';
 import { useI18n, type TranslationKey } from '../i18n/I18nProvider';
+import { useCompanyLanguage } from '../hooks/useCompanyLanguage';
 import { useModules } from '../hooks/useModules';
 import { UsersTab } from './UsersTab';
 import type {
@@ -62,7 +64,7 @@ import type {
 } from '../lib/types';
 import { PlanUsageCard } from '../components/plan/PlanUsage';
 
-type TabKey = 'reminders' | 'templates' | 'log' | 'users' | 'plan' | 'preferences';
+type TabKey = 'business' | 'reminders' | 'templates' | 'log' | 'users' | 'plan' | 'preferences';
 
 const PREVIEW_VALUES: Record<string, string> = {
   name: 'María Quispe',
@@ -549,13 +551,22 @@ function BusinessLanguageCard() {
   const { toast } = useFeedback();
   const settings = useBusinessSettings();
   const save = useSaveBusinessSettings();
+  const applyCompanyLanguage = useCompanyLanguage();
+  const latestT = useRef(t);
+  useEffect(() => {
+    latestT.current = t;
+  });
 
   const choose = (language: BusinessLanguage) => {
     if (language === settings.data?.language) return;
     save.mutate(
       { language },
       {
-        onSuccess: () => toast.success(t('settings.business.saved')),
+        onSuccess: () => {
+          applyCompanyLanguage(language);
+          // Said in the new language, once the app has switched to it.
+          window.setTimeout(() => toast.success(latestT.current('settings.business.saved')), 0);
+        },
         onError: (error) => toast.apiError(error),
       },
     );
@@ -600,7 +611,6 @@ function BusinessLanguageCard() {
 
 function PreferencesTab() {
   const { t, locale, setLocale } = useI18n();
-  const modules = useModules();
   const { preference, setPreference } = useTheme();
   const themes: Array<{ value: ThemePreference; label: TranslationKey; icon: ReactNode }> = [
     { value: 'light', label: 'prefs.themeLight', icon: <Sun /> },
@@ -654,8 +664,6 @@ function PreferencesTab() {
           </div>
         </div>
       </Card>
-      {/* Automatic reminders belong to Cobranza. */}
-      {modules.collections && <BusinessLanguageCard />}
     </div>
   );
 }
@@ -703,6 +711,7 @@ export function SettingsPage() {
             ? [{ value: 'users' as const, label: t('settings.tabs.users'), icon: <Users /> }]
             : []),
           { value: 'plan', label: t('settings.tabs.plan'), icon: <Gauge /> },
+          { value: 'business', label: t('settings.tabs.business'), icon: <Building2 /> },
           { value: 'preferences', label: t('settings.tabs.preferences'), icon: <Languages /> },
         ]}
       />
@@ -711,6 +720,7 @@ export function SettingsPage() {
       {tab === 'log' && <LogTab />}
       {tab === 'users' && <UsersTab />}
       {tab === 'plan' && <PlanUsageCard />}
+      {tab === 'business' && <BusinessLanguageCard />}
       {tab === 'preferences' && <PreferencesTab />}
     </Page>
   );

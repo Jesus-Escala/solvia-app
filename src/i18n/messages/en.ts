@@ -950,6 +950,8 @@ export const en: Messages = {
       customer: 'Customer',
       items: 'Items',
       payment: 'Payment',
+      paymentType: 'Payment type',
+      method: 'Payment method',
       total: 'Total',
     },
     types: {
@@ -1547,6 +1549,7 @@ export const en: Messages = {
       log: 'Send log',
       users: 'Users',
       preferences: 'Preferences',
+      business: 'Company',
     },
     reminders: {
       title: 'Automatic reminders',
@@ -1594,14 +1597,14 @@ export const en: Messages = {
     preferences: {
       title: 'Preferences',
       description: 'Saved in this browser.',
-      language: 'Interface language',
+      language: 'Language on this device',
       theme: 'Appearance',
     },
     business: {
-      title: 'Language of the messages to your customers',
+      title: 'Company language',
       description:
-        'The reminders Solvia sends on its own over WhatsApp are written in this language. It applies to the whole business.',
-      saved: 'Message language saved',
+        'The language Solvia shows your whole team and writes tickets, reports and WhatsApp messages to your customers in. Each person can change it only on their device with the ES / EN button at the top.',
+      saved: 'Company language saved',
     },
   },
   help: {

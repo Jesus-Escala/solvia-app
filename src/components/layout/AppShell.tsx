@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router';
 import { useAuth } from '../../auth/AuthContext';
+import { useCompanyLanguage } from '../../hooks/useCompanyLanguage';
 import { useMe } from '../../hooks/queries';
 import { ApiError } from '../../lib/api';
 import { TourProvider } from '../../tour/TourProvider';
@@ -27,6 +28,8 @@ export function AppShell() {
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const { logout } = useAuth();
   const me = useMe();
+  // The app speaks the company's language (applied at sign-in and when an admin changes it).
+  useCompanyLanguage();
 
   // A token can outlive its user or tenant (e.g. after a data reset): end that session.
   useEffect(() => {

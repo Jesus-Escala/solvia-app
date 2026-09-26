@@ -586,7 +586,7 @@ export interface SaleListParams {
   to?: string | null;
   page: number;
   pageSize?: number | null;
-  sortBy?: 'number' | 'date' | 'customer' | 'items' | 'paymentType' | 'total' | null;
+  sortBy?: 'number' | 'date' | 'customer' | 'items' | 'paymentType' | 'method' | 'total' | null;
   sortDir?: SortDir | null;
 }
 
@@ -710,7 +710,7 @@ export function usePurchases(params: {
   status?: 'completed' | 'voided' | null;
   page: number;
   pageSize?: number;
-  sortBy?: 'number' | 'date' | 'supplier' | 'items' | 'total' | null;
+  sortBy?: 'number' | 'date' | 'supplier' | 'items' | 'method' | 'total' | null;
   sortDir?: SortDir | null;
 }) {
   return useQuery({

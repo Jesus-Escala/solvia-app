@@ -186,6 +186,17 @@ function PurchasesList() {
       cell: (row) => <span className="line-clamp-1 text-muted">{row.summary}</span>,
     },
     {
+      id: 'method',
+      sortable: true,
+      header: t('sales.columns.method'),
+      cell: (row) =>
+        row.payments.length === 0 ? (
+          <span className="text-subtle">—</span>
+        ) : (
+          <PaymentPartsLabel parts={row.payments} amounts={false} />
+        ),
+    },
+    {
       id: 'total',
       sortable: true,
       header: t('sales.columns.total'),

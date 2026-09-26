@@ -33,6 +33,28 @@ import { ModuleOff } from './ProductsPage';
 // Empty sort = newest first.
 const DEFAULTS = { search: '', type: '', page: '1', pageSize: '20', sortBy: '', sortDir: '' };
 
+/** How it was paid: at once ("Al contado") or on credit ("Fiado"). */
+function PaymentTypeLabel({ sale }: { sale: Sale }) {
+  const { t } = useI18n();
+  return sale.paymentType === 'credit' ? (
+    <span className="inline-flex items-center gap-1.5">
+      <ReceiptText className="h-3.5 w-3.5 text-warning-ink" />
+      {t('sales.types.credit')}
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1.5">
+      <HandCoins className="h-3.5 w-3.5 text-success-ink" />
+      {t('sales.types.cash')}
+    </span>
+  );
+}
+
+/** With what: the method, or each of them when it was split ("—" on credit). */
+function PaymentMethodsLabel({ sale }: { sale: Sale }) {
+  if (sale.payments.length === 0) return <span className="text-subtle">—</span>;
+  return <PaymentPartsLabel parts={sale.payments} amounts={false} />;
+}
+
 /** "Contado · Yape" or "Fiado · Maria" in one short line. */
 function PaymentLabel({ sale }: { sale: Sale }) {
   const { t } = useI18n();
@@ -229,9 +251,7 @@ function SalesList() {
     shortage: state.type === 'shortage' ? true : null,
     page: Number(state.page) || 1,
     pageSize: Number(state.pageSize) || 20,
-    sortBy: (state.sortBy === 'payment'
-      ? 'paymentType'
-      : state.sortBy || null) as SaleListParams['sortBy'],
+    sortBy: (state.sortBy || null) as SaleListParams['sortBy'],
     sortDir: state.sortDir === 'desc' ? 'desc' : 'asc',
   });
   const filtered = Boolean(state.search || state.type);
@@ -277,10 +297,16 @@ function SalesList() {
       cell: (row) => <span className="line-clamp-1 text-muted">{row.summary}</span>,
     },
     {
-      id: 'payment',
+      id: 'paymentType',
       sortable: true,
-      header: t('sales.columns.payment'),
-      cell: (row) => <PaymentLabel sale={row} />,
+      header: t('sales.columns.paymentType'),
+      cell: (row) => <PaymentTypeLabel sale={row} />,
+    },
+    {
+      id: 'method',
+      sortable: true,
+      header: t('sales.columns.method'),
+      cell: (row) => <PaymentMethodsLabel sale={row} />,
     },
     {
       id: 'total',
