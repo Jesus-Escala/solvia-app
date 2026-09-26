@@ -18,7 +18,9 @@ import { MoneyInput } from './MoneyInput';
 import { moneyText } from '../../lib/moneyText';
 import { ProductThumb } from './ProductThumb';
 import { QrImage } from './QrImage';
-import { useProductImage, useSaveProduct } from '../../hooks/queries';
+import { useProductImage, useSaveProduct, useStoreMaps } from '../../hooks/queries';
+import { useModules } from '../../hooks/useModules';
+import { SpotSelect } from '../maps/SpotSelect';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { Product, ProductKind, ProductUnit } from '../../lib/types';
 
@@ -81,10 +83,15 @@ function ProductForm({
   const { toast } = useFeedback();
   const save = useSaveProduct(product?.id);
   const image = useProductImage();
+  const modules = useModules();
+  const maps = useStoreMaps(modules.inventory);
+  // Where it is kept: only once the business marked spots on a plan.
+  const withSpots = (maps.data ?? []).some((map) => map.spots.length > 0);
   const [form, setForm] = useState({
     kind: product?.kind ?? ('product' as ProductKind),
     name: product?.name ?? '',
     categoryId: product?.categoryId ?? null,
+    spotId: product?.spotId ?? null,
     price: product ? moneyText(product.price) : '',
     unit: product?.unit ?? ('unit' as ProductUnit),
     cost: product?.cost == null ? '' : moneyText(product.cost),
@@ -121,6 +128,7 @@ function ProductForm({
       kind: form.kind,
       name: form.name,
       categoryId: form.categoryId,
+      ...(withSpots && { spotId: form.spotId }),
       price,
       unit: service ? 'unit' : form.unit,
       cost,
@@ -299,6 +307,25 @@ function ProductForm({
           />
         )}
       </Field>
+
+      {withSpots && (
+        <Field
+          label={t('locations.product.label')}
+          optionalLabel={t('common.optional')}
+          hint={t('locations.product.hint')}
+          error={errors.field(save.error, 'spotId')}
+        >
+          {(id, describedBy) => (
+            <SpotSelect
+              id={id}
+              describedBy={describedBy}
+              maps={maps.data ?? []}
+              value={form.spotId}
+              onChange={(spotId) => update('spotId', spotId)}
+            />
+          )}
+        </Field>
+      )}
 
       <Field
         label={t('products.form.cost')}

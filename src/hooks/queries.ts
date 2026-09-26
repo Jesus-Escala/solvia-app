@@ -51,6 +51,9 @@ import type {
   TemplateType,
   TenantUser,
   UserRole,
+  MapSpot,
+  SpotColor,
+  StoreMap,
 } from '../lib/types';
 
 export const queryKeys = {
@@ -68,6 +71,7 @@ export const queryKeys = {
   reminderRules: ['settings', 'reminders'] as const,
   business: ['settings', 'business'] as const,
   categories: ['products', 'categories'] as const,
+  maps: ['maps'] as const,
   notifications: (params: object) => ['notifications', params] as const,
   authConfig: ['auth-config'] as const,
   users: ['users'] as const,
@@ -517,10 +521,114 @@ export function useDeleteCategory() {
   });
 }
 
+/** Floor plans of the business with their spots and products (inventory module). */
+export function useStoreMaps(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.maps,
+    queryFn: () => api.get<{ data: StoreMap[] }>('/maps'),
+    select: (response) => response.data,
+    enabled,
+  });
+}
+
+/**
+ * Every change of a plan answers with the whole plan: it replaces its copy in the list, and the
+ * products refresh (they show where they are).
+ */
+function useMapMutation<V>(request: (variables: V) => Promise<StoreMap>) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: request,
+    onSuccess: (map) => {
+      queryClient.setQueryData<{ data: StoreMap[] }>(queryKeys.maps, (current) => {
+        if (!current) return current;
+        const exists = current.data.some((item) => item.id === map.id);
+        return {
+          data: exists
+            ? current.data.map((item) => (item.id === map.id ? map : item))
+            : [...current.data, map],
+        };
+      });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.maps });
+      void queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+}
+
+/** Creates (no `id`) or renames a plan. */
+export function useSaveStoreMap() {
+  return useMapMutation(({ id, name }: { id: string | null; name: string }) =>
+    id ? api.patch<StoreMap>(`/maps/${id}`, { name }) : api.post<StoreMap>('/maps', { name }),
+  );
+}
+
+export function useDeleteStoreMap() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/maps/${id}`),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.maps }),
+        queryClient.invalidateQueries({ queryKey: ['products'] }),
+      ]),
+  });
+}
+
+/** Uploads the plan's picture (with its width / height) or removes it (`file` null). */
+export function useStoreMapImage() {
+  return useMapMutation(
+    ({ id, file, aspect }: { id: string; file: Blob | null; aspect: number }) => {
+      if (file === null) return api.delete<StoreMap>(`/maps/${id}/image`);
+      const form = new FormData();
+      form.set('aspect', String(aspect));
+      form.set('image', file, file instanceof File ? file.name : 'plano.webp');
+      return api.put<StoreMap>(`/maps/${id}/image`, form);
+    },
+  );
+}
+
+export interface SpotInput {
+  name?: string;
+  x?: number;
+  y?: number;
+  color?: SpotColor;
+}
+
+/** Marks a spot on a plan (`mapId`) or changes one (`spotId`). */
+export function useSaveSpot() {
+  return useMapMutation(
+    ({ mapId, spotId, input }: { mapId: string; spotId: string | null; input: SpotInput }) =>
+      spotId
+        ? api.patch<StoreMap>(`/maps/spots/${spotId}`, input)
+        : api.post<StoreMap>(`/maps/${mapId}/spots`, input),
+  );
+}
+
+/** Deletes a spot; its products stay, without a place. */
+export function useDeleteSpot() {
+  return useMapMutation((spot: Pick<MapSpot, 'id'>) =>
+    api.delete<StoreMap>(`/maps/spots/${spot.id}`),
+  );
+}
+
+/** Puts products in a spot (they leave the spot they were in). */
+export function usePlaceProducts() {
+  return useMapMutation(({ spotId, productIds }: { spotId: string; productIds: string[] }) =>
+    api.post<StoreMap>(`/maps/spots/${spotId}/products`, { productIds }),
+  );
+}
+
+export function useUnplaceProduct() {
+  return useMapMutation(({ spotId, productId }: { spotId: string; productId: string }) =>
+    api.delete<StoreMap>(`/maps/spots/${spotId}/products/${productId}`),
+  );
+}
+
 export interface ProductInput {
   kind?: ProductKind;
   name: string;
   categoryId?: string | null;
+  spotId?: string | null;
   code?: string | null;
   unit?: ProductUnit;
   price?: number;

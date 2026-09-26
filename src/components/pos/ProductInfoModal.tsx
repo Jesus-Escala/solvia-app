@@ -1,6 +1,6 @@
-import { Plus, ZoomIn } from 'lucide-react';
+import { MapPin, Plus, ZoomIn } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
-import { Badge, Button, Modal, Skeleton, cx } from '@/ui';
+import { Badge, Button, Modal, Skeleton, TextButton, cx } from '@/ui';
 import { useProduct } from '../../hooks/queries';
 import { useModules } from '../../hooks/useModules';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -8,6 +8,7 @@ import type { ProductOption } from '../../lib/types';
 import { ImageViewer } from '../domain/ImageViewer';
 import { ProductThumb } from '../domain/ProductThumb';
 import { QrImage } from '../domain/QrImage';
+import { SpotMapModal } from '../maps/SpotMapModal';
 
 /**
  * The detail of a product from the point of sale: its picture (big on a tap), code and QR, price,
@@ -60,6 +61,8 @@ function ProductInfo({
   const modules = useModules();
   const full = useProduct(product.id);
   const [viewing, setViewing] = useState<{ url: string; title: string } | null>(null);
+  const [showSpot, setShowSpot] = useState(false);
+  const spot = modules.inventory ? (full.data?.spot ?? null) : null;
   const unit = t(`products.unitsShort.${product.unit}`);
   const service = product.kind === 'service';
   const margin =
@@ -114,6 +117,24 @@ function ProductInfo({
         )}
       </div>
 
+      {/* Where it is kept: first, so it is found right away. */}
+      {spot && (
+        <div className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary-soft/40 p-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary">
+            <MapPin className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold tracking-[0.1em] text-muted uppercase">
+              {t('locations.product.label')}
+            </p>
+            <p className="truncate font-semibold">
+              {spot.name} <span className="font-normal text-muted">· {spot.mapName}</span>
+            </p>
+          </div>
+          <TextButton onClick={() => setShowSpot(true)}>{t('locations.product.see')}</TextButton>
+        </div>
+      )}
+
       <dl className="divide-y divide-line rounded-2xl border border-line text-sm">
         <Row label={t('products.form.price')} strong>
           {fmt.money(product.price)}
@@ -160,6 +181,14 @@ function ProductInfo({
         {t(mode === 'sale' ? 'pos.info.addSale' : 'pos.info.addPurchase')}
       </Button>
       <ImageViewer image={viewing} onClose={() => setViewing(null)} />
+      <SpotMapModal
+        target={
+          showSpot && spot
+            ? { mapId: spot.mapId, spotId: spot.id, title: `${product.name} · ${spot.name}` }
+            : null
+        }
+        onClose={() => setShowSpot(false)}
+      />
     </div>
   );
 }

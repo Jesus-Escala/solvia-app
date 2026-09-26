@@ -3,6 +3,7 @@ import {
   CircleHelp,
   FileSpreadsheet,
   Home,
+  Map,
   Package,
   ReceiptText,
   Settings,
@@ -62,6 +63,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { to: '/products', label: 'nav.products', icon: <Package />, module: 'catalog' },
       { to: '/purchases', label: 'nav.purchases', icon: <Warehouse />, module: 'inventory' },
       { to: '/suppliers', label: 'nav.suppliers', icon: <Truck />, module: 'inventory' },
+      { to: '/locations', label: 'nav.locations', icon: <Map />, module: 'inventory' },
     ],
   },
   {

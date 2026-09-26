@@ -18,6 +18,7 @@ import { PurchasesPage } from './pages/PurchasesPage';
 import { SalePosPage } from './pages/SalePosPage';
 import { SalesPage } from './pages/SalesPage';
 import { SuppliersPage } from './pages/SuppliersPage';
+import { LocationsPage } from './pages/LocationsPage';
 import { ReceivablesPage } from './pages/ReceivablesPage';
 import { SettingsPage } from './pages/SettingsPage';
 
@@ -70,6 +71,7 @@ export function App() {
           <Route path="sales" element={<SalesPage />} />
           <Route path="purchases" element={<PurchasesPage />} />
           <Route path="suppliers" element={<SuppliersPage />} />
+          <Route path="locations" element={<LocationsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="help" element={<HelpPage />} />
           <Route path="*" element={<NotFoundPage />} />

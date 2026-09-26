@@ -85,6 +85,9 @@ export interface Product {
   name: string;
   categoryId: string | null;
   category: { id: string; name: string } | null;
+  /** Spot of a floor plan where it is kept (null: not placed). */
+  spotId: string | null;
+  spot: { id: string; name: string; mapId: string; mapName: string } | null;
   /** Its own barcode, or the internal code Solvia gave it (printed as its QR). */
   code: string | null;
   /** Picture (`/files/products/...`). */
@@ -101,6 +104,40 @@ export interface Product {
   active: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Pin colors of the spots on a floor plan (theme tokens). */
+export type SpotColor = 'primary' | 'info' | 'success' | 'warning' | 'danger' | 'accent';
+
+export interface SpotProduct {
+  id: string;
+  name: string;
+  code: string | null;
+  imageUrl: string | null;
+  unit: ProductUnit;
+  trackStock: boolean;
+  stock: number;
+}
+
+/** A place marked on a floor plan (a shelf, a fridge…); x and y are fractions of the plan. */
+export interface MapSpot {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  color: SpotColor;
+  products: SpotProduct[];
+}
+
+/** A floor plan of the business (inventory module). */
+export interface StoreMap {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+  /** Width / height of the picture. */
+  aspect: number;
+  position: number;
+  spots: MapSpot[];
 }
 
 export interface Me extends SessionUser {
