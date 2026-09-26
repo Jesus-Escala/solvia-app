@@ -415,6 +415,15 @@ export interface ProductListParams {
   sortDir?: SortDir | null;
 }
 
+/** One product with everything (category, stock…), e.g. for its detail in the point of sale. */
+export function useProduct(id: string | null) {
+  return useQuery({
+    queryKey: ['products', 'detail', id] as const,
+    queryFn: () => api.get<Product>(`/products/${id}`),
+    enabled: id !== null,
+  });
+}
+
 export function useProducts(params: ProductListParams, enabled = true) {
   return useQuery({
     queryKey: ['products', params] as const,

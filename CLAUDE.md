@@ -60,7 +60,7 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
 'purchase')` navigates there. `components/pos/`: `PosLayout` (catalog left, ticket right;
   phones: catalog + bottom bar that opens the ticket) and `ProductCatalog` (without a search only the 20
   best sellers, "Recomendados", from `/products/lookup?sort=popular`; the rest by search (name or code) or barcode — Enter resolves scans in order, so fast
-  scans are never lost; "Cámara" opens `pos/CameraScanner` (ZXing, loaded on open: QR and EAN/UPC/Code 128, several in a row, only the exact code is added; needs https or localhost)). A product that is not in the catalog is created right there in a dialog (`pos/NewProductForm` → `NewProductModal`,
+  scans are never lost; "Cámara" opens `pos/CameraScanner` (ZXing, loaded on open: QR and EAN/UPC/Code 128, several in a row, only the exact code is added; needs https or localhost)). Each tile has an "i" that opens `pos/ProductInfoModal` (picture, code and QR, price, cost and margin, stock, pack, sold in 90 days, "Agregar a la venta / compra"). A product that is not in the catalog is created right there in a dialog (`pos/NewProductForm` → `NewProductModal`,
   also from "Crear «texto»" when a search finds nothing), so every line is a catalog product. The
   sale ticket (`pos/SaleLines.tsx`, helpers in `pos/saleMath.ts`) takes a price for this sale
   only, a discount and "Cobrar" → checkout (cash with change, Yape, Plin, transfer or credit with

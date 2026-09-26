@@ -9,7 +9,7 @@ import {
   Sparkles,
   Tag,
   X,
-  ZoomIn,
+  Info,
 } from 'lucide-react';
 import { useRef, useState, type ReactNode, type RefObject } from 'react';
 import { cx, Skeleton } from '@/ui';
@@ -17,9 +17,9 @@ import { productLookupQuery, useCategories, useProductCatalog } from '../../hook
 import { useI18n } from '../../i18n/I18nProvider';
 import type { ProductOption } from '../../lib/types';
 import { CameraScanner } from './CameraScanner';
+import { ProductInfoModal } from './ProductInfoModal';
 import { ADD_KEY_LABEL } from './keys';
 import { Kbd } from './PosLayout';
-import { ImageViewer } from '../domain/ImageViewer';
 import { ProductThumb } from '../domain/ProductThumb';
 import { useDebouncedValue } from '../domain/useSearchBox';
 
@@ -57,7 +57,8 @@ export function ProductCatalog({
   const { t } = useI18n();
   const [text, setText] = useState('');
   const [notFound, setNotFound] = useState<string | null>(null);
-  const [viewing, setViewing] = useState<{ url: string; title: string } | null>(null);
+  // The product whose detail is open (the "i" of its tile).
+  const [info, setInfo] = useState<ProductOption | null>(null);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const categories = (useCategories().data ?? []).filter((category) => category.products > 0);
   const typed = text.trim();
@@ -268,17 +269,15 @@ export function ProductCatalog({
                     searchRef.current?.focus();
                   }}
                 />
-                {product.imageUrl && (
-                  <button
-                    type="button"
-                    title={t('products.form.zoomImage')}
-                    aria-label={t('products.form.zoomImage')}
-                    onClick={() => setViewing({ url: product.imageUrl!, title: product.name })}
-                    className="absolute top-2 left-2 flex h-7 w-7 items-center justify-center rounded-lg bg-surface/90 text-muted shadow-sm transition hover:text-ink"
-                  >
-                    <ZoomIn className="h-4 w-4" />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  title={t('pos.info.open')}
+                  aria-label={t('pos.info.openNamed', { name: product.name })}
+                  onClick={() => setInfo(product)}
+                  className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-lg border border-line bg-surface text-muted shadow-xs transition hover:border-primary/40 hover:bg-primary-soft/50 hover:text-primary-ink"
+                >
+                  <Info className="h-4 w-4" />
+                </button>
               </li>
             ))}
           </ul>
@@ -308,7 +307,15 @@ export function ProductCatalog({
           <p className="mt-3 text-center text-sm text-muted">{t('pos.searchMore')}</p>
         )}
       </div>
-      <ImageViewer image={viewing} onClose={() => setViewing(null)} />
+      <ProductInfoModal
+        product={info}
+        mode={purchase ? 'purchase' : 'sale'}
+        onAdd={(product) => {
+          onPick(product);
+          searchRef.current?.focus();
+        }}
+        onClose={() => setInfo(null)}
+      />
     </div>
   );
 }
@@ -388,7 +395,7 @@ function ProductTile({
       {quantity > 0 && (
         <span
           key={quantity}
-          className="animate-pop-in absolute -top-2 -right-2 flex h-7 min-w-7 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-on-primary shadow-pop tabular-nums"
+          className="animate-pop-in absolute -top-2 -left-2 flex h-7 min-w-7 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-on-primary shadow-pop tabular-nums"
         >
           {fmt.number(quantity)}
         </span>
@@ -400,7 +407,9 @@ function ProductTile({
           size={product.imageUrl ? 48 : 36}
         />
         <span className="min-w-0">
-          <span className="line-clamp-2 text-sm leading-snug font-semibold">{product.name}</span>
+          <span className="line-clamp-2 pr-7 text-sm leading-snug font-semibold">
+            {product.name}
+          </span>
           {top && (
             <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-accent/20 px-1.5 py-0.5 text-[10px] font-bold text-ink">
               <Flame className="h-3 w-3" />
