@@ -1,7 +1,7 @@
 import {
   ArrowLeft,
   ImagePlus,
-  Info,
+  Eye,
   List,
   MapPinPlus,
   Map as MapIcon,
@@ -26,6 +26,7 @@ import {
   Tabs,
   TextButton,
   cx,
+  smallButtonClass,
   useFeedback,
 } from '@/ui';
 import { useAuth } from '../auth/AuthContext';
@@ -243,7 +244,7 @@ function Locations() {
               items={list.map((map) => ({ value: map.id, label: map.name }))}
             />
           )}
-          <div className="shrink-0 lg:hidden">
+          <div data-tour="loc-panes" className="shrink-0 lg:hidden">
             <SegmentedControl
               label={t('locations.pane.label')}
               value={pane}
@@ -283,6 +284,7 @@ function Locations() {
                     variant="soft"
                     icon={<MapPinPlus className="h-4 w-4" />}
                     onClick={startPlacing}
+                    data-tour="loc-mark"
                   >
                     {t('locations.mark')}
                   </Button>
@@ -346,6 +348,7 @@ function Locations() {
                 />
               </header>
               <MapStage
+                tour="loc-stage"
                 className="min-h-0 flex-1 rounded-none"
                 map={current}
                 view={view}
@@ -422,6 +425,7 @@ function Locations() {
             </section>
 
             <aside
+              data-tour="loc-panel"
               className={cx(
                 'flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-card',
                 pane === 'map' && 'max-lg:hidden',
@@ -694,7 +698,10 @@ function SpotDetail({
                       )}
                     </span>
                   </span>
-                  <Info className="h-4 w-4 shrink-0 text-muted" />
+                  <span className={smallButtonClass('xs', 'shrink-0')}>
+                    <Eye className="h-3.5 w-3.5" />
+                    {t('locations.spot.detail')}
+                  </span>
                 </button>
                 <IconButton
                   size="sm"

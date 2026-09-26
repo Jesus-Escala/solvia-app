@@ -1,30 +1,49 @@
 /**
- * Guided tour definition. Each step points at an element marked with `data-tour="<target>"`
- * on the given route; texts live under `tour.steps.<id>` in the i18n dictionaries.
- * To add a step: add the attribute to the element, add an entry here and its two strings.
- * Steps with `module` are skipped when the business does not have it.
+ * Guided tours. Each step points at an element marked with `data-tour="<target>"`.
+ *
+ * - `general`: the first-time tour across the app; its steps say on which route they live and
+ *   the tour goes there. Texts under `tour.steps.<id>`.
+ * - One tour per section (the "Recorrido" button in the top bar): it runs on the page you are
+ *   on, showing only the steps whose element is on screen (so a module or a phone layout without
+ *   that element just skips it). Texts under `tour.sections.<tour>.<id>`; the section's name is
+ *   `tour.names.<tour>`.
+ *
+ * To add a step: mark the element, add an entry here and its two strings (es + en). Kit
+ * elements carry generic targets: `page-title`, `page-actions`, `table-search`,
+ * `table-filters`, `table-columns` and `table`.
  */
 import type { ModuleRequirement } from '../hooks/useModules';
 
-type StepId =
-  | 'homeActions'
-  | 'quickAdd'
-  | 'homeToday'
-  | 'navigation'
-  | 'rowActions'
-  | 'customersTable'
-  | 'kpis'
-  | 'reminderRules'
+export interface TourStepDef {
+  id: string;
+  target: string;
+  /** General tour only: the page the step lives on (null: any). */
+  route?: string | null;
+  module?: ModuleRequirement;
+  /** Only on phones (e.g. the "+" lives in the bottom bar there). */
+  phoneOnly?: boolean;
+}
+
+export type SectionTourId =
+  | 'home'
+  | 'sales'
+  | 'salePos'
+  | 'purchases'
+  | 'purchasePos'
+  | 'customers'
+  | 'customerDetail'
+  | 'receivables'
+  | 'products'
+  | 'suppliers'
+  | 'locations'
+  | 'dashboard'
+  | 'reports'
+  | 'settings'
   | 'help';
 
-export const TOUR_STEPS: ReadonlyArray<{
-  id: StepId;
-  route: string | null;
-  target: string;
-  module?: ModuleRequirement;
-  /** Only on phones (the "+" lives in the bottom bar there). */
-  phoneOnly?: boolean;
-}> = [
+export type TourId = 'general' | SectionTourId;
+
+export const GENERAL_TOUR: ReadonlyArray<TourStepDef> = [
   { id: 'homeActions', route: '/', target: 'home-actions' },
   { id: 'quickAdd', route: '/', target: 'quick-add', phoneOnly: true },
   { id: 'homeToday', route: '/', target: 'home-today', module: 'collections' },
@@ -33,7 +52,123 @@ export const TOUR_STEPS: ReadonlyArray<{
   { id: 'customersTable', route: '/customers', target: 'customers-table', module: 'customers' },
   { id: 'kpis', route: '/dashboard?view=collection', target: 'period', module: 'collections' },
   { id: 'reminderRules', route: '/settings', target: 'reminder-rules', module: 'collections' },
+  { id: 'sectionTours', route: null, target: 'section-tour' },
   { id: 'help', route: null, target: 'help' },
 ];
 
-export type TourStep = (typeof TOUR_STEPS)[number];
+const intro = { id: 'intro', target: 'page-title' };
+const list = [
+  { id: 'search', target: 'table-search' },
+  { id: 'filters', target: 'table-filters' },
+  { id: 'table', target: 'table' },
+  { id: 'columns', target: 'table-columns' },
+];
+
+/** The steps of each section's tour, in order (missing elements are skipped). */
+export const SECTION_TOURS: Record<SectionTourId, ReadonlyArray<TourStepDef>> = {
+  home: [
+    { id: 'actions', target: 'home-actions' },
+    { id: 'quickAdd', target: 'quick-add', phoneOnly: true },
+    { id: 'today', target: 'home-today' },
+    { id: 'navigation', target: 'nav' },
+  ],
+  sales: [intro, { id: 'new', target: 'page-actions' }, ...list],
+  salePos: [
+    intro,
+    { id: 'search', target: 'pos-search' },
+    { id: 'scan', target: 'pos-scan' },
+    { id: 'new', target: 'pos-new' },
+    { id: 'categories', target: 'pos-categories' },
+    { id: 'catalog', target: 'pos-catalog' },
+    { id: 'ticket', target: 'pos-ticket' },
+    { id: 'keys', target: 'pos-keys' },
+  ],
+  purchases: [intro, { id: 'new', target: 'page-actions' }, ...list],
+  purchasePos: [
+    intro,
+    { id: 'search', target: 'pos-search' },
+    { id: 'scan', target: 'pos-scan' },
+    { id: 'new', target: 'pos-new' },
+    { id: 'catalog', target: 'pos-catalog' },
+    { id: 'ticket', target: 'pos-ticket' },
+    { id: 'keys', target: 'pos-keys' },
+  ],
+  customers: [intro, { id: 'new', target: 'page-actions' }, ...list],
+  customerDetail: [intro, { id: 'actions', target: 'page-actions' }],
+  receivables: [intro, { id: 'new', target: 'page-actions' }, ...list],
+  products: [intro, { id: 'actions', target: 'page-actions' }, ...list],
+  suppliers: [intro, { id: 'new', target: 'page-actions' }, ...list],
+  locations: [
+    intro,
+    { id: 'new', target: 'page-actions' },
+    { id: 'panes', target: 'loc-panes' },
+    { id: 'mark', target: 'loc-mark' },
+    { id: 'view', target: 'loc-view' },
+    { id: 'stage', target: 'loc-stage' },
+    { id: 'panel', target: 'loc-panel' },
+  ],
+  dashboard: [
+    intro,
+    { id: 'views', target: 'dashboard-views' },
+    { id: 'period', target: 'period' },
+  ],
+  reports: [
+    intro,
+    { id: 'chooser', target: 'report-chooser' },
+    { id: 'toolbar', target: 'report-toolbar' },
+    { id: 'search', target: 'table-search' },
+    { id: 'table', target: 'table' },
+  ],
+  settings: [
+    intro,
+    { id: 'tabs', target: 'settings-tabs' },
+    { id: 'reminders', target: 'reminder-rules' },
+  ],
+  help: [intro],
+};
+
+/** Where each section lives (to start its tour from the help center) and the module it needs. */
+export const SECTION_ROUTES: Record<
+  SectionTourId,
+  { route: string; module?: ModuleRequirement } | null
+> = {
+  home: { route: '/' },
+  sales: { route: '/sales', module: 'sales' },
+  salePos: { route: '/sales/new', module: 'sales' },
+  purchases: { route: '/purchases', module: 'inventory' },
+  purchasePos: { route: '/purchases/new', module: 'inventory' },
+  customers: { route: '/customers', module: 'customers' },
+  customerDetail: null,
+  receivables: { route: '/receivables', module: 'collections' },
+  products: { route: '/products', module: 'catalog' },
+  suppliers: { route: '/suppliers', module: 'inventory' },
+  locations: { route: '/locations', module: 'inventory' },
+  dashboard: { route: '/dashboard', module: 'collections' },
+  reports: { route: '/reports' },
+  settings: { route: '/settings' },
+  help: null,
+};
+
+/** The section tour of a page (by its path). */
+export function tourForPath(pathname: string): SectionTourId {
+  const path = pathname.replace(/\/+$/, '') || '/';
+  if (path === '/') return 'home';
+  if (path === '/sales/new') return 'salePos';
+  if (path === '/purchases/new') return 'purchasePos';
+  if (path.startsWith('/customers/')) return 'customerDetail';
+  const first = path.split('/')[1];
+  const byPath: Record<string, SectionTourId> = {
+    sales: 'sales',
+    purchases: 'purchases',
+    customers: 'customers',
+    receivables: 'receivables',
+    products: 'products',
+    suppliers: 'suppliers',
+    locations: 'locations',
+    dashboard: 'dashboard',
+    reports: 'reports',
+    settings: 'settings',
+    help: 'help',
+  };
+  return byPath[first ?? ''] ?? 'home';
+}

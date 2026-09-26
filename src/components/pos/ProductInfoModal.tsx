@@ -1,4 +1,4 @@
-import { MapPin, Plus, ZoomIn } from 'lucide-react';
+import { Map as MapIcon, MapPin, Plus, ZoomIn } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Badge, Button, Modal, Skeleton, TextButton, cx } from '@/ui';
 import { useProduct } from '../../hooks/queries';
@@ -106,108 +106,147 @@ function ProductInfo({
   const counted = modules.inventory && product.trackStock;
   const left = product.stock;
 
+  const low = counted && left > 0 && left <= (product.minStock ?? 0);
+
   return (
-    <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2">
-        {/* Picture: big on a tap. */}
+    <div className="space-y-3">
+      {/* The product at a glance: picture, name, what it is and its price. */}
+      <div className="flex gap-4 rounded-2xl bg-surface-2 p-3 sm:p-4">
         <button
           type="button"
           disabled={!product.imageUrl}
           onClick={() =>
             product.imageUrl && setViewing({ url: product.imageUrl, title: product.name })
           }
-          className="group relative flex items-center justify-center rounded-2xl border border-line p-3 disabled:cursor-default"
+          className="group relative shrink-0 self-start overflow-hidden rounded-xl bg-surface shadow-card disabled:cursor-default"
           aria-label={t('products.form.zoomImage')}
         >
-          <ProductThumb name={product.name} imageUrl={product.imageUrl} size={144} />
+          <ProductThumb name={product.name} imageUrl={product.imageUrl} size={112} />
           {product.imageUrl && (
-            <span className="absolute right-2 bottom-2 flex h-7 w-7 items-center justify-center rounded-lg bg-surface/90 text-muted shadow-sm group-hover:text-ink">
+            <span className="absolute right-1.5 bottom-1.5 flex h-7 w-7 items-center justify-center rounded-lg bg-surface/90 text-muted shadow-sm group-hover:text-ink">
               <ZoomIn className="h-4 w-4" />
             </span>
           )}
         </button>
-        {/* Code and QR. */}
-        <div className="flex flex-col items-center justify-center gap-1 rounded-2xl border border-line bg-surface-2 p-3 text-center">
-          {product.code && <QrImage code={product.code} size={112} />}
-          <p className="text-[11px] font-medium text-muted">{t('products.form.qrCode')}</p>
-          <p className="-mt-0.5 font-mono text-lg font-semibold tracking-wider">
-            {product.code ?? '—'}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap gap-1.5">
+            <Badge tone={service ? 'info' : 'neutral'}>
+              {t(service ? 'products.kinds.service' : 'products.kinds.product')}
+            </Badge>
+            {full.isLoading ? (
+              <Skeleton className="h-5 w-20" />
+            ) : (
+              <Badge tone="neutral">{full.data?.category?.name ?? t('categories.none')}</Badge>
+            )}
+            {counted && left <= 0 && <Badge tone="danger">{t('sales.pos.out')}</Badge>}
+            {low && <Badge tone="warning">{t('products.filters.low')}</Badge>}
+          </div>
+          <p className="mt-2 line-clamp-2 text-lg leading-snug font-semibold">{product.name}</p>
+          <p className="mt-1 text-[11px] font-semibold tracking-[0.1em] text-muted uppercase">
+            {t('products.form.price')}
+          </p>
+          <p className="font-display text-2xl leading-tight font-semibold text-primary-ink tabular-nums sm:text-3xl">
+            {fmt.money(product.price)}
+            {!service && (
+              <span className="ml-1 font-sans text-sm font-normal text-muted">/ {unit}</span>
+            )}
           </p>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge tone={service ? 'info' : 'neutral'}>
-          {t(service ? 'products.kinds.service' : 'products.kinds.product')}
-        </Badge>
-        {full.isLoading ? (
-          <Skeleton className="h-5 w-24" />
-        ) : (
-          <Badge tone="neutral">{full.data?.category?.name ?? t('categories.none')}</Badge>
-        )}
-        {counted && left <= 0 && <Badge tone="danger">{t('sales.pos.out')}</Badge>}
-        {counted && left > 0 && left <= (product.minStock ?? 0) && (
-          <Badge tone="warning">{t('products.filters.low')}</Badge>
+      {/* One card per row: the location needs the width for its button. */}
+      <div className="grid gap-3">
+        {/* Its code and QR, to scan or read out. */}
+        <div className="flex items-center gap-3 rounded-2xl border border-line p-3">
+          {product.code && (
+            <span className="shrink-0 rounded-lg bg-white p-1 ring-1 ring-line">
+              <QrImage code={product.code} size={64} />
+            </span>
+          )}
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold tracking-[0.1em] text-muted uppercase">
+              {t('products.form.qrCode')}
+            </p>
+            <p className="truncate font-mono text-lg font-semibold tracking-wider">
+              {product.code ?? '—'}
+            </p>
+          </div>
+        </div>
+        {/* Where it is kept. */}
+        {modules.inventory && (
+          <div
+            className={cx(
+              'flex items-center gap-3 rounded-2xl border p-3',
+              spot ? 'border-primary/30 bg-primary-soft/40' : 'border-line',
+            )}
+          >
+            <span
+              className={cx(
+                'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
+                spot ? 'bg-primary text-on-primary' : 'bg-surface-2 text-muted',
+              )}
+            >
+              <MapPin className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold tracking-[0.1em] text-muted uppercase">
+                {t('locations.product.label')}
+              </p>
+              {full.isLoading ? (
+                <Skeleton className="mt-1 h-5 w-24" />
+              ) : spot ? (
+                <p className="truncate font-semibold">
+                  {spot.name} <span className="font-normal text-muted">· {spot.mapName}</span>
+                </p>
+              ) : (
+                <p className="text-sm text-muted">{t('locations.product.none')}</p>
+              )}
+            </div>
+            {spot && (
+              <TextButton onClick={() => setShowSpot(true)} className="shrink-0 whitespace-nowrap">
+                <MapIcon className="h-4 w-4" />
+                {t('locations.product.see')}
+              </TextButton>
+            )}
+          </div>
         )}
       </div>
 
-      {/* Where it is kept: first, so it is found right away. */}
-      {spot && (
-        <div className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary-soft/40 p-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary">
-            <MapPin className="h-5 w-5" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold tracking-[0.1em] text-muted uppercase">
-              {t('locations.product.label')}
-            </p>
-            <p className="truncate font-semibold">
-              {spot.name} <span className="font-normal text-muted">· {spot.mapName}</span>
-            </p>
-          </div>
-          <TextButton onClick={() => setShowSpot(true)}>{t('locations.product.see')}</TextButton>
-        </div>
-      )}
-
-      <dl className="divide-y divide-line rounded-2xl border border-line text-sm">
-        <Row label={t('products.form.price')} strong>
-          {fmt.money(product.price)}
-          {!service && <span className="ml-1 text-xs font-normal text-muted">/ {unit}</span>}
-        </Row>
-        <Row label={t('products.columns.cost')}>
+      {/* The numbers, each in its own tile. */}
+      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <Tile label={t('products.columns.cost')}>
           {product.cost === null ? '—' : fmt.money(product.cost)}
-        </Row>
-        <Row label={t('products.columns.margin')}>
-          {margin === null ? (
-            '—'
-          ) : (
-            <span className={margin < 0 ? 'text-danger-ink' : 'text-success-ink'}>
-              {fmt.money(product.price - (product.cost ?? 0))} · {fmt.percent(margin)}
-            </span>
-          )}
-        </Row>
-        {!service && (
-          <Row label={t('products.columns.unit')}>{t(`products.units.${product.unit}`)}</Row>
-        )}
+        </Tile>
+        <Tile
+          label={t('products.columns.margin')}
+          tone={margin === null ? 'default' : margin < 0 ? 'danger' : 'success'}
+          sub={margin === null ? null : fmt.percent(margin)}
+        >
+          {margin === null ? '—' : fmt.money(product.price - (product.cost ?? 0))}
+        </Tile>
         {counted && (
-          <Row label={t('products.columns.stock')}>
-            <span className={cx(left <= 0 && 'text-danger-ink')}>
-              {fmt.number(left)} {unit}
-            </span>
-            {product.minStock !== null && (
-              <span className="ml-2 text-xs font-normal text-muted">
-                {t('pos.info.alertAt', { count: fmt.number(product.minStock) })}
-              </span>
-            )}
-          </Row>
+          <Tile
+            label={t('products.columns.stock')}
+            tone={left <= 0 ? 'danger' : low ? 'warning' : 'default'}
+            sub={
+              product.minStock === null
+                ? null
+                : t('pos.info.alertAt', { count: fmt.number(product.minStock) })
+            }
+          >
+            {fmt.number(left)} <span className="text-sm font-normal">{unit}</span>
+          </Tile>
+        )}
+        {!service && (
+          <Tile label={t('products.columns.unit')}>{t(`products.units.${product.unit}`)}</Tile>
         )}
         {product.packSize !== null && (
-          <Row label={t('pos.info.pack')}>
-            {fmt.number(product.packSize)} {unit}
-          </Row>
+          <Tile label={t('pos.info.pack')}>
+            {fmt.number(product.packSize)} <span className="text-sm font-normal">{unit}</span>
+          </Tile>
         )}
         {product.sold !== null && product.sold !== undefined && (
-          <Row label={t('pos.info.sold')}>{t('pos.info.soldCount', { count: product.sold })}</Row>
+          <Tile label={t('pos.info.sold')}>{t('pos.info.soldCount', { count: product.sold })}</Tile>
         )}
       </dl>
 
@@ -229,26 +268,34 @@ function ProductInfo({
   );
 }
 
-function Row({
+const TILE_TONES = {
+  default: 'text-ink',
+  success: 'text-success-ink',
+  warning: 'text-warning-ink',
+  danger: 'text-danger-ink',
+} as const;
+
+/** One figure of the product: a small label over a big value (and a note under it). */
+function Tile({
   label,
-  strong = false,
+  tone = 'default',
+  sub = null,
   children,
 }: {
   label: string;
-  strong?: boolean;
+  tone?: keyof typeof TILE_TONES;
+  sub?: string | null;
   children: ReactNode;
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 px-3 py-2">
-      <dt className="text-muted">{label}</dt>
-      <dd
-        className={cx(
-          'text-right tabular-nums',
-          strong ? 'text-base font-semibold' : 'font-medium',
-        )}
-      >
+    <div className="min-w-0 rounded-xl border border-line px-3 py-2.5">
+      <dt className="truncate text-[11px] font-semibold tracking-[0.1em] text-muted uppercase">
+        {label}
+      </dt>
+      <dd className={cx('mt-0.5 truncate text-base font-semibold tabular-nums', TILE_TONES[tone])}>
         {children}
       </dd>
+      {sub && <p className="truncate text-xs text-muted">{sub}</p>}
     </div>
   );
 }

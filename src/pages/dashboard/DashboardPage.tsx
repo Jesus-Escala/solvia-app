@@ -100,6 +100,7 @@ export function DashboardPage() {
 
       <Tabs
         stretch
+        data-tour="dashboard-views"
         label={t('dashboard.tabs.label')}
         value={view}
         onChange={(next) => update({ view: next })}

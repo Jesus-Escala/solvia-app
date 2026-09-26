@@ -1316,6 +1316,7 @@ export const en: Messages = {
       removed: '"{product}" is no longer in {spot}',
       removeProduct: 'Take out of here',
       seeProduct: 'See the product detail',
+      detail: 'See',
       stock: '{count} {unit} left',
     },
     product: {
@@ -1846,6 +1847,309 @@ export const en: Messages = {
     comingSoon: 'Soon you will be able to chat with me here.',
   },
   tour: {
+    sectionButton: 'Tour',
+    sectionButtonTitle: 'How does {name} work? I will show you step by step',
+    sectionTitle: 'Tours by section',
+    sectionHint:
+      'Forgot how to do something? Pick the section and I will show you step by step. There is also the "Tour" button at the top of every screen.',
+    general: 'General tour',
+    thisSection: 'Tour of this section ({name})',
+    names: {
+      home: 'Home',
+      sales: 'Sales',
+      salePos: 'New sale',
+      purchases: 'Purchases',
+      purchasePos: 'New purchase',
+      customers: 'Customers',
+      customerDetail: 'Customer detail',
+      receivables: 'Collections',
+      products: 'Products',
+      suppliers: 'Suppliers',
+      locations: 'Locations',
+      dashboard: 'Dashboard',
+      reports: 'Reports',
+      settings: 'Settings',
+      help: 'Help',
+    },
+    sections: {
+      home: {
+        actions: {
+          title: 'Everyday things',
+          body: 'From here you sell, note down credit, record a payment or add a customer, in one tap.',
+        },
+        quickAdd: {
+          title: 'Always at hand',
+          body: 'The "+ Add" button is on every screen: use it when you sell, give credit or get paid.',
+        },
+        today: {
+          title: 'Who to collect from today',
+          body: 'Overdue and soon-due debts. Tap "Paid" or "WhatsApp" to remind them.',
+        },
+        navigation: {
+          title: 'The menu',
+          body: 'Each section of your business: sales, collections, inventory and results.',
+        },
+      },
+      sales: {
+        intro: {
+          title: 'Your sales',
+          body: 'All your sales, cash and on credit, with their ticket.',
+        },
+        new: { title: 'Sell', body: '"New sale" opens the sales screen (shortcut Alt+A).' },
+        search: { title: 'Search', body: 'Type the sale number or the customer name.' },
+        filters: {
+          title: 'Filter',
+          body: 'Show only cash, credit or out-of-stock sales. On phones they open with this button.',
+        },
+        table: {
+          title: 'The detail',
+          body: 'Tap a sale to see what was taken, how it was paid and its ticket: view, print, WhatsApp or download.',
+        },
+        columns: {
+          title: 'Columns',
+          body: 'Choose which columns to see. Tap a column title to sort.',
+        },
+      },
+      salePos: {
+        intro: {
+          title: 'Sales screen',
+          body: 'Build the ticket on the left and charge on the right. "Sales" at the top takes you back.',
+        },
+        search: {
+          title: 'Find the product',
+          body: 'By code or description (Alt+B). With a barcode reader, scan and it is added.',
+        },
+        scan: {
+          title: 'Scan with the camera',
+          body: 'Point the camera at the product QR: it is added and you can keep scanning.',
+        },
+        new: {
+          title: 'New product',
+          body: 'Not in your catalog? Create it right here without leaving the sale (Alt+A).',
+        },
+        categories: {
+          title: 'Categories',
+          body: '"Recommended" are your best sellers; tap a category to see its products.',
+        },
+        catalog: {
+          title: 'Tap to add',
+          body: 'Each tap adds one to the ticket. The "i" shows the detail: price, stock, where it is and its picture.',
+        },
+        ticket: {
+          title: 'The ticket',
+          body: 'Change quantities, the price for this sale or a discount. Then "Charge": cash or credit, and how it was paid.',
+        },
+        keys: {
+          title: 'Shortcuts',
+          body: 'Alt+S charges, Alt+B searches, Alt+A creates and Esc goes back.',
+        },
+      },
+      purchases: {
+        intro: {
+          title: 'Your purchases',
+          body: 'What you buy from suppliers: stock goes up and costs are updated.',
+        },
+        new: { title: 'Buy', body: '"New purchase" opens the purchase screen (shortcut Alt+A).' },
+        search: { title: 'Search', body: 'Type the purchase number or the supplier.' },
+        filters: {
+          title: 'Filter',
+          body: 'Choose which purchases to see. On phones they open with this button.',
+        },
+        table: {
+          title: 'The detail',
+          body: 'Tap a purchase to see what came, how you paid and its PDF receipt.',
+        },
+        columns: {
+          title: 'Columns',
+          body: 'Choose which columns to see. Tap a column title to sort.',
+        },
+      },
+      purchasePos: {
+        intro: {
+          title: 'Purchase screen',
+          body: 'Build the purchase on the left and save it on the right.',
+        },
+        search: {
+          title: 'Find the product',
+          body: 'By code or description (Alt+B), or scan it with the reader.',
+        },
+        scan: {
+          title: 'Scan with the camera',
+          body: 'Point the camera at the QR: it is added and you go on with the next one.',
+        },
+        new: {
+          title: 'New product',
+          body: 'Something you never bought? Create it right here (Alt+A).',
+        },
+        catalog: {
+          title: 'Tap to add',
+          body: 'Each tap adds one. The "i" shows the product detail.',
+        },
+        ticket: {
+          title: 'The purchase',
+          body: 'Set quantities (or sacks), the cost, the supplier and how you paid. Then save (Alt+S).',
+        },
+        keys: {
+          title: 'Shortcuts',
+          body: 'Alt+S saves, Alt+B searches, Alt+A creates and Esc goes back.',
+        },
+      },
+      customers: {
+        intro: {
+          title: 'Your customers',
+          body: 'How much each one owes you and whether they pay well.',
+        },
+        new: {
+          title: 'New customer',
+          body: 'Add a customer with their WhatsApp (shortcut Alt+A).',
+        },
+        search: { title: 'Search', body: 'By name, document or phone.' },
+        filters: { title: 'Filter', body: 'For example, only those who owe you.' },
+        table: {
+          title: 'The detail',
+          body: 'Tap a customer to see their debts, payments and statement. Right-click to edit.',
+        },
+        columns: { title: 'Columns', body: 'Choose which columns to see. Tap the title to sort.' },
+      },
+      customerDetail: {
+        intro: {
+          title: 'The customer',
+          body: 'Everything about this customer: what they owe, what they paid and their history.',
+        },
+        actions: {
+          title: 'Actions',
+          body: 'Note down credit or a payment, remind them by WhatsApp or see their PDF statement.',
+        },
+      },
+      receivables: {
+        intro: { title: 'Collections', body: 'What you are owed: each credit with its due date.' },
+        new: {
+          title: 'Note down credit',
+          body: 'Record what they still owe you (shortcut Alt+A).',
+        },
+        search: { title: 'Search', body: 'By customer or description.' },
+        filters: { title: 'Filter', body: '"All", pending, overdue or paid.' },
+        table: {
+          title: 'Collect from here',
+          body: '"Paid" when they pay (it can be several methods); "WhatsApp" to remind them.',
+        },
+        columns: { title: 'Columns', body: 'Choose which columns to see. Tap the title to sort.' },
+      },
+      products: {
+        intro: {
+          title: 'Your products',
+          body: 'What you sell, with its price, cost, stock and QR code.',
+        },
+        actions: {
+          title: 'Actions',
+          body: '"New product" (Alt+A), "Categories" to group them and "Print labels" with their QR.',
+        },
+        search: { title: 'Search', body: 'By code or description.' },
+        filters: {
+          title: 'Filter',
+          body: 'On sale, running low, archived, products or services and by category.',
+        },
+        table: {
+          title: 'Change a product',
+          body: 'Tap one to change it: price, picture, category, location and its label.',
+        },
+        columns: { title: 'Columns', body: 'Choose which columns to see. Tap the title to sort.' },
+      },
+      suppliers: {
+        intro: {
+          title: 'Your suppliers',
+          body: 'Who you buy from, with their tax ID and WhatsApp.',
+        },
+        new: { title: 'New supplier', body: 'Add one here (shortcut Alt+A).' },
+        search: { title: 'Search', body: 'By name or tax ID.' },
+        filters: { title: 'Filter', body: 'Choose which suppliers to see.' },
+        table: {
+          title: 'Change a supplier',
+          body: 'Tap one to edit it; with the "…" menu you message them on WhatsApp.',
+        },
+        columns: { title: 'Columns', body: 'Choose which columns to see.' },
+      },
+      locations: {
+        intro: {
+          title: 'Locations',
+          body: 'The floor plan of your business: mark where each product is to find it in no time.',
+        },
+        new: {
+          title: 'New floor plan',
+          body: 'Upload a picture of your plan or draw your shop right here (shortcut Alt+A).',
+        },
+        panes: {
+          title: 'Plan or list',
+          body: 'On phones, switch between the plan and the list of locations.',
+        },
+        mark: {
+          title: 'Mark an area',
+          body: 'Tap here and drag on the plan to draw a shelf, a fridge or the till.',
+        },
+        view: {
+          title: '2D or 3D',
+          body: "In 2D you move and resize areas; in 3D you see them raised with their products' pictures.",
+        },
+        stage: {
+          title: 'Move the plan',
+          body: 'Drag to move or turn it; the wheel or two fingers to zoom. Tap an area to pick it.',
+        },
+        panel: {
+          title: 'Where is it?',
+          body: 'Search a product and its area is marked. In an area you add its products and tap one to see its detail.',
+        },
+      },
+      dashboard: {
+        intro: {
+          title: 'Dashboard',
+          body: 'Your numbers in charts: how much you sell, buy, collect and are owed.',
+        },
+        views: {
+          title: 'Views',
+          body: 'Each tab answers one question: sales, purchases, collections, who owes you and what you will collect.',
+        },
+        period: {
+          title: 'The period',
+          body: 'Choose the dates and how to group them (day, week or month).',
+        },
+      },
+      reports: {
+        intro: {
+          title: 'Reports',
+          body: 'Tables with the detail of your business, to see or download.',
+        },
+        chooser: {
+          title: 'Choose the report',
+          body: 'First the area (Sales, Purchases, Collections, Inventory), then the report.',
+        },
+        toolbar: {
+          title: 'Dates and files',
+          body: 'Choose the dates and open the report as PDF or Excel to save or send it.',
+        },
+        search: { title: 'Search the report', body: 'Type to keep only the rows you care about.' },
+        table: { title: 'The report', body: 'Tap a column title to sort.' },
+      },
+      settings: {
+        intro: {
+          title: 'Settings',
+          body: 'Your business details, your team and how Solvia works for you.',
+        },
+        tabs: {
+          title: 'Sections',
+          body: 'Business (language), messages and reminders, your plan, users and preferences.',
+        },
+        reminders: {
+          title: 'Automatic reminders',
+          body: 'Choose when Solvia reminds your customers by WhatsApp.',
+        },
+      },
+      help: {
+        intro: {
+          title: 'Help',
+          body: 'Frequent questions and the tours of each section, whenever you need them.',
+        },
+      },
+    },
     welcomeTitle: 'Welcome to Solvia',
     welcomeBody:
       'Would you like a quick tour of the platform? We will show you where everything is in under 2 minutes.',
@@ -1857,6 +2161,10 @@ export const en: Messages = {
     skip: 'Exit tour',
     progress: '{current} of {total}',
     steps: {
+      sectionTours: {
+        title: 'Tour of each section',
+        body: 'On every screen, this button shows you step by step how it works. Use it when you forget how to do something.',
+      },
       homeActions: {
         title: 'Everyday actions',
         body: 'From here you add a sale on credit, record a payment or add a customer.',

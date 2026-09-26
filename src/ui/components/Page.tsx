@@ -54,7 +54,10 @@ export function PageHeader({
             {eyebrow}
           </div>
         )}
-        <h1 className="text-[1.5rem] leading-tight font-semibold text-ink sm:text-[2.1rem]">
+        <h1
+          data-tour="page-title"
+          className="text-[1.5rem] leading-tight font-semibold text-ink sm:text-[2.1rem]"
+        >
           {title}
         </h1>
         {description && (
@@ -64,7 +67,11 @@ export function PageHeader({
           </div>
         )}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && (
+        <div data-tour="page-actions" className="flex flex-wrap items-center gap-2">
+          {actions}
+        </div>
+      )}
     </div>
   );
 }

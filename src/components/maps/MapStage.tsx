@@ -87,6 +87,7 @@ export function MapStage({
   onSelect,
   onChange,
   focus = null,
+  tour,
   className,
 }: {
   map: StoreMap;
@@ -103,6 +104,8 @@ export function MapStage({
   onChange?: (spot: MapSpot, area: SpotArea) => void;
   /** Spot to bring to the middle (2D); a new `at` moves the plan there again. */
   focus?: { id: string; at: number } | null;
+  /** `data-tour` target of the guided tours. */
+  tour?: string;
   className?: string;
 }) {
   const { t } = useI18n();
@@ -351,6 +354,7 @@ export function MapStage({
   return (
     <div
       ref={viewport}
+      data-tour={tour}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -442,7 +446,7 @@ export function MapStage({
       )}
 
       {/* Floating controls. */}
-      <div data-map-control className="absolute top-3 left-3 z-10">
+      <div data-map-control data-tour="loc-view" className="absolute top-3 left-3 z-10">
         <SegmentedControl
           size="sm"
           label={t('locations.view.label')}

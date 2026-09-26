@@ -155,7 +155,7 @@ function ReportChooser({
   return (
     <>
       {/* Phones: a list to pick from (the buttons would take the whole screen). */}
-      <label className="block md:hidden">
+      <label data-tour="report-chooser" className="block md:hidden">
         <span className="label">{t('reports.choose')}</span>
         <select
           className="input"
@@ -174,7 +174,7 @@ function ReportChooser({
         </select>
       </label>
       {/* Computers: first the area (Ventas, Compras, Cobranza, Inventario), then its reports. */}
-      <div className="space-y-3 max-md:hidden">
+      <div data-tour="report-chooser" className="space-y-3 max-md:hidden">
         <Tabs
           label={t('reports.area')}
           value={area.title}
@@ -308,7 +308,10 @@ function ReportToolbar({
   return (
     <>
       <p className="-mt-1 text-sm text-muted max-md:hidden">{t(`reports.hints.${report.id}`)}</p>
-      <div className="flex flex-col-reverse gap-2 md:flex-row md:items-center md:justify-between">
+      <div
+        data-tour="report-toolbar"
+        className="flex flex-col-reverse gap-2 md:flex-row md:items-center md:justify-between"
+      >
         {report.dated ? (
           <div className={cx(!filtersOpen && 'max-md:hidden')}>
             <PeriodPicker

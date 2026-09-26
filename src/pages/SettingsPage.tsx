@@ -688,6 +688,7 @@ export function SettingsPage() {
     <Page fill={tab === 'log'}>
       <PageHeader title={t('settings.title')} description={t('settings.subtitle')} />
       <Tabs
+        data-tour="settings-tabs"
         label={t('settings.title')}
         value={tab}
         onChange={(value) => update({ tab: value })}

@@ -24,6 +24,7 @@ import {
   useCanOfferInstall,
 } from '@/ui';
 import { AssistantMenu } from './AssistantMenu';
+import { TourButton } from '../../tour/TourButton';
 
 export function Topbar({
   collapsed,
@@ -65,6 +66,7 @@ export function Topbar({
       )}
 
       <div className="ml-auto flex items-center gap-1">
+        <TourButton className="mr-1" />
         <AssistantMenu />
 
         <PreferencesControls />

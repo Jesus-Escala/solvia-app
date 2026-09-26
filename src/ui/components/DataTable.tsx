@@ -306,6 +306,7 @@ export function DataTable<T>({
           <IconButton
             ref={ref}
             label={t('table.columns')}
+            data-tour="table-columns"
             variant="secondary"
             size="sm"
             onClick={toggle}
@@ -386,12 +387,17 @@ export function DataTable<T>({
         // options in sight (they wrap; none is hidden off-screen).
         <div className="flex shrink-0 flex-col gap-2 border-b border-line px-3 py-2.5 md:flex-row md:flex-wrap md:items-center md:px-4 md:py-3">
           <div className="flex items-center gap-2 md:contents">
-            {search && <div className="min-w-0 flex-1 md:flex-none">{search}</div>}
+            {search && (
+              <div data-tour="table-search" className="min-w-0 flex-1 md:flex-none">
+                {search}
+              </div>
+            )}
             {folded && (
               <FilterFoldButton
                 open={filtersOpen}
                 onToggle={() => setFiltersOpen((open) => !open)}
                 active={filtersActive}
+                tour="table-filters"
               />
             )}
             <div
@@ -406,6 +412,7 @@ export function DataTable<T>({
           </div>
           {(toolbar || !search) && (
             <div
+              {...(toolbar && { 'data-tour': 'table-filters' })}
               className={cx(
                 'flex min-w-0 flex-col gap-2 max-md:[&>*]:w-full md:flex-1 md:flex-row md:flex-wrap md:items-center',
                 folded && !filtersOpen && 'max-md:hidden',
@@ -424,6 +431,7 @@ export function DataTable<T>({
       )}
 
       <div
+        data-tour="table"
         className={cx(
           'relative min-h-0 shrink overflow-auto',
           // Phones: room for at least one whole card (the page scrolls a little if needed).

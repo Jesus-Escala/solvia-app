@@ -14,13 +14,50 @@ import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
 import { Mascot, Button, cx, Modal, IconButton } from '@/ui';
-import { useI18n } from '../i18n/I18nProvider';
-import { useModules } from '../hooks/useModules';
-import { TOUR_STEPS } from './steps';
+import { useI18n, type TranslationKey } from '../i18n/I18nProvider';
+import { useModules, type Modules } from '../hooks/useModules';
+import {
+  GENERAL_TOUR,
+  SECTION_ROUTES,
+  SECTION_TOURS,
+  type SectionTourId,
+  type TourId,
+  type TourStepDef,
+} from './steps';
 
 interface TourContextValue {
-  start: () => void;
+  /** Starts a tour: the general one, or a section's on the page you are on. */
+  start: (tour?: TourId) => void;
+  /** Goes to a section's page and starts its tour there (from the help center). */
+  startAt: (section: SectionTourId) => void;
   active: boolean;
+}
+
+interface RunningTour {
+  tour: TourId;
+  steps: TourStepDef[];
+}
+
+const isPhone = () => window.matchMedia('(max-width: 1023px)').matches;
+
+/** The steps a tour shows here: its module's, for this screen size and (sections) on screen. */
+function stepsOf(tour: TourId, modules: Modules): TourStepDef[] {
+  const allowed = (step: TourStepDef) =>
+    (!step.module || modules[step.module]) && (!step.phoneOnly || isPhone());
+  if (tour === 'general') return GENERAL_TOUR.filter(allowed);
+  const all = SECTION_TOURS[tour].filter(allowed);
+  const shown = all.filter((step) => findVisibleTarget(step.target) !== null);
+  // Nothing marked on screen: at least the section's introduction, centered.
+  return shown.length > 0 ? shown : all.slice(0, 1);
+}
+
+/** Text of a step: the general tour's, or the section's. */
+function stepText(tour: TourId, step: TourStepDef, part: 'title' | 'body') {
+  return (
+    tour === 'general'
+      ? `tour.steps.${step.id}.${part}`
+      : `tour.sections.${tour}.${step.id}.${part}`
+  ) as TranslationKey;
 }
 
 const TourContext = createContext<TourContextValue | null>(null);
@@ -130,22 +167,46 @@ function waitForTarget(
 
 export function TourProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [index, setIndex] = useState<number | null>(null);
-  // The provider only mounts inside the authenticated shell, so `user` is known here.
+  const modules = useModules();
+  const navigate = useNavigate();
+  const [running, setRunning] = useState<RunningTour | null>(null);
+  const [index, setIndex] = useState(0);
+  // The provider only mounts inside the authenticated routes, so `user` is known here.
   const [welcomeOpen, setWelcomeOpen] = useState(() => Boolean(user && !hasSeen(user.id)));
 
-  const start = useCallback(() => {
-    setWelcomeOpen(false);
-    markSeen(user?.id);
-    setIndex(0);
-  }, [user?.id]);
+  const start = useCallback(
+    (tour: TourId = 'general') => {
+      setWelcomeOpen(false);
+      markSeen(user?.id);
+      setIndex(0);
+      setRunning({ tour, steps: stepsOf(tour, modules) });
+    },
+    [user?.id, modules],
+  );
+
+  const startAt = useCallback(
+    (section: SectionTourId) => {
+      const place = SECTION_ROUTES[section];
+      if (!place) return start(section);
+      navigate(place.route);
+      // Once the page is drawn, its elements can be found.
+      const signal = { cancelled: false };
+      void waitForTarget('page-title', signal).then(() =>
+        window.setTimeout(() => start(section), 150),
+      );
+    },
+    [navigate, start],
+  );
 
   const stop = useCallback(() => {
     markSeen(user?.id);
-    setIndex(null);
+    setRunning(null);
   }, [user?.id]);
 
-  const value = useMemo(() => ({ start, active: index !== null }), [start, index]);
+  const value = useMemo(
+    () => ({ start, startAt, active: running !== null }),
+    [start, startAt, running],
+  );
 
   return (
     <TourContext.Provider value={value}>
@@ -158,8 +219,15 @@ export function TourProvider({ children }: { children: ReactNode }) {
           markSeen(user?.id);
         }}
       />
-      {index !== null && (
-        <TourOverlay key={index} index={index} setIndex={setIndex} onClose={stop} />
+      {running && running.steps.length > 0 && (
+        <TourOverlay
+          key={`${running.tour}-${index}`}
+          tour={running.tour}
+          steps={running.steps}
+          index={index}
+          setIndex={setIndex}
+          onClose={stop}
+        />
       )}
     </TourContext.Provider>
   );
@@ -202,10 +270,14 @@ function WelcomeModal({
 }
 
 function TourOverlay({
+  tour,
+  steps,
   index,
   setIndex,
   onClose,
 }: {
+  tour: TourId;
+  steps: TourStepDef[];
   index: number;
   setIndex: (index: number) => void;
   onClose: () => void;
@@ -213,12 +285,6 @@ function TourOverlay({
   const { t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
-  const modules = useModules();
-  // Only the steps of the modules this business has.
-  const phone = window.matchMedia('(max-width: 1023px)').matches;
-  const steps = TOUR_STEPS.filter(
-    (item) => (!item.module || modules[item.module]) && (!item.phoneOnly || phone),
-  );
   const step = steps[Math.min(index, steps.length - 1)]!;
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [ready, setReady] = useState(false);
@@ -243,7 +309,15 @@ function TourOverlay({
     void waitForTarget(step.target, signal).then((element) => {
       if (signal.cancelled) return;
       if (element) {
-        element.scrollIntoView({ block: 'center', inline: 'nearest' });
+        // Only when it is out of sight: scrolling a page that fits would shift the whole
+        // screen (containers with hidden overflow still scroll by code).
+        const box = element.getBoundingClientRect();
+        const inSight =
+          box.top >= 0 &&
+          box.top < window.innerHeight - 40 &&
+          box.left >= 0 &&
+          box.left < window.innerWidth - 40;
+        if (!inSight) element.scrollIntoView({ block: 'nearest', inline: 'nearest' });
         // Measure after scrolling settles.
         window.setTimeout(() => {
           if (!signal.cancelled) {
@@ -336,8 +410,13 @@ function TourOverlay({
         style={cardStyle}
       >
         <div className="mb-3 flex items-center justify-between gap-3">
-          <span className="flex items-center gap-2">
+          <span className="flex min-w-0 items-center gap-2">
             <Mascot variant="avatar" size={28} mood="happy" />
+            {tour !== 'general' && (
+              <span className="truncate text-xs font-semibold text-muted">
+                {t(`tour.names.${tour}`)}
+              </span>
+            )}
             <span className="rounded-full bg-primary-soft px-2.5 py-0.5 text-[11px] font-semibold text-primary-ink tabular-nums">
               {t('tour.progress', { current: index + 1, total: steps.length })}
             </span>
@@ -347,10 +426,10 @@ function TourOverlay({
           </IconButton>
         </div>
         <h2 id="tour-title" className="text-base font-semibold">
-          {t(`tour.steps.${step.id}.title`)}
+          {t(stepText(tour, step, 'title'))}
         </h2>
         <p className="mt-1.5 text-sm leading-relaxed text-muted">
-          {t(`tour.steps.${step.id}.body`)}
+          {t(stepText(tour, step, 'body'))}
         </p>
         <div className="mt-4 flex items-center gap-1" aria-hidden="true">
           {steps.map((item, dot) => (

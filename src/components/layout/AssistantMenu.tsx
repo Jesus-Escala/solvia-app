@@ -1,8 +1,9 @@
-import { BookOpen, ChevronRight, Compass, MessageCircleHeart } from 'lucide-react';
+import { BookOpen, ChevronRight, Compass, MessageCircleHeart, Route } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../../auth/AuthContext';
 import { useI18n } from '../../i18n/I18nProvider';
+import { tourForPath } from '../../tour/steps';
 import { useTour } from '../../tour/TourProvider';
 import { Mascot, Popover } from '@/ui';
 
@@ -31,6 +32,7 @@ export function AssistantMenu() {
   const { user } = useAuth();
   const tour = useTour();
   const navigate = useNavigate();
+  const section = tourForPath(useLocation().pathname);
   const firstName = user?.name.split(' ')[0] ?? '';
 
   return (
@@ -73,10 +75,18 @@ export function AssistantMenu() {
           <div className="space-y-2 px-1 pb-1">
             <Action
               icon={<Compass />}
-              label={t('assistant.tour')}
+              label={t('tour.thisSection', { name: t(`tour.names.${section}`) })}
               onClick={() => {
                 close();
-                tour.start();
+                tour.start(section);
+              }}
+            />
+            <Action
+              icon={<Route />}
+              label={t('tour.general')}
+              onClick={() => {
+                close();
+                tour.start('general');
               }}
             />
             <Action

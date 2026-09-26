@@ -103,7 +103,7 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
   the backend responses**), `src/lib/config.ts` (URLs from env).
 - `src/auth/` — AuthContext (login, Google, change password), RequireAuth (forces
   `/change-password` while `mustChangePassword`).
-- `src/tour/` — guided tour steps (`data-tour` attributes mark targets).
+- `src/tour/` — guided tours (`data-tour` attributes mark targets): the general first-time tour and **one per section** (`SECTION_TOURS` in `steps.ts`, texts under `tour.sections.<tour>`). The "Recorrido" button (`TourButton`, top bar and POS bar) starts the tour of the page on screen, showing only the steps whose element is visible; Help lists every section's tour (`startAt`). Kit elements carry generic targets (`page-title`, `page-actions`, `table-search`, `table-filters`, `table-columns`, `table`), so a new list page gets a tour by adding its entry and texts. `TourProvider` wraps the authenticated routes (POS screens included).
 
 ## Rules
 

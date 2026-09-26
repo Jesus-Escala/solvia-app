@@ -15,7 +15,9 @@ import {
 import { useState, type ReactNode } from 'react';
 import { Mascot, Button, cx, Page, PageHeader, Reveal } from '@/ui';
 import { useI18n, type TranslationKey } from '../i18n/I18nProvider';
+import { SECTION_ROUTES, type SectionTourId } from '../tour/steps';
 import { useTour } from '../tour/TourProvider';
+import { useModules } from '../hooks/useModules';
 
 /** Guide sections, how many steps each has (texts under help.guides.<id>.stepN) and a colour. */
 const GUIDES: Array<{ id: string; steps: number; icon: ReactNode; tone: string }> = [
@@ -110,7 +112,7 @@ export function HelpPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <Button
                 icon={<Compass className="h-4 w-4" />}
-                onClick={tour.start}
+                onClick={() => tour.start('general')}
                 className="help-shine"
               >
                 {t('help.startTour')}
@@ -263,6 +265,10 @@ export function HelpPage() {
       )}
 
       <Reveal>
+        <SectionTours />
+      </Reveal>
+
+      <Reveal>
         <section className="flex flex-col items-center gap-4 rounded-2xl border border-line bg-surface-2 p-5 text-center sm:flex-row sm:text-left">
           <div className="help-float">
             <Mascot size={64} mood="happy" />
@@ -271,11 +277,48 @@ export function HelpPage() {
             <h2 className="font-semibold">{t('help.stuckTitle')}</h2>
             <p className="text-sm text-muted">{t('help.stuckDescription')}</p>
           </div>
-          <Button variant="secondary" icon={<Compass className="h-4 w-4" />} onClick={tour.start}>
+          <Button
+            variant="secondary"
+            icon={<Compass className="h-4 w-4" />}
+            onClick={() => tour.start('general')}
+          >
             {t('help.startTour')}
           </Button>
         </section>
       </Reveal>
     </Page>
+  );
+}
+
+/** Every section's tour, to remember how something is done (it opens the section first). */
+function SectionTours() {
+  const { t } = useI18n();
+  const tour = useTour();
+  const modules = useModules();
+  const sections = (Object.keys(SECTION_ROUTES) as SectionTourId[]).filter((section) => {
+    const place = SECTION_ROUTES[section];
+    return place !== null && (!place.module || modules[place.module]);
+  });
+  return (
+    <section className="rounded-2xl border border-line bg-surface p-5">
+      <h2 className="flex items-center gap-2 font-semibold">
+        <Compass className="h-4 w-4 text-primary" />
+        {t('tour.sectionTitle')}
+      </h2>
+      <p className="mt-1 text-sm text-muted">{t('tour.sectionHint')}</p>
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+        {sections.map((section) => (
+          <button
+            key={section}
+            type="button"
+            onClick={() => tour.startAt(section)}
+            className="flex items-center justify-between gap-2 rounded-xl border border-line px-3 py-2.5 text-left text-sm font-medium transition hover:border-primary/40 hover:bg-primary-soft/40"
+          >
+            <span className="truncate">{t(`tour.names.${section}`)}</span>
+            <Compass className="h-4 w-4 shrink-0 text-primary" />
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }

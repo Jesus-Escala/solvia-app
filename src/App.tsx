@@ -1,5 +1,6 @@
 import { Compass } from 'lucide-react';
-import { Link, Route, Routes } from 'react-router';
+import { Link, Outlet, Route, Routes } from 'react-router';
+import { TourProvider } from './tour/TourProvider';
 import { ModuleRoute } from './components/modules/ModuleRoute';
 import { PublicOnly, RequireAuth } from './auth/RequireAuth';
 import { AppShell } from './components/layout/AppShell';
@@ -49,32 +50,40 @@ export function App() {
       </Route>
       <Route element={<RequireAuth />}>
         <Route path="change-password" element={<ChangePasswordPage />} />
-        {/* Points of sale: full screens of their own, outside the app shell. */}
-        <Route element={<ModuleRoute need="sales" />}>
-          <Route path="sales/new" element={<SalePosPage />} />
-        </Route>
-        <Route element={<ModuleRoute need="inventory" />}>
-          <Route path="purchases/new" element={<PurchasePosPage />} />
-        </Route>
-        <Route element={<AppShell />}>
-          <Route index element={<HomePage />} />
-          <Route element={<ModuleRoute need="collections" />}>
-            <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="receivables" element={<ReceivablesPage />} />
+        <Route
+          element={
+            <TourProvider>
+              <Outlet />
+            </TourProvider>
+          }
+        >
+          {/* Points of sale: full screens of their own, outside the app shell. */}
+          <Route element={<ModuleRoute need="sales" />}>
+            <Route path="sales/new" element={<SalePosPage />} />
           </Route>
-          <Route path="reports" element={<ReportsPage />} />
-          <Route element={<ModuleRoute need="customers" />}>
-            <Route path="customers" element={<CustomersPage />} />
-            <Route path="customers/:id" element={<CustomerDetailPage />} />
+          <Route element={<ModuleRoute need="inventory" />}>
+            <Route path="purchases/new" element={<PurchasePosPage />} />
           </Route>
-          <Route path="products" element={<ProductsPage />} />
-          <Route path="sales" element={<SalesPage />} />
-          <Route path="purchases" element={<PurchasesPage />} />
-          <Route path="suppliers" element={<SuppliersPage />} />
-          <Route path="locations" element={<LocationsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="help" element={<HelpPage />} />
-          <Route path="*" element={<NotFoundPage />} />
+          <Route element={<AppShell />}>
+            <Route index element={<HomePage />} />
+            <Route element={<ModuleRoute need="collections" />}>
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="receivables" element={<ReceivablesPage />} />
+            </Route>
+            <Route path="reports" element={<ReportsPage />} />
+            <Route element={<ModuleRoute need="customers" />}>
+              <Route path="customers" element={<CustomersPage />} />
+              <Route path="customers/:id" element={<CustomerDetailPage />} />
+            </Route>
+            <Route path="products" element={<ProductsPage />} />
+            <Route path="sales" element={<SalesPage />} />
+            <Route path="purchases" element={<PurchasesPage />} />
+            <Route path="suppliers" element={<SuppliersPage />} />
+            <Route path="locations" element={<LocationsPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="help" element={<HelpPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
         </Route>
       </Route>
     </Routes>

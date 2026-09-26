@@ -43,6 +43,7 @@ export function PosLayout({
             type="button"
             onClick={onOpenPanel}
             disabled={count === 0}
+            data-tour="pos-ticket"
             className="flex h-14 w-full items-center gap-3 rounded-2xl bg-primary px-4 text-on-primary shadow-pop transition active:scale-[0.99] disabled:bg-surface-3 disabled:text-muted disabled:shadow-none"
           >
             <ShoppingBasket className="h-5 w-5 shrink-0" />
@@ -62,6 +63,7 @@ export function PosLayout({
         </div>
       </section>
       <aside
+        data-tour="pos-ticket"
         className={cx(
           'flex min-h-0 flex-col border-line bg-surface lg:border-l lg:shadow-pop',
           !panelOpen && 'max-lg:hidden',

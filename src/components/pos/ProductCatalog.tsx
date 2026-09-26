@@ -124,7 +124,7 @@ export function ProductCatalog({
     <div className="flex h-full min-h-0 flex-col">
       <div className="shrink-0 space-y-2 px-3 pt-3 pb-1 sm:px-4 sm:pt-4">
         <div className="flex gap-2">
-          <div className="relative min-w-0 flex-1">
+          <div data-tour="pos-search" className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute top-1/2 left-3.5 h-5 w-5 -translate-y-1/2 text-subtle" />
             <input
               ref={searchRef}
@@ -171,6 +171,7 @@ export function ProductCatalog({
               setText('');
             }}
             title={t('pos.newButtonTitle')}
+            data-tour="pos-new"
             className="flex h-12 shrink-0 items-center gap-2 rounded-xl bg-primary px-3.5 text-sm font-semibold text-on-primary shadow-sm transition hover:brightness-110 [&>svg]:h-5 [&>svg]:w-5"
           >
             <PackagePlus />
@@ -180,6 +181,7 @@ export function ProductCatalog({
           <button
             type="button"
             onClick={() => setScanning(true)}
+            data-tour="pos-scan"
             title={t('scanner.open')}
             aria-label={t('scanner.open')}
             className="flex h-12 shrink-0 items-center gap-2 rounded-xl border border-line bg-surface px-3.5 text-sm font-semibold text-ink shadow-xs transition hover:border-primary/40 hover:bg-primary-soft/40 [&>svg]:h-5 [&>svg]:w-5"
@@ -200,6 +202,7 @@ export function ProductCatalog({
           <div
             role="radiogroup"
             aria-label={t('pos.categories')}
+            data-tour="pos-categories"
             className="-mx-3 flex gap-1.5 overflow-x-auto px-3 pb-1 [scrollbar-width:none]! sm:-mx-4 sm:px-4"
           >
             <CategoryChip
@@ -239,7 +242,10 @@ export function ProductCatalog({
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-2.5 pb-4 sm:px-4">
         {catalog.isLoading ? (
-          <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          <ul
+            data-tour="pos-catalog"
+            className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+          >
             {Array.from({ length: 8 }, (_, index) => (
               <li key={index}>
                 <Skeleton className="h-32 w-full rounded-2xl" />

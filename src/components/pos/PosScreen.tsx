@@ -2,6 +2,7 @@ import { ArrowLeft, Building2 } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { LogoMark, PreferencesControls, useFeedback } from '@/ui';
+import { TourButton } from '../../tour/TourButton';
 import { useMe } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 
@@ -77,7 +78,9 @@ export function PosScreen({
         </button>
         <span className="h-6 w-px bg-line" aria-hidden="true" />
         <LogoMark size={28} className="shrink-0" />
-        <h1 className="truncate font-display text-lg font-semibold">{title}</h1>
+        <h1 data-tour="page-title" className="truncate font-display text-lg font-semibold">
+          {title}
+        </h1>
         {me?.tenant && (
           <span className="hidden min-w-0 items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3 py-1 text-xs font-medium text-muted md:inline-flex">
             <Building2 className="h-3.5 w-3.5 shrink-0" />
@@ -86,6 +89,7 @@ export function PosScreen({
         )}
         <ul
           aria-label={t('sales.pos.shortcuts')}
+          data-tour="pos-keys"
           className="ml-auto hidden items-center gap-1 rounded-xl border border-line bg-surface-2 p-1 lg:flex"
         >
           {shortcuts.map((shortcut) => (
@@ -100,7 +104,8 @@ export function PosScreen({
             </li>
           ))}
         </ul>
-        <span className="ml-auto flex items-center lg:ml-2">
+        <span className="ml-auto flex items-center gap-1 lg:ml-2">
+          <TourButton />
           <PreferencesControls />
         </span>
       </header>

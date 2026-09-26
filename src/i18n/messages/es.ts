@@ -1324,6 +1324,7 @@ export const es = {
       removed: '«{product}» ya no está en {spot}',
       removeProduct: 'Sacar de aquí',
       seeProduct: 'Ver el detalle del producto',
+      detail: 'Ver',
       stock: 'Quedan {count} {unit}',
     },
     product: {
@@ -1851,6 +1852,306 @@ export const es = {
     comingSoon: 'Muy pronto podrás chatear conmigo aquí.',
   },
   tour: {
+    sectionButton: 'Recorrido',
+    sectionButtonTitle: '¿Cómo se usa {name}? Te lo muestro paso a paso',
+    sectionTitle: 'Recorridos por sección',
+    sectionHint:
+      '¿Olvidaste cómo se hace algo? Elige la sección y te la muestro paso a paso. También está el botón «Recorrido» arriba en cada pantalla.',
+    general: 'Recorrido general',
+    thisSection: 'Recorrido de esta sección ({name})',
+    names: {
+      home: 'Inicio',
+      sales: 'Ventas',
+      salePos: 'Nueva venta',
+      purchases: 'Compras',
+      purchasePos: 'Nueva compra',
+      customers: 'Clientes',
+      customerDetail: 'Detalle del cliente',
+      receivables: 'Cobranza',
+      products: 'Productos',
+      suppliers: 'Proveedores',
+      locations: 'Ubicaciones',
+      dashboard: 'Dashboard',
+      reports: 'Reportes',
+      settings: 'Configuración',
+      help: 'Ayuda',
+    },
+    sections: {
+      home: {
+        actions: {
+          title: 'Lo de todos los días',
+          body: 'Desde aquí vendes, anotas un fiado, registras un pago o agregas un cliente, con un toque.',
+        },
+        quickAdd: {
+          title: 'Siempre a mano',
+          body: 'El botón «+ Anotar» está en todas las pantallas: úsalo cuando vendas, fíes o te paguen.',
+        },
+        today: {
+          title: 'A quién cobrarle hoy',
+          body: 'Los atrasados y los que te pagan pronto. Toca «Me pagó» o «WhatsApp» para recordarles.',
+        },
+        navigation: {
+          title: 'El menú',
+          body: 'Cada sección de tu negocio: ventas, cobranza, inventario y resultados.',
+        },
+      },
+      sales: {
+        intro: {
+          title: 'Tus ventas',
+          body: 'Aquí ves todas tus ventas: al contado y al fiado, con su ticket.',
+        },
+        new: { title: 'Vender', body: '«Nueva venta» abre la pantalla de venta (atajo Alt+A).' },
+        search: { title: 'Buscar', body: 'Escribe el número de venta o el nombre del cliente.' },
+        filters: {
+          title: 'Filtrar',
+          body: 'Muestra solo las ventas al contado, al fiado o sin stock. En el celular se abren con este botón.',
+        },
+        table: {
+          title: 'El detalle',
+          body: 'Toca una venta para ver qué se llevó, cómo pagó y su ticket: verlo, imprimirlo, enviarlo por WhatsApp o descargarlo.',
+        },
+        columns: {
+          title: 'Columnas',
+          body: 'Elige qué columnas ver. Toca el título de una columna para ordenar.',
+        },
+      },
+      salePos: {
+        intro: {
+          title: 'Pantalla de venta',
+          body: 'Arma el ticket a la izquierda y cobra a la derecha. «Ventas» arriba te regresa a la lista.',
+        },
+        search: {
+          title: 'Buscar el producto',
+          body: 'Por código o descripción (Alt+B). Con un lector de códigos, escanea y se agrega solo.',
+        },
+        scan: {
+          title: 'Escanear con la cámara',
+          body: 'Apunta la cámara al QR del producto: se agrega y puedes seguir escaneando otros.',
+        },
+        new: {
+          title: 'Producto nuevo',
+          body: 'Si no está en tu catálogo, créalo aquí mismo sin salir de la venta (Alt+A).',
+        },
+        categories: {
+          title: 'Categorías',
+          body: '«Recomendados» son tus más vendidos; toca una categoría para ver sus productos.',
+        },
+        catalog: {
+          title: 'Toca para agregar',
+          body: 'Cada toque suma uno al ticket. La «i» muestra el detalle: precio, stock, dónde está y su foto.',
+        },
+        ticket: {
+          title: 'El ticket',
+          body: 'Cambia cantidades, el precio de esta venta o un descuento. Luego «Cobrar»: al contado o fiado, y cómo pagó.',
+        },
+        keys: { title: 'Atajos', body: 'Alt+S cobra, Alt+B busca, Alt+A crea y Esc regresa.' },
+      },
+      purchases: {
+        intro: {
+          title: 'Tus compras',
+          body: 'Lo que le compras a tus proveedores: el stock sube y los costos se actualizan.',
+        },
+        new: { title: 'Comprar', body: '«Nueva compra» abre la pantalla de compra (atajo Alt+A).' },
+        search: { title: 'Buscar', body: 'Escribe el número de compra o el proveedor.' },
+        filters: {
+          title: 'Filtrar',
+          body: 'Elige qué compras ver. En el celular se abren con este botón.',
+        },
+        table: {
+          title: 'El detalle',
+          body: 'Toca una compra para ver lo que trajo, cómo pagaste y su comprobante en PDF.',
+        },
+        columns: {
+          title: 'Columnas',
+          body: 'Elige qué columnas ver. Toca el título de una columna para ordenar.',
+        },
+      },
+      purchasePos: {
+        intro: {
+          title: 'Pantalla de compra',
+          body: 'Arma la compra a la izquierda y guárdala a la derecha.',
+        },
+        search: {
+          title: 'Buscar el producto',
+          body: 'Por código o descripción (Alt+B), o escanéalo con el lector.',
+        },
+        scan: {
+          title: 'Escanear con la cámara',
+          body: 'Apunta la cámara al QR: se agrega y sigues con el siguiente.',
+        },
+        new: {
+          title: 'Producto nuevo',
+          body: 'Si es algo que nunca compraste, créalo aquí mismo (Alt+A).',
+        },
+        catalog: {
+          title: 'Toca para agregar',
+          body: 'Cada toque suma uno. La «i» muestra el detalle del producto.',
+        },
+        ticket: {
+          title: 'La compra',
+          body: 'Pon cantidades (o sacos), el costo, el proveedor y cómo pagaste. Luego guarda (Alt+S).',
+        },
+        keys: { title: 'Atajos', body: 'Alt+S guarda, Alt+B busca, Alt+A crea y Esc regresa.' },
+      },
+      customers: {
+        intro: { title: 'Tus clientes', body: 'Cuánto te debe cada uno y si paga bien.' },
+        new: { title: 'Nuevo cliente', body: 'Agrega un cliente con su WhatsApp (atajo Alt+A).' },
+        search: { title: 'Buscar', body: 'Por nombre, documento o teléfono.' },
+        filters: { title: 'Filtrar', body: 'Por ejemplo, solo los que te deben.' },
+        table: {
+          title: 'El detalle',
+          body: 'Toca un cliente para ver sus deudas, pagos y su estado de cuenta. Clic derecho para editarlo.',
+        },
+        columns: {
+          title: 'Columnas',
+          body: 'Elige qué columnas ver. Toca el título para ordenar.',
+        },
+      },
+      customerDetail: {
+        intro: {
+          title: 'El cliente',
+          body: 'Todo lo de este cliente: lo que te debe, lo que te pagó y su historial.',
+        },
+        actions: {
+          title: 'Acciones',
+          body: 'Anota un fiado o un pago, recuérdale por WhatsApp o mira su estado de cuenta en PDF.',
+        },
+      },
+      receivables: {
+        intro: { title: 'Cobranza', body: 'Lo que te deben: cada fiado con su vencimiento.' },
+        new: {
+          title: 'Anotar un fiado',
+          body: 'Registra lo que te quedaron debiendo (atajo Alt+A).',
+        },
+        search: { title: 'Buscar', body: 'Por cliente o descripción.' },
+        filters: { title: 'Filtrar', body: '«Todos», pendientes, atrasados o pagados.' },
+        table: {
+          title: 'Cobrar desde aquí',
+          body: '«Me pagó» cuando te pagan (puede ser con varios métodos); «WhatsApp» para recordarle.',
+        },
+        columns: {
+          title: 'Columnas',
+          body: 'Elige qué columnas ver. Toca el título para ordenar.',
+        },
+      },
+      products: {
+        intro: {
+          title: 'Tus productos',
+          body: 'Lo que vendes, con su precio, costo, stock y código QR.',
+        },
+        actions: {
+          title: 'Acciones',
+          body: '«Nuevo producto» (Alt+A), «Categorías» para agruparlos e «Imprimir etiquetas» con su QR.',
+        },
+        search: { title: 'Buscar', body: 'Por código o descripción.' },
+        filters: {
+          title: 'Filtrar',
+          body: 'En venta, por acabarse, archivados, productos o servicios y por categoría.',
+        },
+        table: {
+          title: 'Cambiar un producto',
+          body: 'Toca uno para cambiarlo: precio, foto, categoría, ubicación y su etiqueta.',
+        },
+        columns: {
+          title: 'Columnas',
+          body: 'Elige qué columnas ver. Toca el título para ordenar.',
+        },
+      },
+      suppliers: {
+        intro: { title: 'Tus proveedores', body: 'A quién le compras, con su RUC y WhatsApp.' },
+        new: { title: 'Nuevo proveedor', body: 'Agrégalo aquí (atajo Alt+A).' },
+        search: { title: 'Buscar', body: 'Por nombre o RUC.' },
+        filters: { title: 'Filtrar', body: 'Elige qué proveedores ver.' },
+        table: {
+          title: 'Cambiar un proveedor',
+          body: 'Toca uno para editarlo; con el menú «…» le escribes por WhatsApp.',
+        },
+        columns: { title: 'Columnas', body: 'Elige qué columnas ver.' },
+      },
+      locations: {
+        intro: {
+          title: 'Ubicaciones',
+          body: 'El plano de tu negocio: marca dónde está cada producto para encontrarlo al toque.',
+        },
+        new: {
+          title: 'Nuevo plano',
+          body: 'Sube la imagen de tu plano o dibuja tu tienda aquí mismo (atajo Alt+A).',
+        },
+        panes: {
+          title: 'Plano o lista',
+          body: 'En el celular cambia entre ver el plano y la lista de ubicaciones.',
+        },
+        mark: {
+          title: 'Marcar una zona',
+          body: 'Toca aquí y arrastra sobre el plano para dibujar un estante, una refrigeradora o la caja.',
+        },
+        view: {
+          title: '2D o 3D',
+          body: 'En 2D mueves y cambias el tamaño de las zonas; en 3D las ves levantadas con las fotos de sus productos.',
+        },
+        stage: {
+          title: 'Mover el plano',
+          body: 'Arrastra para moverlo o girarlo; la rueda o dos dedos para acercar. Toca una zona para elegirla.',
+        },
+        panel: {
+          title: '¿Dónde está?',
+          body: 'Busca un producto y se marca su zona. En una zona agregas sus productos y tocas uno para ver su detalle.',
+        },
+      },
+      dashboard: {
+        intro: {
+          title: 'Dashboard',
+          body: 'Tus números en gráficos: cuánto vendes, compras, cobras y te deben.',
+        },
+        views: {
+          title: 'Vistas',
+          body: 'Cada pestaña responde una pregunta: ventas, compras, cobranza, quién te debe y lo que vas a cobrar.',
+        },
+        period: {
+          title: 'El periodo',
+          body: 'Elige las fechas y cómo agruparlas (día, semana o mes).',
+        },
+      },
+      reports: {
+        intro: {
+          title: 'Reportes',
+          body: 'Tablas con el detalle de tu negocio, para ver o descargar.',
+        },
+        chooser: {
+          title: 'Elegir el reporte',
+          body: 'Primero el área (Ventas, Compras, Cobranza, Inventario) y luego el reporte.',
+        },
+        toolbar: {
+          title: 'Fechas y archivos',
+          body: 'Elige las fechas y abre el reporte en PDF o Excel para guardarlo o enviarlo.',
+        },
+        search: {
+          title: 'Buscar en el reporte',
+          body: 'Escribe para quedarte solo con las filas que te interesan.',
+        },
+        table: { title: 'El reporte', body: 'Toca el título de una columna para ordenar.' },
+      },
+      settings: {
+        intro: {
+          title: 'Configuración',
+          body: 'Los datos de tu negocio, tu equipo y cómo funciona Solvia para ti.',
+        },
+        tabs: {
+          title: 'Secciones',
+          body: 'Empresa (idioma), mensajes y recordatorios, tu plan, usuarios y preferencias.',
+        },
+        reminders: {
+          title: 'Recordatorios solos',
+          body: 'Elige cuándo Solvia les recuerda a tus clientes por WhatsApp.',
+        },
+      },
+      help: {
+        intro: {
+          title: 'Ayuda',
+          body: 'Preguntas frecuentes y los recorridos de cada sección, cuando los necesites.',
+        },
+      },
+    },
     welcomeTitle: 'Bienvenido a Solvia',
     welcomeBody: '¿Te muestro rápido cómo funciona? Son menos de 2 minutos.',
     start: 'Comenzar recorrido',
@@ -1861,6 +2162,10 @@ export const es = {
     skip: 'Salir del recorrido',
     progress: '{current} de {total}',
     steps: {
+      sectionTours: {
+        title: 'Recorrido de cada sección',
+        body: 'En cada pantalla, este botón te muestra paso a paso cómo se usa. Úsalo cuando olvides cómo hacer algo.',
+      },
       homeActions: {
         title: 'Lo de todos los días',
         body: 'Desde aquí anotas un fiado, registras un pago o agregas un cliente.',

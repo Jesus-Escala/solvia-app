@@ -11,12 +11,15 @@ export function FilterFoldButton({
   open,
   onToggle,
   active = null,
+  tour,
   className,
 }: {
   open: boolean;
   onToggle: () => void;
   /** Filters in use (null: not counted). */
   active?: number | null;
+  /** `data-tour` target of the guided tours. */
+  tour?: string;
   className?: string;
 }) {
   const { t } = useUiI18n();
@@ -25,6 +28,7 @@ export function FilterFoldButton({
     <button
       type="button"
       aria-expanded={open}
+      data-tour={tour}
       aria-label={t('table.filters')}
       title={t('table.filters')}
       onClick={onToggle}
