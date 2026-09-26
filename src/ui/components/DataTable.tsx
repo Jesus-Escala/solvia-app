@@ -14,6 +14,7 @@ import { IconButton } from './Button';
 import { cx } from './cx';
 import { EmptyState, Skeleton } from './Feedback';
 import { FilterFoldButton } from './FilterFold';
+import { smallButtonClass } from './buttonStyles';
 import { LoadingPill } from './LoadingOverlay';
 import { Popover } from './Overlays';
 
@@ -94,6 +95,11 @@ export interface DataTableProps<T> extends Omit<HTMLAttributes<HTMLElement>, 'ch
    */
   foldFilters?: boolean;
   filtersActive?: number | null;
+  /**
+   * Phones: how many detail fields a card shows before "Ver más" (the rest open per card), so one
+   * card never takes the whole screen.
+   */
+  mobileFields?: number;
   /** Right side of the toolbar (extra buttons). */
   toolbarEnd?: ReactNode;
   /** Persist column visibility in localStorage under this key. */
@@ -155,6 +161,7 @@ export function DataTable<T>({
   toolbar,
   foldFilters = true,
   filtersActive = null,
+  mobileFields = 4,
   toolbarEnd,
   columnsStorageKey,
   fill = true,
@@ -340,6 +347,15 @@ export function DataTable<T>({
 
   const hasToolbar = Boolean(search || toolbar || toolbarEnd || columnsMenu);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  // Phone cards opened with "Ver más" (by row key).
+  const [openCards, setOpenCards] = useState<ReadonlySet<string>>(() => new Set());
+  const toggleCard = (key: string) =>
+    setOpenCards((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   const folded = foldFilters && Boolean(toolbar);
   const titleColumn = columns.find((column) => column.mobile === 'title') ?? visibleColumns[0];
   const subtitleColumns = visibleColumns.filter((column) => column.mobile === 'subtitle');
@@ -410,7 +426,8 @@ export function DataTable<T>({
       <div
         className={cx(
           'relative min-h-0 shrink overflow-auto',
-          fill ? 'min-h-32 md:min-h-40' : 'md:max-h-(--table-max-h)',
+          // Phones: room for at least one whole card (the page scrolls a little if needed).
+          fill ? 'min-h-[15rem] md:min-h-40' : 'md:max-h-(--table-max-h)',
         )}
         style={fill ? undefined : ({ '--table-max-h': `${maxHeight}px` } as React.CSSProperties)}
         aria-busy={showSkeleton || showFetching}
@@ -614,18 +631,41 @@ export function DataTable<T>({
                     </div>
                   )}
                 </div>
-                {fieldColumns.length > 0 && (
-                  <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 rounded-lg bg-surface-2 px-3 py-2.5 text-sm">
-                    {fieldColumns.map((column) => (
-                      <div key={column.id} className="min-w-0">
-                        <dt className="text-[11px] tracking-wide text-subtle uppercase">
-                          {column.header}
-                        </dt>
-                        <dd className="truncate">{column.cell(row)}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                )}
+                {fieldColumns.length > 0 &&
+                  (() => {
+                    const key = rowKey(row);
+                    const open = openCards.has(key);
+                    const extra = fieldColumns.length - mobileFields;
+                    const shown =
+                      open || extra <= 0 ? fieldColumns : fieldColumns.slice(0, mobileFields);
+                    return (
+                      <>
+                        <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 rounded-lg bg-surface-2 px-3 py-2.5 text-sm">
+                          {shown.map((column) => (
+                            <div key={column.id} className="min-w-0">
+                              <dt className="text-[11px] tracking-wide text-subtle uppercase">
+                                {column.header}
+                              </dt>
+                              <dd className="truncate">{column.cell(row)}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                        {extra > 0 && (
+                          <button
+                            type="button"
+                            aria-expanded={open}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              toggleCard(key);
+                            }}
+                            className={smallButtonClass('xs', 'mt-2')}
+                          >
+                            {open ? t('table.lessFields') : t('table.moreFields', { count: extra })}
+                          </button>
+                        )}
+                      </>
+                    );
+                  })()}
                 {rowActions && (
                   <div
                     className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-line pt-3"
@@ -648,7 +688,7 @@ export function DataTable<T>({
       </div>
 
       {pagination && pagination.total > 0 && (
-        <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-line bg-surface px-4 py-2.5 text-xs text-muted">
+        <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-line bg-surface px-4 py-2 text-xs text-muted md:py-2.5">
           <span className="tabular-nums">
             {t('table.range', {
               from: fmt.number(firstRow),
@@ -661,7 +701,8 @@ export function DataTable<T>({
           </span>
           <div className="flex items-center gap-3">
             {pagination.onPageSizeChange && (
-              <label className="flex items-center gap-2">
+              // Phones: the page bar stays on one line (rows per page is a computer setting).
+              <label className="flex items-center gap-2 max-md:hidden">
                 {t('table.rowsPerPage')}
                 <select
                   className="rounded-md border border-line bg-surface px-1.5 py-1 text-xs text-ink"

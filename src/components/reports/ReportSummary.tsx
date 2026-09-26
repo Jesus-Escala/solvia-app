@@ -15,16 +15,17 @@ const VALUE_TONES: Record<SummaryTone, string> = {
   danger: 'text-danger-ink',
 };
 
-const STRIP_TONES: Record<SummaryTone, string> = {
-  default: 'border-primary/25 bg-primary-soft/45',
-  success: 'border-success/25 bg-success-soft/50',
-  warning: 'border-warning/30 bg-warning-soft/50',
-  danger: 'border-danger/25 bg-danger-soft/45',
+const ACCENTS: Record<SummaryTone, string> = {
+  default: 'before:bg-primary',
+  success: 'before:bg-success',
+  warning: 'before:bg-warning',
+  danger: 'before:bg-danger',
 };
 
 /**
- * The figures of a report at a glance: the first one big and in color (what was sold, collected,
- * bought…), the others beside it (below it on phones, two per row).
+ * The figures of a report as cards that catch the eye: the first one filled with the brand color
+ * (what was sold, collected, bought…), the others with a colored edge. Phones: one row that slides
+ * sideways, so the list below keeps its room.
  */
 export function ReportSummary({
   figures,
@@ -33,50 +34,54 @@ export function ReportSummary({
   figures: SummaryFigure[];
   loading?: boolean;
 }) {
-  const [main, ...rest] = figures;
-  if (loading || !main) {
-    return <Skeleton className="h-24 w-full shrink-0 rounded-2xl" />;
-  }
-  const tone = main.tone ?? 'default';
-  return (
-    <section
-      className={cx(
-        'flex shrink-0 flex-col gap-3 rounded-2xl border px-4 py-3 md:flex-row md:items-center md:gap-6 md:px-5 md:py-4',
-        STRIP_TONES[tone],
-      )}
-    >
-      <div className="min-w-0 md:pr-6 md:[&:not(:last-child)]:border-r md:[&:not(:last-child)]:border-line">
-        <p className="text-[11px] font-semibold tracking-[0.1em] text-muted uppercase">
-          {main.label}
-        </p>
-        <p
-          className={cx(
-            'font-display text-3xl leading-tight font-semibold tabular-nums md:text-4xl',
-            VALUE_TONES[tone],
-          )}
-        >
-          {main.value}
-        </p>
+  const row =
+    'flex shrink-0 gap-2 max-md:-mx-4 max-md:overflow-x-auto max-md:px-4 max-md:pb-1 max-md:[scrollbar-width:none]! md:grid md:auto-cols-fr md:grid-flow-col md:gap-3';
+  if (loading || figures.length === 0) {
+    return (
+      <div className={row}>
+        {Array.from({ length: 3 }, (_, index) => (
+          <Skeleton key={index} className="h-[4.5rem] w-44 shrink-0 rounded-xl md:w-auto" />
+        ))}
       </div>
-      {rest.length > 0 && (
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 md:flex md:flex-wrap md:gap-x-8">
-          {rest.map((figure) => (
-            <div key={figure.label} className="min-w-0">
-              <dt className="truncate text-[11px] font-semibold tracking-[0.08em] text-muted uppercase">
-                {figure.label}
-              </dt>
-              <dd
-                className={cx(
-                  'truncate text-lg font-semibold tabular-nums',
-                  VALUE_TONES[figure.tone ?? 'default'],
-                )}
-              >
-                {figure.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
+    );
+  }
+  return (
+    <div className={row}>
+      {figures.map((figure, index) =>
+        index === 0 ? (
+          <article
+            key={figure.label}
+            className="w-44 shrink-0 rounded-xl bg-primary px-3.5 py-3 text-on-primary shadow-card md:w-auto md:px-4"
+          >
+            <p className="truncate text-[11px] font-semibold tracking-[0.1em] uppercase opacity-80">
+              {figure.label}
+            </p>
+            <p className="mt-0.5 truncate font-display text-2xl leading-tight font-semibold tabular-nums md:text-3xl">
+              {figure.value}
+            </p>
+          </article>
+        ) : (
+          <article
+            key={figure.label}
+            className={cx(
+              'relative w-40 shrink-0 overflow-hidden rounded-xl border border-line bg-surface py-3 pr-3 pl-4 shadow-card before:absolute before:inset-y-0 before:left-0 before:w-1 md:w-auto',
+              ACCENTS[figure.tone ?? 'default'],
+            )}
+          >
+            <p className="truncate text-[11px] font-semibold tracking-[0.1em] text-muted uppercase">
+              {figure.label}
+            </p>
+            <p
+              className={cx(
+                'mt-0.5 truncate font-display text-xl leading-tight font-semibold tabular-nums md:text-2xl',
+                VALUE_TONES[figure.tone ?? 'default'],
+              )}
+            >
+              {figure.value}
+            </p>
+          </article>
+        ),
       )}
-    </section>
+    </div>
   );
 }
