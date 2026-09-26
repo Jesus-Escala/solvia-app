@@ -8,8 +8,9 @@ import { OWL, OWL_COLORS } from './owlGeometry';
  * - `fly`: both wings up and flapping, as if flying somewhere.
  * - `cover`: both wings completely cover the eyes (e.g. while a password is typed).
  * - `peek`: one wing covers an eye, the other eye peeks (e.g. password shown).
+ * - `search`: holds a magnifying glass over its right eye and looks around (nothing found).
  */
-export type MascotMood = 'default' | 'happy' | 'wave' | 'fly' | 'cover' | 'peek';
+export type MascotMood = 'default' | 'happy' | 'wave' | 'fly' | 'cover' | 'peek' | 'search';
 
 /*
  * Illustrated Bowl (viewBox 0 0 120 131): a big round head on a small round body, drawn with
@@ -59,6 +60,11 @@ if (TIP_R * Math.min(COVER_LEFT.scale, COVER_RIGHT.scale) < EYE_R + 1.5) {
 }
 
 type Pose = { rotate: number; scale: number };
+
+/** The magnifying glass of `search`: its lens over the right eye, the handle down to the wing. */
+const LENS = { x: RIGHT_EYE.x + 3, y: RIGHT_EYE.y + 1, r: 15.5 };
+const HANDLE_FROM = { x: LENS.x + LENS.r * 0.72, y: LENS.y + LENS.r * 0.72 };
+const HANDLE_TO = { x: LENS.x + 25, y: LENS.y + 25 };
 const REST_LEFT: Pose = { rotate: -12, scale: 0.66 };
 const REST_RIGHT: Pose = { rotate: 12, scale: 0.66 };
 
@@ -73,7 +79,32 @@ const POSES: Record<MascotMood, { left: Pose; right: Pose }> = {
     left: COVER_LEFT,
     right: aim(SHOULDERS.right, { x: RIGHT_EYE.x + 2, y: RIGHT_EYE.y + 23 }),
   },
+  // The right wing holds the handle of the magnifying glass.
+  search: { left: REST_LEFT, right: aim(SHOULDERS.right, HANDLE_TO) },
 };
+
+/** A magnifying glass: gold rim like the coin, a light glass and a glint. */
+function MagnifyingGlass() {
+  return (
+    <g>
+      <path
+        d={`M${HANDLE_FROM.x} ${HANDLE_FROM.y}L${HANDLE_TO.x} ${HANDLE_TO.y}`}
+        stroke="#92400e"
+        strokeWidth="5"
+        strokeLinecap="round"
+      />
+      <circle cx={LENS.x} cy={LENS.y} r={LENS.r} fill="#e0f2fe" fillOpacity="0.32" />
+      <circle cx={LENS.x} cy={LENS.y} r={LENS.r} stroke="#d97706" strokeWidth="3.4" />
+      <path
+        d={`M${LENS.x - LENS.r * 0.55} ${LENS.y - LENS.r * 0.2}A${LENS.r * 0.6} ${LENS.r * 0.6} 0 0 1 ${LENS.x - LENS.r * 0.1} ${LENS.y - LENS.r * 0.6}`}
+        stroke="#ffffff"
+        strokeOpacity="0.85"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+    </g>
+  );
+}
 
 /** Gradient ids of one rendered mascot (unique per instance). */
 function useIds() {
@@ -431,14 +462,22 @@ export function Mascot({
         pose={pose.left}
         animation={mood === 'fly' ? 'mascot-flap-left' : undefined}
       />
-      <Wing
-        ids={ids}
-        shoulder={SHOULDERS.right}
-        pose={pose.right}
-        animation={
-          mood === 'wave' ? 'mascot-wave' : mood === 'fly' ? 'mascot-flap-right' : undefined
-        }
-      />
+      {mood === 'search' ? (
+        // Glass and wing move together, searching left and right.
+        <g className="mascot-search">
+          <MagnifyingGlass />
+          <Wing ids={ids} shoulder={SHOULDERS.right} pose={pose.right} />
+        </g>
+      ) : (
+        <Wing
+          ids={ids}
+          shoulder={SHOULDERS.right}
+          pose={pose.right}
+          animation={
+            mood === 'wave' ? 'mascot-wave' : mood === 'fly' ? 'mascot-flap-right' : undefined
+          }
+        />
+      )}
     </svg>
   );
 }

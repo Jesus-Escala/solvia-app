@@ -338,6 +338,24 @@ h1,
   animation: mascot-flap-right 0.3s ease-in-out infinite;
 }
 
+/* Searching: the magnifying glass sweeps left and right over the face. */
+@keyframes mascot-search {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  30% {
+    transform: translate(-14px, 2px) rotate(-4deg);
+  }
+  65% {
+    transform: translate(4px, -2px) rotate(3deg);
+  }
+}
+
+.mascot-search {
+  animation: mascot-search 3.2s ease-in-out infinite;
+}
+
 @keyframes table-progress {
   from {
     transform: translateX(-100%);

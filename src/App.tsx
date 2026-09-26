@@ -1,13 +1,10 @@
-import { Compass } from 'lucide-react';
 import { lazy } from 'react';
-import { Link, Outlet, Route, Routes } from 'react-router';
+import { Outlet, Route, Routes } from 'react-router';
 import { TourProvider } from './tour/TourProvider';
 import { ModuleRoute } from './components/modules/ModuleRoute';
 import { PublicOnly, RequireAuth } from './auth/RequireAuth';
 import { AppShell } from './components/layout/AppShell';
 import { PageFrame } from './components/layout/PageErrorBoundary';
-import { Page, smallButtonClass } from '@/ui';
-import { useI18n } from './i18n/I18nProvider';
 import { ChangePasswordPage, LoginPage, RegisterPage } from './pages/AuthPages';
 
 // Each screen loads when it is opened, so the app starts fast (sign-in stays in the first load).
@@ -47,27 +44,12 @@ const LocationsPage = lazy(() =>
 const ReceivablesPage = lazy(() =>
   import('./pages/ReceivablesPage').then((m) => ({ default: m.ReceivablesPage })),
 );
+const NotFoundPage = lazy(() =>
+  import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
+);
 const SettingsPage = lazy(() =>
   import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })),
 );
-
-function NotFoundPage() {
-  const { t } = useI18n();
-  return (
-    <Page>
-      <div className="flex flex-col items-center py-24 text-center">
-        <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary-ink">
-          <Compass className="h-7 w-7" />
-        </span>
-        <p className="text-sm font-semibold text-primary-ink">404</p>
-        <h1 className="mt-1 text-3xl font-semibold">{t('notFound.title')}</h1>
-        <Link to="/" className={smallButtonClass('sm', 'mt-6')}>
-          {t('notFound.back')}
-        </Link>
-      </div>
-    </Page>
-  );
-}
 
 export function App() {
   return (

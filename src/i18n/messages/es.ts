@@ -2221,8 +2221,13 @@ export const es = {
     progress: '{current} de {total}',
   },
   notFound: {
-    title: 'Página no encontrada',
+    eyebrow: 'Error 404',
+    title: 'No encontramos esta página',
+    description:
+      'Bowl buscó por todos lados con su lupa y no la encontró. Puede que el enlace esté mal escrito o que la página ya no exista.',
     back: 'Ir al inicio',
+    goBack: 'Volver atrás',
+    shortcuts: 'O ve directo a una de tus secciones:',
   },
 };
 

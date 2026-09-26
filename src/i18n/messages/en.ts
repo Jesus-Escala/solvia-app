@@ -2220,7 +2220,12 @@ export const en: Messages = {
     progress: '{current} of {total}',
   },
   notFound: {
-    title: 'Page not found',
-    back: 'Go to the dashboard',
+    eyebrow: 'Error 404',
+    title: 'We could not find this page',
+    description:
+      'Bowl searched everywhere with his magnifying glass and did not find it. The link may be mistyped or the page may no longer exist.',
+    back: 'Go home',
+    goBack: 'Go back',
+    shortcuts: 'Or go straight to one of your sections:',
   },
 };
