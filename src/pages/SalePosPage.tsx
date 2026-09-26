@@ -1,4 +1,4 @@
-import { SAVE_KEY_LABEL, SEARCH_KEY_LABEL } from '../components/pos/keys';
+import { ADD_KEY_LABEL, SAVE_KEY_LABEL, SEARCH_KEY_LABEL } from '../components/pos/keys';
 import { useLocation } from 'react-router';
 import type { PickedCustomer } from '../components/domain/CustomerPicker';
 import { PosScreen } from '../components/pos/PosScreen';
@@ -22,6 +22,7 @@ export function SalePosPage() {
       shortcuts={[
         { keys: SAVE_KEY_LABEL, label: t('sales.pos.keyCharge') },
         { keys: SEARCH_KEY_LABEL, label: t('sales.pos.keySearch') },
+        { keys: ADD_KEY_LABEL, label: t('sales.pos.keyAdd') },
         { keys: 'Esc', label: t('sales.pos.keyBack') },
       ]}
     >

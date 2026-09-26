@@ -893,6 +893,7 @@ export const es = {
       keyCharge: 'Cobrar',
       keySearch: 'Buscar',
       keyBack: 'Volver',
+      keyAdd: 'Nuevo',
       results: 'Resultados para «{text}»',
       noCatalog:
         'Aún no tienes productos. Agrégalos en «Productos», o vende un servicio con «Otro producto o servicio».',

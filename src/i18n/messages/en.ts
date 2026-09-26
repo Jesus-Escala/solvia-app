@@ -887,6 +887,7 @@ export const en: Messages = {
       keyCharge: 'Charge',
       keySearch: 'Search',
       keyBack: 'Back',
+      keyAdd: 'New',
       results: 'Results for “{text}”',
       noCatalog:
         'You have no products yet. Add them in “Products”, or sell a service with “Another product or service”.',

@@ -65,7 +65,7 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
   sale ticket (`pos/SaleLines.tsx`, helpers in `pos/saleMath.ts`) takes a price for this sale
   only, a discount and "Cobrar" → checkout (cash with change, Yape, Plin, transfer or credit with
   down payment), then the ticket (`saleTicket.ts` + `TicketActions`: see the 80 mm PDF of `GET /sales/:id/ticket` in `FileViewer`, print, WhatsApp, download — also from the sale detail). While the money does not add up (split parts, cash received short) the confirm button stays off with the reason over it. Keyboard (`pos/keys.ts`):
-  Alt+S charge/confirm/save, Alt+B search (Option on a Mac), Esc back. Stock shortages are traced (sale/line badges, "Sin stock"
+  Alt+S charge/confirm/save, Alt+B search, Alt+A new (a product in the ticket, a customer while charging) (Option on a Mac), Esc back. Alt+A also runs the "new" button of Products, Customers, Cobranza, Sales, Purchases and Suppliers (`hooks/useAddShortcut.ts`, shown with `<Kbd>`). Stock shortages are traced (sale/line badges, "Sin stock"
   filter, `KardexModal`) when the inventory module is on.
 - **Several payment methods** (`components/domain/SplitPayments.tsx` + helpers in `splitParts.ts`): "Varios" in the sale checkout, the down payment of a credit sale and "¿Cómo pagaste?" of a purchase (`MethodRow`), and "Pagó con varios métodos" in "Me pagó". The last row keeps the rest while the others are typed; the API gets `payments` / `downPayments` / `parts` (`[{ method, amount }]`) and shows them with `PaymentPartsLabel`.
 - **Language of the automatic reminders**: one per business (`GET/PUT /settings/business`, admins), in Settings > Preferencias under the interface language (only with Cobranza); scheduled jobs run in it.

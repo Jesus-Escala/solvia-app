@@ -10,7 +10,7 @@ import {
   useErrorToast,
   useFeedback,
 } from '@/ui';
-import { isSaveKey, isSearchKey, SAVE_KEY_LABEL } from './keys';
+import { isAddKey, isSaveKey, isSearchKey, SAVE_KEY_LABEL } from './keys';
 import { Kbd, PosLayout } from './PosLayout';
 import { NewProductModal } from './NewProductForm';
 import { ProductCatalog } from './ProductCatalog';
@@ -173,6 +173,10 @@ export function PurchasePos({
       if (isSearchKey(event)) {
         event.preventDefault();
         searchRef.current?.focus();
+      } else if (isAddKey(event)) {
+        // Alt+A: a product that is not in the catalog yet.
+        event.preventDefault();
+        setNewName('');
       } else if (isSaveKey(event)) {
         event.preventDefault();
         formRef.current?.requestSubmit();

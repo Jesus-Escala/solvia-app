@@ -20,6 +20,9 @@ import {
 import { usePurchases, useVoidPurchase } from '../hooks/queries';
 import { useModules } from '../hooks/useModules';
 import { useI18n } from '../i18n/I18nProvider';
+import { Kbd } from '../components/pos/PosLayout';
+import { ADD_KEY_LABEL } from '../components/pos/keys';
+import { useAddShortcut } from '../hooks/useAddShortcut';
 import type { Purchase } from '../lib/types';
 import { PaymentPartsLabel } from '../components/domain/SplitPayments';
 import { ModuleOff } from './ProductsPage';
@@ -133,6 +136,7 @@ function PurchasesList() {
   const errors = useErrorText();
   const [state, update] = useUrlState(DEFAULTS);
   const navigate = useNavigate();
+  useAddShortcut(() => navigate('/purchases/new'));
   const voidAction = useVoidPurchaseAction();
   const [viewing, setViewing] = useState<Purchase | null>(null);
   const query = usePurchases({
@@ -204,6 +208,7 @@ function PurchasesList() {
             onClick={() => navigate('/purchases/new')}
           >
             {t('purchases.new')}
+            <Kbd>{ADD_KEY_LABEL}</Kbd>
           </Button>
         }
       />

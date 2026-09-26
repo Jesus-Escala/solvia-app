@@ -24,6 +24,9 @@ import {
 import { useCustomers, useDeleteCustomer, type CustomerListParams } from '../hooks/queries';
 import { useUrlState } from '@/ui';
 import { useI18n } from '../i18n/I18nProvider';
+import { Kbd } from '../components/pos/PosLayout';
+import { ADD_KEY_LABEL } from '../components/pos/keys';
+import { useAddShortcut } from '../hooks/useAddShortcut';
 import type { CustomerListItem, RiskLevel, SortDir } from '../lib/types';
 
 const DEFAULTS = {
@@ -44,6 +47,7 @@ export function CustomersPage() {
   const { toast, confirm } = useFeedback();
   const [state, update] = useUrlState(DEFAULTS);
   const [creating, setCreating] = useState(false);
+  useAddShortcut(() => setCreating(true));
   const [editing, setEditing] = useState<CustomerListItem | null>(null);
   const remove = useDeleteCustomer();
 
@@ -159,6 +163,7 @@ export function CustomersPage() {
             onClick={() => setCreating(true)}
           >
             {t('customers.new')}
+            <Kbd>{ADD_KEY_LABEL}</Kbd>
           </Button>
         }
       />

@@ -1,4 +1,4 @@
-import { SAVE_KEY_LABEL, SEARCH_KEY_LABEL } from '../components/pos/keys';
+import { ADD_KEY_LABEL, SAVE_KEY_LABEL, SEARCH_KEY_LABEL } from '../components/pos/keys';
 import { PosScreen } from '../components/pos/PosScreen';
 import { PurchasePos } from '../components/pos/PurchasePos';
 import { useI18n } from '../i18n/I18nProvider';
@@ -14,6 +14,7 @@ export function PurchasePosPage() {
       shortcuts={[
         { keys: SAVE_KEY_LABEL, label: t('purchases.pos.keySave') },
         { keys: SEARCH_KEY_LABEL, label: t('sales.pos.keySearch') },
+        { keys: ADD_KEY_LABEL, label: t('sales.pos.keyAdd') },
       ]}
     >
       {({ onDirty, leave }) => <PurchasePos onClose={leave} onDirty={onDirty} />}

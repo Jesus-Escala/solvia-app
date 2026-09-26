@@ -17,3 +17,10 @@ export const isSaveKey = (event: KeyboardEvent) =>
 /** Alt+B (Option+B): back to the product search ("buscar"). */
 export const isSearchKey = (event: KeyboardEvent) =>
   event.altKey && !event.ctrlKey && !event.metaKey && event.code === 'KeyB';
+
+/** Label of the "add a new one" shortcut ("Alt+A" or "⌥A"). */
+export const ADD_KEY_LABEL = MAC ? '⌥A' : 'Alt+A';
+
+/** Alt+A (Option+A): a new record — a product, a customer, a debt… ("agregar"). */
+export const isAddKey = (event: KeyboardEvent) =>
+  event.altKey && !event.ctrlKey && !event.metaKey && event.code === 'KeyA';

@@ -24,6 +24,9 @@ import { TicketActions } from '../components/pos/TicketActions';
 import { useSales, useVoidSale, type SaleListParams } from '../hooks/queries';
 import { useModules } from '../hooks/useModules';
 import { useI18n } from '../i18n/I18nProvider';
+import { Kbd } from '../components/pos/PosLayout';
+import { ADD_KEY_LABEL } from '../components/pos/keys';
+import { useAddShortcut } from '../hooks/useAddShortcut';
 import type { Sale } from '../lib/types';
 import { ModuleOff } from './ProductsPage';
 
@@ -216,6 +219,7 @@ function SalesList() {
   const errors = useErrorText();
   const [state, update] = useUrlState(DEFAULTS);
   const navigate = useNavigate();
+  useAddShortcut(() => navigate('/sales/new'));
   const voidAction = useVoidSaleAction();
   const [viewing, setViewing] = useState<Sale | null>(null);
 
@@ -303,6 +307,7 @@ function SalesList() {
             onClick={() => navigate('/sales/new')}
           >
             {t('sales.new')}
+            <Kbd>{ADD_KEY_LABEL}</Kbd>
           </Button>
         }
       />

@@ -19,6 +19,9 @@ import {
 import { useDashboardSummary, useReceivables, type ReceivableListParams } from '../hooks/queries';
 import { useUrlState } from '@/ui';
 import { useI18n } from '../i18n/I18nProvider';
+import { Kbd } from '../components/pos/PosLayout';
+import { ADD_KEY_LABEL } from '../components/pos/keys';
+import { useAddShortcut } from '../hooks/useAddShortcut';
 import type { ReceivableStatus, SortDir } from '../lib/types';
 
 // `` (the default) = all; `open` = everything still owed: pending, partially paid or late.
@@ -41,6 +44,7 @@ export function ReceivablesPage() {
   const errors = useErrorText();
   const [state, update] = useUrlState(DEFAULTS);
   const [creating, setCreating] = useState(false);
+  useAddShortcut(() => setCreating(true));
   const actions = useReceivableActions();
   const summary = useDashboardSummary();
   const columns = useReceivableColumns();
@@ -72,6 +76,7 @@ export function ReceivablesPage() {
         actions={
           <Button icon={<Plus className="h-4 w-4" />} onClick={() => setCreating(true)}>
             {t('receivables.new')}
+            <Kbd>{ADD_KEY_LABEL}</Kbd>
           </Button>
         }
       />

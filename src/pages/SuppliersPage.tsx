@@ -27,6 +27,9 @@ import { useAuth } from '../auth/AuthContext';
 import { useDeleteSupplier, useSaveSupplier, useSuppliers } from '../hooks/queries';
 import { useModules } from '../hooks/useModules';
 import { useI18n } from '../i18n/I18nProvider';
+import { Kbd } from '../components/pos/PosLayout';
+import { ADD_KEY_LABEL } from '../components/pos/keys';
+import { useAddShortcut } from '../hooks/useAddShortcut';
 import type { Supplier } from '../lib/types';
 import { ModuleOff } from './ProductsPage';
 
@@ -142,6 +145,7 @@ function SuppliersList() {
   const [state, update] = useUrlState(DEFAULTS);
   // null = closed, 'new' = creating, a supplier = editing it.
   const [editing, setEditing] = useState<Supplier | 'new' | null>(null);
+  useAddShortcut(() => setEditing('new'));
   const remove = useDeleteSupplier();
   const query = useSuppliers({
     search: state.search || null,
@@ -221,6 +225,7 @@ function SuppliersList() {
         actions={
           <Button icon={<Truck className="h-4 w-4" />} onClick={() => setEditing('new')}>
             {t('suppliers.new')}
+            <Kbd>{ADD_KEY_LABEL}</Kbd>
           </Button>
         }
       />

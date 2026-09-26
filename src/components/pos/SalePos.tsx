@@ -22,7 +22,7 @@ import {
   useErrorToast,
   useFeedback,
 } from '@/ui';
-import { isSaveKey, isSearchKey, SAVE_KEY_LABEL } from './keys';
+import { isAddKey, isSaveKey, isSearchKey, SAVE_KEY_LABEL } from './keys';
 import { Kbd, PosLayout } from './PosLayout';
 import { ProductCatalog } from './ProductCatalog';
 import { CustomerPicker, type PickedCustomer } from '../domain/CustomerPicker';
@@ -190,6 +190,14 @@ export function SalePos({
         event.preventDefault();
         setStep('ticket');
         searchRef.current?.focus();
+      } else if (isAddKey(event)) {
+        // Alt+A: a new product for the ticket, or a new customer while charging.
+        event.preventDefault();
+        if (step === 'ticket') setNewName('');
+        else if (!preset && !newCustomer) {
+          setCustomer(null);
+          setNewCustomer({ name: '', phone: '' });
+        }
       } else if (isSaveKey(event)) {
         event.preventDefault();
         if (step === 'ticket') goCheckout();

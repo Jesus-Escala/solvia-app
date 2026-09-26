@@ -53,6 +53,9 @@ import {
   type ProductListParams,
 } from '../hooks/queries';
 import { useModules } from '../hooks/useModules';
+import { Kbd } from '../components/pos/PosLayout';
+import { ADD_KEY_LABEL } from '../components/pos/keys';
+import { useAddShortcut } from '../hooks/useAddShortcut';
 import { useI18n } from '../i18n/I18nProvider';
 import type { Product, ProductKind, SortDir } from '../lib/types';
 
@@ -97,6 +100,7 @@ function ProductsList() {
   const [state, update] = useUrlState(DEFAULTS);
   const [creating, setCreating] = useState(false);
   const [managing, setManaging] = useState(false);
+  useAddShortcut(() => setCreating(true));
   const categories = useCategories();
   const [editing, setEditing] = useState<Product | null>(null);
   const [kardex, setKardex] = useState<Product | null>(null);
@@ -301,6 +305,7 @@ function ProductsList() {
             </Button>
             <Button icon={<PackagePlus className="h-4 w-4" />} onClick={() => setCreating(true)}>
               {t('products.new')}
+              <Kbd>{ADD_KEY_LABEL}</Kbd>
             </Button>
           </div>
         }
