@@ -12,6 +12,7 @@ export {
   TextButton,
   type TextButtonProps,
 } from './components/Button';
+export { FilterFoldButton } from './components/FilterFold';
 export {
   smallButtonClass,
   type SmallButtonSize,

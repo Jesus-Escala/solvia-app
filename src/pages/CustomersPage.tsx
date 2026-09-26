@@ -178,6 +178,7 @@ export function CustomersPage() {
             placeholder={t('customers.searchPlaceholder')}
           />
         }
+        filtersActive={[state.risk !== ''].filter(Boolean).length}
         toolbar={
           <>
             <SegmentedControl

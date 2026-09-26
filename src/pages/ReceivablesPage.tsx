@@ -91,6 +91,9 @@ export function ReceivablesPage() {
             placeholder={t('receivables.searchPlaceholder')}
           />
         }
+        filtersActive={
+          [state.status !== '', state.dueFrom !== '' || state.dueTo !== ''].filter(Boolean).length
+        }
         toolbar={
           <>
             <SegmentedControl

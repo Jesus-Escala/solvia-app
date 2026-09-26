@@ -313,10 +313,9 @@ function ProductsList() {
       <DataTable
         columnsStorageKey="products"
         caption={t('products.title')}
-        foldFilters={{
-          active: [state.status !== 'all', state.kind !== '', state.category !== ''].filter(Boolean)
-            .length,
-        }}
+        filtersActive={
+          [state.status !== 'all', state.kind !== '', state.category !== ''].filter(Boolean).length
+        }
         search={
           <SearchInput
             value={state.search}

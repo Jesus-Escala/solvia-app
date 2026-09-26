@@ -143,6 +143,7 @@ export const es = {
     subtitle:
       'Tablas con el detalle de tu negocio. Elige un reporte y las fechas; puedes bajarlo a Excel.',
     choose: 'Elige un reporte',
+    area: 'Área de los reportes',
     groups: {
       sales: 'Ventas',
       purchases: 'Compras',

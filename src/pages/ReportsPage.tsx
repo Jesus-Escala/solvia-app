@@ -10,6 +10,7 @@ import {
   ShoppingBag,
   Tags,
   Truck,
+  ShoppingCart,
   UserRound,
   Users,
   Wallet,
@@ -24,6 +25,8 @@ import {
   Button,
   cx,
   DataTable,
+  FilterFoldButton,
+  Tabs,
   KpiCard,
   KpiRow,
   Page,
@@ -67,9 +70,10 @@ interface ReportDef {
 }
 
 /** The reports, in the order and groups the page shows them. */
-const GROUPS: Array<{ title: TranslationKey; reports: ReportDef[] }> = [
+const GROUPS: Array<{ title: TranslationKey; icon: ReactNode; reports: ReportDef[] }> = [
   {
     title: 'reports.groups.sales',
+    icon: <ShoppingCart />,
     reports: [
       { id: 'sales-detail', icon: <ReceiptText />, module: 'sales', dated: true, generic: true },
       { id: 'sales-by-day', icon: <CalendarDays />, module: 'sales', dated: true, generic: true },
@@ -82,6 +86,7 @@ const GROUPS: Array<{ title: TranslationKey; reports: ReportDef[] }> = [
   },
   {
     title: 'reports.groups.purchases',
+    icon: <Warehouse />,
     reports: [
       {
         id: 'purchases-detail',
@@ -108,12 +113,14 @@ const GROUPS: Array<{ title: TranslationKey; reports: ReportDef[] }> = [
   },
   {
     title: 'reports.groups.collections',
+    icon: <HandCoins />,
     reports: [
       { id: 'collections-by-customer', icon: <HandCoins />, module: 'collections', dated: true },
     ],
   },
   {
     title: 'reports.groups.inventory',
+    icon: <Boxes />,
     reports: [
       { id: 'stock', icon: <Boxes />, module: 'catalog', dated: false },
       { id: 'shortages', icon: <AlertTriangle />, module: 'sales', dated: true },
@@ -142,6 +149,8 @@ function ReportChooser({
   onChange: (report: AnyReportId) => void;
 }) {
   const { t } = useI18n();
+  const area =
+    groups.find((group) => group.reports.some((report) => report.id === value)) ?? groups[0]!;
   return (
     <>
       {/* Phones: a list to pick from (the buttons would take the whole screen). */}
@@ -163,17 +172,25 @@ function ReportChooser({
           ))}
         </select>
       </label>
-      <div
-        className="flex flex-wrap gap-x-6 gap-y-2.5 max-md:hidden"
-        role="radiogroup"
-        aria-label={t('reports.choose')}
-      >
-        {groups.map((group) => (
-          <div key={group.title} className="min-w-0">
-            <div className="mb-1.5 text-[11px] font-semibold tracking-wide text-subtle uppercase">
-              {t(group.title)}
-            </div>
-            <div className="flex flex-wrap gap-1.5">
+      {/* Computers: first the area (Ventas, Compras, Cobranza, Inventario), then its reports. */}
+      <div className="space-y-3 max-md:hidden">
+        <Tabs
+          label={t('reports.area')}
+          value={area.title}
+          onChange={(title) => {
+            const next = groups.find((group) => group.title === title);
+            if (next?.reports[0]) onChange(next.reports[0].id);
+          }}
+          items={groups.map((group) => ({
+            value: group.title,
+            label: t(group.title),
+            icon: group.icon,
+            count: group.reports.length,
+          }))}
+        />
+        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('reports.choose')}>
+          {[area].map((group) => (
+            <div key={group.title} className="contents">
               {group.reports.map((report) => {
                 const active = report.id === value;
                 return (
@@ -196,8 +213,8 @@ function ReportChooser({
                 );
               })}
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </>
   );
@@ -272,7 +289,10 @@ function ReportToolbar({
 }) {
   const { t } = useI18n();
   const [viewing, setViewing] = useState<ViewerRequest | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const closeViewer = useCallback(() => setViewing(null), []);
+  const thisMonth = presetRange('thisMonth');
+  const customRange = range.from !== thisMonth.from || range.to !== thisMonth.to;
   const view = (kind: ViewerKind) =>
     setViewing({
       kind,
@@ -287,18 +307,27 @@ function ReportToolbar({
   return (
     <>
       <p className="-mt-1 text-sm text-muted max-md:hidden">{t(`reports.hints.${report.id}`)}</p>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col-reverse gap-2 md:flex-row md:items-center md:justify-between">
         {report.dated ? (
-          <PeriodPicker
-            range={range}
-            granularity={null}
-            onRangeChange={onRangeChange}
-            onGranularityChange={null}
-          />
+          <div className={cx(!filtersOpen && 'max-md:hidden')}>
+            <PeriodPicker
+              range={range}
+              granularity={null}
+              onRangeChange={onRangeChange}
+              onGranularityChange={null}
+            />
+          </div>
         ) : (
-          <span />
+          <span className="max-md:hidden" />
         )}
-        <div className="grid grid-cols-2 gap-2 sm:flex">
+        <div className="flex gap-2 max-md:[&>*:not(:first-child)]:flex-1">
+          {report.dated && (
+            <FilterFoldButton
+              open={filtersOpen}
+              onToggle={() => setFiltersOpen((open) => !open)}
+              active={customRange ? 1 : 0}
+            />
+          )}
           <Button
             variant="secondary"
             icon={<FileText className="h-4 w-4 text-danger-ink" />}

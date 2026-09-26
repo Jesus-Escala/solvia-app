@@ -1,13 +1,4 @@
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Columns3,
-  SlidersHorizontal,
-} from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Columns3 } from 'lucide-react';
 import {
   useEffect,
   useMemo,
@@ -22,6 +13,7 @@ import { useUiI18n } from '../i18n/context';
 import { IconButton } from './Button';
 import { cx } from './cx';
 import { EmptyState, Skeleton } from './Feedback';
+import { FilterFoldButton } from './FilterFold';
 import { LoadingPill } from './LoadingOverlay';
 import { Popover } from './Overlays';
 
@@ -97,10 +89,11 @@ export interface DataTableProps<T> extends Omit<HTMLAttributes<HTMLElement>, 'ch
   /** Filters of the toolbar; on phones each one on a full line, every option visible. */
   toolbar?: ReactNode;
   /**
-   * Phones: the filters fold under a "Filtros" button (with how many are active) so the list
-   * keeps its room — for pages with several filters. Omit it to always show them.
+   * Phones: the filters fold under a "Filtros" button so the list keeps its room (the standard;
+   * false shows them always). `filtersActive` is how many are in use, shown on the button.
    */
-  foldFilters?: { active: number };
+  foldFilters?: boolean;
+  filtersActive?: number | null;
   /** Right side of the toolbar (extra buttons). */
   toolbarEnd?: ReactNode;
   /** Persist column visibility in localStorage under this key. */
@@ -160,7 +153,8 @@ export function DataTable<T>({
   pagination,
   search,
   toolbar,
-  foldFilters,
+  foldFilters = true,
+  filtersActive = null,
   toolbarEnd,
   columnsStorageKey,
   fill = true,
@@ -346,7 +340,7 @@ export function DataTable<T>({
 
   const hasToolbar = Boolean(search || toolbar || toolbarEnd || columnsMenu);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const folded = Boolean(foldFilters && toolbar);
+  const folded = foldFilters && Boolean(toolbar);
   const titleColumn = columns.find((column) => column.mobile === 'title') ?? visibleColumns[0];
   const subtitleColumns = visibleColumns.filter((column) => column.mobile === 'subtitle');
   const asideColumns = visibleColumns.filter((column) => column.mobile === 'aside');
@@ -378,26 +372,11 @@ export function DataTable<T>({
           <div className="flex items-center gap-2 md:contents">
             {search && <div className="min-w-0 flex-1 md:flex-none">{search}</div>}
             {folded && (
-              <button
-                type="button"
-                aria-expanded={filtersOpen}
-                onClick={() => setFiltersOpen((open) => !open)}
-                className={cx(
-                  'inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl border px-3 text-sm font-semibold transition md:hidden [&>svg]:h-4 [&>svg]:w-4',
-                  foldFilters!.active > 0 || filtersOpen
-                    ? 'border-primary/40 bg-primary-soft/60 text-primary-ink'
-                    : 'border-line bg-surface text-ink',
-                )}
-              >
-                <SlidersHorizontal />
-                {t('table.filters')}
-                {foldFilters!.active > 0 && (
-                  <span className="rounded-full bg-primary px-1.5 text-[11px] text-on-primary tabular-nums">
-                    {foldFilters!.active}
-                  </span>
-                )}
-                <ChevronDown className={cx('transition', filtersOpen && 'rotate-180')} />
-              </button>
+              <FilterFoldButton
+                open={filtersOpen}
+                onToggle={() => setFiltersOpen((open) => !open)}
+                active={filtersActive}
+              />
             )}
             <div
               className={cx(

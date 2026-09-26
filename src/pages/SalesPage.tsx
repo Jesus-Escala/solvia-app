@@ -347,6 +347,7 @@ function SalesList() {
             placeholder={t('sales.searchPlaceholder')}
           />
         }
+        filtersActive={[state.type !== ''].filter(Boolean).length}
         toolbar={
           <>
             <SegmentedControl
