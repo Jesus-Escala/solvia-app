@@ -20,6 +20,14 @@ import { useCreatePurchase, useSaveSupplier } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { ProductOption, SaleDocType, SupplierOption } from '../../lib/types';
 import { SupplierPicker } from '../domain/SupplierPicker';
+import { MethodRow, SplitPayments } from '../domain/SplitPayments';
+import {
+  partsComplete,
+  partsPayload,
+  startParts,
+  type MethodChoice,
+  type PartDraft,
+} from '../domain/splitParts';
 
 interface Line {
   product: ProductOption;
@@ -92,6 +100,9 @@ export function PurchasePos({
   const [docType, setDocType] = useState<SaleDocType>('invoice');
   const [docNumber, setDocNumber] = useState('');
   const [updateCosts, setUpdateCosts] = useState(true);
+  // How the supplier was paid: one method (cash by default) or several.
+  const [payMethod, setPayMethod] = useState<MethodChoice>('cash');
+  const [payParts, setPayParts] = useState<PartDraft[]>([]);
 
   const total = round2(
     lines.reduce((sum, line) => sum + line.quantity * (Number(line.unitCost) || 0), 0),
@@ -171,7 +182,15 @@ export function PurchasePos({
       toast.warning(t('sales.form.empty'));
       return;
     }
+    if (payMethod === 'split' && !partsComplete(payParts, total)) {
+      toast.warning(t('split.notComplete', { amount: fmt.money(total) }));
+      return;
+    }
     const purchase = await create.mutateAsync({
+      ...(total > 0 && {
+        payments:
+          payMethod === 'split' ? partsPayload(payParts) : [{ method: payMethod, amount: total }],
+      }),
       ...(supplier !== null && { supplierId: supplier.id }),
       ...(docNumber.trim() !== '' && { docType, docNumber: docNumber.trim() }),
       updateCosts,
@@ -398,6 +417,24 @@ export function PurchasePos({
             </div>
           )}
         </div>
+        {total > 0 && (
+          <div>
+            <p className="label">{t('purchases.form.paidWith')}</p>
+            <MethodRow
+              label={t('purchases.form.paidWith')}
+              value={payMethod}
+              onChange={(value) => {
+                setPayMethod(value);
+                if (value === 'split' && payMethod !== 'split') setPayParts(startParts(total));
+              }}
+            />
+            {payMethod === 'split' && (
+              <div className="mt-2">
+                <SplitPayments parts={payParts} onChange={setPayParts} target={total} />
+              </div>
+            )}
+          </div>
+        )}
         <p className="flex items-baseline justify-between">
           <span className="text-sm font-medium text-muted">{t('purchases.form.total')}</span>
           <span className="font-display text-4xl font-semibold tabular-nums">

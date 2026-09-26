@@ -35,9 +35,14 @@ export function useSaleTicket() {
       sale.discount > 0 ? row(t('sales.ticket.subtotal'), fmt.money(sale.subtotal)) : '',
       sale.discount > 0 ? row(t('sales.ticket.discount'), `−${fmt.money(sale.discount)}`) : '',
       row(t('sales.ticket.total'), fmt.money(sale.total), true),
-      sale.paymentType === 'cash' && sale.method
-        ? row(t('sales.ticket.paid'), t(`methods.${sale.method}`))
-        : '',
+      sale.paymentType === 'cash' && sale.payments.length > 1
+        ? row(t('sales.ticket.paid'), '') +
+          sale.payments
+            .map((part) => row(`· ${t(`methods.${part.method}`)}`, fmt.money(part.amount)))
+            .join('')
+        : sale.paymentType === 'cash' && sale.method
+          ? row(t('sales.ticket.paid'), t(`methods.${sale.method}`))
+          : '',
       cash ? row(t('sales.ticket.received'), fmt.money(cash.received)) : '',
       cash && cash.change > 0 ? row(t('sales.ticket.change'), fmt.money(cash.change)) : '',
       sale.receivable && sale.receivable.paid > 0

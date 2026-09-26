@@ -21,6 +21,7 @@ import { usePurchases, useVoidPurchase } from '../hooks/queries';
 import { useModules } from '../hooks/useModules';
 import { useI18n } from '../i18n/I18nProvider';
 import type { Purchase } from '../lib/types';
+import { PaymentPartsLabel } from '../components/domain/SplitPayments';
 import { ModuleOff } from './ProductsPage';
 
 // Empty sort = newest first.
@@ -87,11 +88,19 @@ function PurchaseDetail({ purchase, onClose }: { purchase: Purchase; onClose: ()
           </li>
         ))}
       </ul>
-      <div className="flex items-baseline justify-between rounded-xl bg-surface-2 px-4 py-3">
-        <span className="text-sm text-muted">{t('sales.columns.total')}</span>
-        <span className="font-display text-2xl font-semibold tabular-nums">
-          {fmt.money(purchase.total)}
-        </span>
+      <div className="space-y-2 rounded-xl bg-surface-2 px-4 py-3">
+        <p className="flex items-baseline justify-between">
+          <span className="text-sm text-muted">{t('sales.columns.total')}</span>
+          <span className="font-display text-2xl font-semibold tabular-nums">
+            {fmt.money(purchase.total)}
+          </span>
+        </p>
+        {purchase.payments.length > 0 && (
+          <p className="flex flex-wrap items-center justify-between gap-2 text-sm">
+            <span className="text-muted">{t('split.youPaidWith')}</span>
+            <PaymentPartsLabel parts={purchase.payments} />
+          </p>
+        )}
       </div>
       {purchase.status === 'completed' && (
         <div className="flex flex-col gap-3 rounded-xl border border-danger/30 bg-danger-soft/60 p-4 sm:flex-row sm:items-center">

@@ -15,6 +15,8 @@ import {
 import type { PaymentMethod, Receivable } from '../../lib/types';
 import { todayIso } from './dueLabel';
 import { PaymentMethodPicker } from './PaymentMethods';
+import { SplitPayments } from './SplitPayments';
+import { partsComplete, partsPayload, startParts, type PartDraft } from './splitParts';
 
 const MAX_PROOF_MB = 5;
 
@@ -55,6 +57,8 @@ export function PaymentForm({
   const fileInput = useRef<HTMLInputElement>(null);
   const [amount, setAmount] = useState(String(receivable.outstandingAmount));
   const [method, setMethod] = useState<PaymentMethod>('yape');
+  // Paid with several methods at once (part in cash, part with Yape…): null with one.
+  const [parts, setParts] = useState<PartDraft[] | null>(null);
   const [date, setDate] = useState(todayIso());
   const [changeDate, setChangeDate] = useState(false);
   const [proof, setProof] = useState<File | null>(null);
@@ -73,7 +77,16 @@ export function PaymentForm({
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     const value = Number(amount);
-    await register.mutateAsync({ receivableId: receivable.id, amount: value, method, date, proof });
+    if (parts !== null && !partsComplete(parts, value)) {
+      toast.warning(t('split.notComplete', { amount: fmt.money(value) }));
+      return;
+    }
+    await register.mutateAsync({
+      receivableId: receivable.id,
+      parts: parts === null ? [{ method, amount: value }] : partsPayload(parts),
+      date,
+      proof,
+    });
     toast.success(t('payment.success', { amount: fmt.money(value) }));
     onClose();
   };
@@ -151,7 +164,21 @@ export function PaymentForm({
 
       <div>
         <p className="label">{t('payment.method')}</p>
-        <PaymentMethodPicker label={t('payment.method')} value={method} onChange={setMethod} />
+        {parts === null ? (
+          <PaymentMethodPicker label={t('payment.method')} value={method} onChange={setMethod} />
+        ) : (
+          <div className="space-y-2 rounded-xl border border-line p-3">
+            <p className="text-xs text-muted">{t('split.hint')}</p>
+            <SplitPayments parts={parts} onChange={setParts} target={numericAmount} />
+          </div>
+        )}
+        <TextButton
+          size="xs"
+          className="mt-2"
+          onClick={() => setParts(parts === null ? startParts(numericAmount, 'cash') : null)}
+        >
+          {parts === null ? t('split.toggle') : t('split.single')}
+        </TextButton>
       </div>
 
       <div>

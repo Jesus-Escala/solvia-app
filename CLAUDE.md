@@ -67,6 +67,7 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
   down payment), then the ticket (`saleTicket.ts`: print / WhatsApp). Keyboard (`pos/keys.ts`):
   Alt+S charge/confirm/save, Alt+B search (Option on a Mac), Esc back. Stock shortages are traced (sale/line badges, "Sin stock"
   filter, `KardexModal`) when the inventory module is on.
+- **Several payment methods** (`components/domain/SplitPayments.tsx` + helpers in `splitParts.ts`): "Varios" in the sale checkout, the down payment of a credit sale and "¿Cómo pagaste?" of a purchase (`MethodRow`), and "Pagó con varios métodos" in "Me pagó". The last row keeps the rest while the others are typed; the API gets `payments` / `downPayments` / `parts` (`[{ method, amount }]`) and shows them with `PaymentPartsLabel`.
 - **Language of the automatic reminders**: one per business (`GET/PUT /settings/business`, admins), in Settings > Preferencias under the interface language (only with Cobranza); scheduled jobs run in it.
 - **Plan limits**: `components/plan/PlanUsage.tsx` — `PlanUsageCard` (Settings > Mi plan: automatic
   WhatsApp messages, users and customers of the month, from `GET /settings/plan`) and

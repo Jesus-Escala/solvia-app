@@ -19,6 +19,7 @@ import {
   type DataTableColumn,
 } from '@/ui';
 import { PaymentMethodMark } from '../components/domain/PaymentMethods';
+import { PaymentPartsLabel } from '../components/domain/SplitPayments';
 import { useSales, useVoidSale, type SaleListParams } from '../hooks/queries';
 import { useModules } from '../hooks/useModules';
 import { useI18n } from '../i18n/I18nProvider';
@@ -31,6 +32,15 @@ const DEFAULTS = { search: '', type: '', page: '1', pageSize: '20', sortBy: '', 
 /** "Contado · Yape" or "Fiado · Maria" in one short line. */
 function PaymentLabel({ sale }: { sale: Sale }) {
   const { t } = useI18n();
+  if (sale.paymentType === 'cash' && sale.payments.length > 1) {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        {t('sales.types.cash')}
+        <span className="text-muted">·</span>
+        <PaymentPartsLabel parts={sale.payments} amounts={false} />
+      </span>
+    );
+  }
   if (sale.paymentType === 'cash') {
     return (
       <span className="inline-flex items-center gap-1.5">
@@ -152,6 +162,12 @@ function SaleDetail({ sale, onClose }: { sale: Sale; onClose: () => void }) {
             {fmt.money(sale.total)}
           </span>
         </p>
+        {sale.payments.length > 1 && (
+          <p className="flex flex-wrap items-center justify-between gap-2 pt-1 text-sm">
+            <span className="text-muted">{t('split.paidWith')}</span>
+            <PaymentPartsLabel parts={sale.payments} />
+          </p>
+        )}
       </div>
       {sale.notes && (
         <p className="rounded-xl border border-line px-4 py-3 text-sm">

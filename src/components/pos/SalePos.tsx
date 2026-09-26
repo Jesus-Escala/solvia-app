@@ -31,6 +31,14 @@ import { addDaysIso, todayIso } from '../domain/dueLabel';
 import { MoneyInput } from '../domain/MoneyInput';
 import { NewCustomerFields, type NewCustomer } from '../domain/NewCustomerFields';
 import { PaymentMethodMark } from '../domain/PaymentMethods';
+import { MethodRow, SplitMark, SplitPayments } from '../domain/SplitPayments';
+import {
+  partsComplete,
+  partsPayload,
+  startParts,
+  type MethodChoice,
+  type PartDraft,
+} from '../domain/splitParts';
 import { roundQuantity } from '../domain/quantity';
 import type { CashGiven } from './saleTicket';
 import { NewProductModal } from './NewProductForm';
@@ -42,8 +50,8 @@ import { useI18n } from '../../i18n/I18nProvider';
 import type { PaymentMethod, ProductOption, Sale, SaleDocType } from '../../lib/types';
 
 const DOC_TYPES: SaleDocType[] = ['sale_note', 'receipt', 'invoice'];
-/** How the customer pays: the four methods of a cash sale, or on credit ("Fiado"). */
-type PayOption = PaymentMethod | 'credit';
+/** How the customer pays: one of the four methods, several of them ("Varios"), or on credit. */
+type PayOption = PaymentMethod | 'split' | 'credit';
 const PAY_OPTIONS: PaymentMethod[] = ['cash', 'yape', 'plin', 'bank_transfer'];
 
 /**
@@ -96,11 +104,15 @@ export function SalePos({
   const [discountText, setDiscountText] = useState('');
   const [receivedText, setReceivedText] = useState('');
   const [downText, setDownText] = useState('');
-  const [downMethod, setDownMethod] = useState<PaymentMethod>('cash');
+  const [downMethod, setDownMethod] = useState<MethodChoice>('cash');
+  // Paid with several methods: the parts of the sale, or of the down payment.
+  const [splitParts, setSplitParts] = useState<PartDraft[]>([]);
+  const [downParts, setDownParts] = useState<PartDraft[]>([]);
   const [done, setDone] = useState<{ sale: Sale; cash: CashGiven | null } | null>(null);
 
   const credit = pay === 'credit';
-  const method: PaymentMethod = credit ? 'cash' : pay;
+  const split = pay === 'split';
+  const method: PaymentMethod = credit || split ? 'cash' : pay;
   // Money, as the API computes it: each line rounded, then the discount.
   const subtotal = round2(lines.reduce((sum, line) => sum + round2(line.quantity * line.price), 0));
   const discountValue = showDiscount ? money(discountText) : 0;
@@ -208,6 +220,15 @@ export function SalePos({
       toast.warning(t('sales.form.downTooHigh'));
       return;
     }
+    const downSplit = down > 0 && downMethod === 'split';
+    if (split && !partsComplete(splitParts, total)) {
+      toast.warning(t('split.notComplete', { amount: fmt.money(total) }));
+      return;
+    }
+    if (downSplit && !partsComplete(downParts, down)) {
+      toast.warning(t('split.notComplete', { amount: fmt.money(down) }));
+      return;
+    }
     let customerId = customer?.id ?? null;
     if (customerId === null && newCustomer) {
       const created = await saveCustomer.mutateAsync(newCustomer);
@@ -222,8 +243,11 @@ export function SalePos({
     const result = await create.mutateAsync({
       paymentType: credit ? 'credit' : 'cash',
       ...(customerId !== null && { customerId }),
-      ...(credit ? { dueDate } : { method }),
-      ...(down > 0 && { downPayment: down, downPaymentMethod: downMethod }),
+      ...(credit ? { dueDate } : split ? { payments: partsPayload(splitParts) } : { method }),
+      ...(down > 0 &&
+        (downMethod === 'split'
+          ? { downPayments: partsPayload(downParts) }
+          : { downPayment: down, downPaymentMethod: downMethod })),
       ...(discount > 0 && { discount }),
       ...(docNumber.trim() !== '' && { docType, docNumber: docNumber.trim() }),
       ...(notes.trim() !== '' && { notes: notes.trim() }),
@@ -384,7 +408,11 @@ export function SalePos({
     </>
   );
 
-  const payOptions: PayOption[] = modules.collections ? [...PAY_OPTIONS, 'credit'] : PAY_OPTIONS;
+  const payOptions: PayOption[] = [
+    ...PAY_OPTIONS,
+    'split',
+    ...(modules.collections ? (['credit'] as const) : []),
+  ];
   const checkout = (
     <form
       ref={formRef}
@@ -445,7 +473,10 @@ export function SalePos({
                   type="button"
                   role="radio"
                   aria-checked={active}
-                  onClick={() => setPay(option)}
+                  onClick={() => {
+                    setPay(option);
+                    if (option === 'split' && pay !== 'split') setSplitParts(startParts(total));
+                  }}
                   className={cx(
                     'flex flex-col items-center gap-1.5 rounded-xl border px-2 py-2.5 text-xs font-semibold transition active:scale-[0.97]',
                     active
@@ -457,15 +488,28 @@ export function SalePos({
                     <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning-soft text-warning-ink">
                       <ReceiptText className="h-[18px] w-[18px]" />
                     </span>
+                  ) : option === 'split' ? (
+                    <SplitMark />
                   ) : (
                     <PaymentMethodMark method={option} />
                   )}
-                  {option === 'credit' ? t('sales.types.credit') : t(`methods.${option}`)}
+                  {option === 'credit'
+                    ? t('sales.types.credit')
+                    : option === 'split'
+                      ? t('split.option')
+                      : t(`methods.${option}`)}
                 </button>
               );
             })}
           </div>
         </div>
+
+        {split && (
+          <div className="space-y-2 rounded-2xl border border-line p-3">
+            <p className="text-xs text-muted">{t('split.hint')}</p>
+            <SplitPayments parts={splitParts} onChange={setSplitParts} target={total} />
+          </div>
+        )}
 
         {pay === 'cash' && total > 0 && (
           <ChangeCalculator
@@ -504,25 +548,21 @@ export function SalePos({
             {down > 0 && (
               <div>
                 <p className="label">{t('sales.form.downPaymentMethod')}</p>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {PAY_OPTIONS.map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      aria-pressed={downMethod === option}
-                      onClick={() => setDownMethod(option)}
-                      className={cx(
-                        'flex flex-col items-center gap-1 rounded-xl border px-1 py-2 text-[11px] font-semibold transition',
-                        downMethod === option
-                          ? 'border-primary bg-primary-soft text-primary-ink'
-                          : 'border-line text-muted hover:bg-surface-2',
-                      )}
-                    >
-                      <PaymentMethodMark method={option} size="sm" />
-                      {t(`methods.${option}`)}
-                    </button>
-                  ))}
-                </div>
+                <MethodRow
+                  label={t('sales.form.downPaymentMethod')}
+                  value={downMethod}
+                  onChange={(value) => {
+                    setDownMethod(value);
+                    if (value === 'split' && downMethod !== 'split') {
+                      setDownParts(startParts(down));
+                    }
+                  }}
+                />
+                {downMethod === 'split' && (
+                  <div className="mt-2">
+                    <SplitPayments parts={downParts} onChange={setDownParts} target={down} />
+                  </div>
+                )}
               </div>
             )}
           </div>

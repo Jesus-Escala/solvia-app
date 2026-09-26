@@ -21,6 +21,7 @@ import type {
   Payment,
   PaymentLink,
   PaymentMethod,
+  PaymentPart,
   PlanUsage,
   BusinessSettings,
   Product,
@@ -330,8 +331,8 @@ export function useDeleteReceivable() {
 
 export interface PaymentInput {
   receivableId: string;
-  amount: number;
-  method: PaymentMethod;
+  /** One part per method (one payment is recorded for each). */
+  parts: PaymentPart[];
   date: string;
   proof?: File | null;
 }
@@ -341,11 +342,16 @@ export function useRegisterPayment() {
   return useMutation({
     mutationFn: ({ receivableId, proof, ...input }: PaymentInput) => {
       const form = new FormData();
-      form.set('amount', String(input.amount));
-      form.set('method', input.method);
+      const [only] = input.parts;
+      if (input.parts.length === 1 && only) {
+        form.set('amount', String(only.amount));
+        form.set('method', only.method);
+      } else {
+        form.set('parts', JSON.stringify(input.parts));
+      }
       form.set('date', input.date);
       if (proof) form.set('proof', proof);
-      return api.post<{ payment: Payment; receivable: Receivable }>(
+      return api.post<{ payment: Payment; payments: Payment[]; receivable: Receivable }>(
         `/receivables/${receivableId}/payments`,
         form,
       );
@@ -591,6 +597,8 @@ export function useSales(params: SaleListParams) {
 export interface SaleInput {
   paymentType: 'cash' | 'credit';
   method?: PaymentMethod;
+  /** Cash sale paid with several methods (they add up to the total). */
+  payments?: PaymentPart[];
   customerId?: string;
   dueDate?: string;
   docType?: SaleDocType;
@@ -605,6 +613,8 @@ export interface SaleInput {
   /** Credit sale: what the customer pays now (first payment of the debt). */
   downPayment?: number;
   downPaymentMethod?: PaymentMethod;
+  /** Credit sale: a down payment made with several methods. */
+  downPayments?: PaymentPart[];
   notes?: string | null;
 }
 
@@ -712,6 +722,8 @@ export interface PurchaseInput {
   docNumber?: string | null;
   updateCosts?: boolean;
   items: Array<{ productId: string; quantity: number; unitCost: number }>;
+  /** How it was paid to the supplier (adds up to the total). */
+  payments?: PaymentPart[];
 }
 
 /** Purchases and adjustments change stock (and costs): products and the kardex refresh. */

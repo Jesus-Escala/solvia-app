@@ -334,6 +334,8 @@ export interface Purchase {
   docType: SaleDocType;
   docNumber: string | null;
   total: number;
+  /** How it was paid to the supplier, one part per method (empty when not recorded). */
+  payments: PaymentPart[];
   status: 'completed' | 'voided';
   createdAt: string;
   voidedAt: string | null;
@@ -371,6 +373,12 @@ export interface CustomerOption {
 }
 
 export type SalePaymentType = 'cash' | 'credit';
+
+/** Part of a payment made with one method (e.g. S/ 30 in cash of a S/ 50 sale). */
+export interface PaymentPart {
+  method: PaymentMethod;
+  amount: number;
+}
 export type SaleDocType = 'none' | 'sale_note' | 'receipt' | 'invoice';
 
 export interface SaleItem {
@@ -391,7 +399,10 @@ export interface Sale {
   date: string;
   customer: { id: string; name: string; phone: string } | null;
   paymentType: SalePaymentType;
+  /** The method that brought the most (the only one, usually). */
   method: PaymentMethod | null;
+  /** How a cash sale was paid, one part per method (empty for credit sales). */
+  payments: PaymentPart[];
   docType: SaleDocType;
   docNumber: string | null;
   /** Sum of the lines, before the discount. */
