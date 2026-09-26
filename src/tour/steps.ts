@@ -121,7 +121,7 @@ export const SECTION_ROUTES: Record<
   receivables: { route: '/receivables', module: 'collections' },
   products: { route: '/products', module: 'catalog' },
   suppliers: { route: '/suppliers', module: 'inventory' },
-  locations: { route: '/locations', module: 'inventory' },
+  locations: { route: '/locations' },
   dashboard: { route: '/dashboard' },
   reports: { route: '/reports' },
   settings: { route: '/settings' },

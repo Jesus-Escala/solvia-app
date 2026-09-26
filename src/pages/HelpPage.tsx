@@ -70,7 +70,6 @@ const GUIDES: Array<{
     steps: 3,
     icon: <MapIcon />,
     tone: 'from-violet-400 to-purple-600',
-    module: 'inventory',
   },
   {
     id: 'customers',
@@ -104,7 +103,21 @@ const GUIDES: Array<{
   { id: 'team', steps: 3, icon: <UserCog />, tone: 'from-slate-400 to-slate-600' },
 ];
 
-const FAQ_COUNT = 12;
+/** The module each frequent question is about (none: for everyone), in order q1…q12. */
+const FAQ_MODULES: Array<ModuleRequirement | null> = [
+  'collections',
+  'collections',
+  'collections',
+  null,
+  null,
+  'collections',
+  null,
+  'collections',
+  'sales',
+  'sales',
+  'sales',
+  'catalog',
+];
 
 /** Case- and accent-insensitive text used by the search box. */
 const normalize = (text: string) =>
@@ -138,11 +151,15 @@ export function HelpPage() {
     }))
     .filter((guide) => matches(guide.title, ...guide.steps));
 
-  const faqs = Array.from({ length: FAQ_COUNT }, (_, index) => ({
+  // Only the questions about what the business has.
+  const faqs = FAQ_MODULES.map((module, index) => ({
     index,
+    module,
     question: t(key(`help.faq.q${index + 1}`)),
     answer: t(key(`help.faq.a${index + 1}`)),
-  })).filter((faq) => matches(faq.question, faq.answer));
+  }))
+    .filter((faq) => !faq.module || modules[faq.module])
+    .filter((faq) => matches(faq.question, faq.answer));
 
   return (
     <Page>
@@ -360,26 +377,57 @@ export function HelpPage() {
 }
 
 /** Every section's tour, to remember how something is done (it opens the section first). */
+/** The section tours by area, like the menu (an area without any section of the business hides). */
+const TOUR_GROUPS: Array<{ title: TranslationKey; sections: SectionTourId[] }> = [
+  { title: 'tour.groupGeneral', sections: ['home', 'settings'] },
+  { title: 'nav.groups.commercial', sections: ['sales', 'salePos', 'products', 'customers'] },
+  { title: 'nav.groups.receivables', sections: ['receivables'] },
+  {
+    title: 'nav.groups.inventory',
+    sections: ['products', 'purchases', 'purchasePos', 'suppliers'],
+  },
+  { title: 'nav.groups.tools', sections: ['locations'] },
+  { title: 'nav.groups.numbers', sections: ['dashboard', 'reports'] },
+];
+
 function SectionTours() {
   const { t } = useI18n();
   const tour = useTour();
   const modules = useModules();
-  const sections = (Object.keys(SECTION_ROUTES) as SectionTourId[]).filter((section) => {
+  const available = (section: SectionTourId) => {
     const place = SECTION_ROUTES[section];
     return place !== null && (!place.module || modules[place.module]);
-  });
+  };
+  // Products sit where the menu has them: in Inventario with that module, else in Comercial.
+  const inGroup = (group: TranslationKey, section: SectionTourId) =>
+    section !== 'products' || (group === 'nav.groups.inventory') === modules.inventory;
+  const groups = TOUR_GROUPS.map((group) => ({
+    ...group,
+    sections: group.sections.filter(
+      (section) => available(section) && inGroup(group.title, section),
+    ),
+  })).filter((group) => group.sections.length > 0);
   return (
-    <div id="section-tours" className="flex flex-wrap gap-2">
-      {sections.map((section) => (
-        <button
-          key={section}
-          type="button"
-          onClick={() => tour.startAt(section)}
-          className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface/80 px-3 py-1.5 text-sm font-medium shadow-xs transition hover:border-primary/40 hover:bg-primary-soft/60"
-        >
-          <Compass className="h-3.5 w-3.5 text-primary" />
-          {t(`tour.names.${section}`)}
-        </button>
+    <div id="section-tours" className="grid gap-x-6 gap-y-3 sm:grid-cols-2 xl:grid-cols-3">
+      {groups.map((group) => (
+        <div key={group.title} className="min-w-0">
+          <p className="mb-1.5 text-[11px] font-semibold tracking-[0.1em] text-muted uppercase">
+            {t(group.title)}
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {group.sections.map((section) => (
+              <button
+                key={section}
+                type="button"
+                onClick={() => tour.startAt(section)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface/80 px-3 py-1.5 text-sm font-medium shadow-xs transition hover:border-primary/40 hover:bg-primary-soft/60"
+              >
+                <Compass className="h-3.5 w-3.5 text-primary" />
+                {t(`tour.names.${section}`)}
+              </button>
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   );

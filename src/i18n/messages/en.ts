@@ -43,6 +43,7 @@ export const en: Messages = {
       receivables: 'Receivables',
       inventory: 'Inventory',
       numbers: 'Results',
+      tools: 'Tools',
     },
     customers: 'Customers',
     receivables: 'Collections',
@@ -1912,6 +1913,7 @@ export const en: Messages = {
     sectionButton: 'Tour',
     sectionButtonTitle: 'How does {name} work? I will show you step by step',
     sectionTitle: 'Tours by section',
+    groupGeneral: 'General',
     sectionHint:
       'Forgot how to do something? Pick the section and I will show you step by step. There is also the "Tour" button at the top of every screen.',
     thisSection: 'Tour of this section ({name})',

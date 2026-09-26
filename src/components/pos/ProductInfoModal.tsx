@@ -1,7 +1,7 @@
 import { Map as MapIcon, MapPin, Plus, ZoomIn } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Badge, Button, Modal, Skeleton, TextButton, cx } from '@/ui';
-import { useProduct } from '../../hooks/queries';
+import { useProduct, useStoreMaps } from '../../hooks/queries';
 import { useModules } from '../../hooks/useModules';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { ProductOption } from '../../lib/types';
@@ -96,7 +96,9 @@ function ProductInfo({
   const full = useProduct(product.id);
   const [viewing, setViewing] = useState<{ url: string; title: string } | null>(null);
   const [showSpot, setShowSpot] = useState(false);
-  const spot = modules.inventory ? (full.data?.spot ?? null) : null;
+  const spot = full.data?.spot ?? null;
+  // Where it is kept: once the business has a floor plan (a tool of every business).
+  const hasMaps = (useStoreMaps().data ?? []).length > 0;
   const unit = t(`products.unitsShort.${product.unit}`);
   const service = product.kind === 'service';
   const margin =
@@ -173,7 +175,7 @@ function ProductInfo({
           </div>
         </div>
         {/* Where it is kept. */}
-        {modules.inventory && (
+        {(spot || hasMaps) && (
           <div
             className={cx(
               'flex items-center gap-3 rounded-2xl border p-3',

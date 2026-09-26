@@ -56,11 +56,9 @@ import {
   useUnplaceProduct,
 } from '../hooks/queries';
 import { useAddShortcut } from '../hooks/useAddShortcut';
-import { useModules } from '../hooks/useModules';
 import { useI18n } from '../i18n/I18nProvider';
 import { normalizeSearch, rowMatches } from '../lib/searchText';
 import type { MapSpot, StoreMap } from '../lib/types';
-import { ModuleOff } from '../components/modules/ModuleOff';
 
 const VIEW_KEY = 'solvia.mapView';
 
@@ -72,10 +70,8 @@ function storedView(): MapView {
   }
 }
 
-/** Inventario > Ubicaciones: floor plans of the business and where each product is kept. */
+/** Herramientas > Ubicaciones: floor plans of the business and where each product is kept. */
 export function LocationsPage() {
-  const modules = useModules();
-  if (!modules.loading && !modules.inventory) return <ModuleOff />;
   return <Locations />;
 }
 

@@ -23,6 +23,8 @@ export interface NavItem {
   end?: boolean;
   /** Only shown when the business has this module (see `useModules`). */
   module?: ModuleRequirement;
+  /** An extra condition on the modules (e.g. where a shared page goes). */
+  when?: (modules: Modules) => boolean;
 }
 
 export interface NavSection {
@@ -43,6 +45,14 @@ export const NAV_SECTIONS: NavSection[] = [
     title: 'nav.groups.commercial',
     items: [
       { to: '/sales', label: 'nav.sales', icon: <ShoppingCart />, module: 'sales' },
+      // Products serve selling and buying: next to sales when the business only sells…
+      {
+        to: '/products',
+        label: 'nav.products',
+        icon: <Package />,
+        module: 'sales',
+        when: (modules) => !modules.inventory,
+      },
       { to: '/customers', label: 'nav.customers', icon: <Users />, module: 'customers' },
     ],
   },
@@ -60,11 +70,16 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     title: 'nav.groups.inventory',
     items: [
-      { to: '/products', label: 'nav.products', icon: <Package />, module: 'catalog' },
+      // …and in Inventario (with its stock) when the business has it.
+      { to: '/products', label: 'nav.products', icon: <Package />, module: 'inventory' },
       { to: '/purchases', label: 'nav.purchases', icon: <Warehouse />, module: 'inventory' },
       { to: '/suppliers', label: 'nav.suppliers', icon: <Truck />, module: 'inventory' },
-      { to: '/locations', label: 'nav.locations', icon: <Map />, module: 'inventory' },
     ],
+  },
+  {
+    // Tools of every business, whatever its modules.
+    title: 'nav.groups.tools',
+    items: [{ to: '/locations', label: 'nav.locations', icon: <Map /> }],
   },
   {
     title: 'nav.groups.numbers',
@@ -85,7 +100,9 @@ export const NAV_FOOTER: NavItem[] = [
 export function visibleSections(modules: Modules): NavSection[] {
   return NAV_SECTIONS.map((section) => ({
     ...section,
-    items: section.items.filter((item) => !item.module || modules[item.module]),
+    items: section.items.filter(
+      (item) => (!item.module || modules[item.module]) && (!item.when || item.when(modules)),
+    ),
   })).filter((section) => section.items.length > 0);
 }
 

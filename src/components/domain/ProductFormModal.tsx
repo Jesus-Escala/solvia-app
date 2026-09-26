@@ -19,7 +19,6 @@ import { moneyText } from '../../lib/moneyText';
 import { ProductThumb } from './ProductThumb';
 import { QrImage } from './QrImage';
 import { useProductImage, useSaveProduct, useStoreMaps } from '../../hooks/queries';
-import { useModules } from '../../hooks/useModules';
 import { SpotSelect } from '../maps/SpotSelect';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { Product, ProductKind, ProductUnit } from '../../lib/types';
@@ -83,8 +82,7 @@ function ProductForm({
   const { toast } = useFeedback();
   const save = useSaveProduct(product?.id);
   const image = useProductImage();
-  const modules = useModules();
-  const maps = useStoreMaps(modules.inventory);
+  const maps = useStoreMaps();
   // Where it is kept: only once the business marked spots on a plan.
   const withSpots = (maps.data ?? []).some((map) => map.spots.length > 0);
   const [form, setForm] = useState({

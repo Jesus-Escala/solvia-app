@@ -45,6 +45,7 @@ export const es = {
       receivables: 'Cuentas por cobrar',
       inventory: 'Inventario',
       numbers: 'Resultados',
+      tools: 'Herramientas',
     },
     customers: 'Clientes',
     receivables: 'Cobranza',
@@ -1916,6 +1917,7 @@ export const es = {
     sectionButton: 'Recorrido',
     sectionButtonTitle: '¿Cómo se usa {name}? Te lo muestro paso a paso',
     sectionTitle: 'Recorridos por sección',
+    groupGeneral: 'General',
     sectionHint:
       '¿Olvidaste cómo se hace algo? Elige la sección y te la muestro paso a paso. También está el botón «Recorrido» arriba en cada pantalla.',
     thisSection: 'Recorrido de esta sección ({name})',
