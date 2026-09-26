@@ -7,7 +7,6 @@ import {
   ReceiptText,
   ShoppingBasket,
   Tag,
-  Trash2,
   X,
 } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
@@ -23,7 +22,7 @@ import {
   useFeedback,
 } from '@/ui';
 import { isAddKey, isSaveKey, isSearchKey, SAVE_KEY_LABEL } from './keys';
-import { Kbd, PosLayout } from './PosLayout';
+import { ClearButton, Kbd, PosLayout } from './PosLayout';
 import { ProductCatalog } from './ProductCatalog';
 import { CustomerPicker, type PickedCustomer } from '../domain/CustomerPicker';
 import { DueDateField } from '../domain/DueDateField';
@@ -322,12 +321,7 @@ export function SalePos({
             </span>
           )}
         </div>
-        {lines.length > 0 && (
-          <TextButton size="sm" onClick={() => void clear()}>
-            <Trash2 className="h-4 w-4" />
-            {t('sales.pos.clear')}
-          </TextButton>
-        )}
+        {lines.length > 0 && <ClearButton onClick={() => void clear()} />}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
         {lines.length === 0 ? (

@@ -22,6 +22,7 @@ import {
   PasswordInput,
   useErrorText,
   useErrorToast,
+  smallButtonClass,
 } from '@/ui';
 import { useI18n } from '../i18n/I18nProvider';
 
@@ -454,10 +455,7 @@ export function LoginPage() {
           {config.data && !config.data.signupEnabled && (
             <p className="mt-4 text-center text-sm text-muted">
               {t('auth.noAccount')}{' '}
-              <a
-                href={REQUEST_ACCESS_URL}
-                className="font-semibold text-primary-ink hover:underline"
-              >
+              <a href={REQUEST_ACCESS_URL} className={smallButtonClass('inherit', 'ml-1')}>
                 {t('auth.requestAccess')}
               </a>
             </p>

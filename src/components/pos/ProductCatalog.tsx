@@ -17,6 +17,8 @@ import { productLookupQuery, useCategories, useProductCatalog } from '../../hook
 import { useI18n } from '../../i18n/I18nProvider';
 import type { ProductOption } from '../../lib/types';
 import { CameraScanner } from './CameraScanner';
+import { ADD_KEY_LABEL } from './keys';
+import { Kbd } from './PosLayout';
 import { ImageViewer } from '../domain/ImageViewer';
 import { ProductThumb } from '../domain/ProductThumb';
 import { useDebouncedValue } from '../domain/useSearchBox';
@@ -96,8 +98,8 @@ export function ProductCatalog({
    * Looks a code up and adds its product, in the order the codes arrive (a fast scanner or the
    * camera never loses one). `exact`: only a product with that very code (a scan).
    */
-  const resolve = (code: string, exact: boolean) => {
-    queue.current = queue.current.then(async () => {
+  const resolve = (code: string, exact: boolean): Promise<ProductOption | null> => {
+    const result = queue.current.then(async () => {
       try {
         const answer = await queryClient.fetchQuery(productLookupQuery(code));
         const chosen = exact
@@ -107,10 +109,14 @@ export function ProductCatalog({
           setNotFound(null);
           onPick(chosen);
         } else setNotFound(code);
+        return chosen;
       } catch {
         setNotFound(code);
+        return null;
       }
     });
+    queue.current = result.then(() => undefined);
+    return result;
   };
 
   return (
@@ -159,6 +165,19 @@ export function ProductCatalog({
           </div>
           <button
             type="button"
+            onClick={() => {
+              onCreate(typed);
+              setText('');
+            }}
+            title={t('pos.newButtonTitle')}
+            className="flex h-12 shrink-0 items-center gap-2 rounded-xl bg-primary px-3.5 text-sm font-semibold text-on-primary shadow-sm transition hover:brightness-110 [&>svg]:h-5 [&>svg]:w-5"
+          >
+            <PackagePlus />
+            <span className="hidden sm:inline">{t('pos.newButton')}</span>
+            <Kbd>{ADD_KEY_LABEL}</Kbd>
+          </button>
+          <button
+            type="button"
             onClick={() => setScanning(true)}
             title={t('scanner.open')}
             aria-label={t('scanner.open')}
@@ -174,7 +193,7 @@ export function ProductCatalog({
             setScanning(false);
             searchRef.current?.focus();
           }}
-          onCode={(code) => resolve(code, true)}
+          onCode={async (code) => (await resolve(code, true))?.name ?? null}
         />
         {typed === '' && categories.length > 0 && (
           <div
@@ -262,21 +281,6 @@ export function ProductCatalog({
                 )}
               </li>
             ))}
-            {products.length > 0 && (
-              <li>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onCreate(typed);
-                    setText('');
-                  }}
-                  className="flex h-full min-h-32 w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-line-strong p-3 text-center text-sm font-semibold text-muted transition hover:border-primary/50 hover:text-primary-ink"
-                >
-                  <PackagePlus className="h-6 w-6" />
-                  {typed === '' ? t('pos.newTile') : t('pos.create', { text: typed })}
-                </button>
-              </li>
-            )}
           </ul>
         )}
         {!catalog.isLoading && products.length === 0 && (

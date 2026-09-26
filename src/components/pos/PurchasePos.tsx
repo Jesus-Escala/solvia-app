@@ -1,17 +1,16 @@
-import { ArrowLeft, ChevronDown, FileText, Trash2, Truck, X } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileText, Truck, X } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   Checkbox,
   Field,
   IconButton,
   SegmentedControl,
-  TextButton,
   cx,
   useErrorToast,
   useFeedback,
 } from '@/ui';
 import { isAddKey, isSaveKey, isSearchKey, SAVE_KEY_LABEL } from './keys';
-import { Kbd, PosLayout } from './PosLayout';
+import { ClearButton, Kbd, PosLayout } from './PosLayout';
 import { NewProductModal } from './NewProductForm';
 import { ProductCatalog } from './ProductCatalog';
 import { roundQuantity } from '../domain/quantity';
@@ -257,12 +256,7 @@ export function PurchasePos({
             </span>
           )}
         </div>
-        {count > 0 && (
-          <TextButton size="sm" onClick={() => void clear()}>
-            <Trash2 className="h-4 w-4" />
-            {t('sales.pos.clear')}
-          </TextButton>
-        )}
+        {count > 0 && <ClearButton onClick={() => void clear()} />}
       </div>
 
       <div className="shrink-0 border-b border-line px-4 py-3">

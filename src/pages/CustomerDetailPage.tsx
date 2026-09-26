@@ -45,6 +45,7 @@ import {
   useErrorText,
   formatPhone,
   WhatsAppIcon,
+  smallButtonClass,
 } from '@/ui';
 import {
   useCustomer,
@@ -88,10 +89,7 @@ export function CustomerDetailPage() {
     return (
       <Page>
         <Alert tone="danger">{errors.message(error)}</Alert>
-        <Link
-          to="/customers"
-          className="inline-flex items-center gap-1.5 text-sm text-primary-ink hover:underline"
-        >
+        <Link to="/customers" className={smallButtonClass('sm')}>
           <ArrowLeft className="h-4 w-4" /> {t('customerDetail.back')}
         </Link>
       </Page>
@@ -176,7 +174,7 @@ export function CustomerDetailPage() {
             href={row.proofUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1 text-primary-ink hover:underline"
+            className={smallButtonClass('xs')}
           >
             <FileText className="h-3.5 w-3.5" /> {t('customerDetail.payments.viewProof')}
           </a>
@@ -336,7 +334,7 @@ export function CustomerDetailPage() {
             <p className="text-sm text-muted">{t('customerDetail.noCollections.description')}</p>
             <Link
               to={`/sales?search=${encodeURIComponent(customer.name)}`}
-              className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary-ink hover:underline"
+              className={smallButtonClass('sm', 'mt-3')}
             >
               {t('customerDetail.noCollections.link')}
               <ChevronRight className="h-4 w-4" />

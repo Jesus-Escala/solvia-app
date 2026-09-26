@@ -1,4 +1,4 @@
-import { Camera, Package, QrCode, Trash2, Wrench, ZoomIn } from 'lucide-react';
+import { Camera, Package, Printer, QrCode, Trash2, Wrench, ZoomIn } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
   Button,
@@ -17,6 +17,7 @@ import { ImageViewer } from './ImageViewer';
 import { MoneyInput } from './MoneyInput';
 import { moneyText } from '../../lib/moneyText';
 import { ProductThumb } from './ProductThumb';
+import { QrImage } from './QrImage';
 import { useProductImage, useSaveProduct } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { Product, ProductKind, ProductUnit } from '../../lib/types';
@@ -30,13 +31,14 @@ export function ProductFormModal({
   open,
   onClose,
   product,
-  onShowQr,
+  onPrintLabel,
 }: {
   open: boolean;
   onClose: () => void;
   product?: Product;
   /** Opens the QR code of the product being edited. */
-  onShowQr?: (product: Product) => void;
+  /** Prints labels of the product being edited (closes the form and opens the label printer). */
+  onPrintLabel?: (product: Product) => void;
 }) {
   const { t } = useI18n();
   return (
@@ -52,7 +54,7 @@ export function ProductFormModal({
         <ProductForm
           product={product}
           onClose={onClose}
-          {...(onShowQr && product && { onShowQr: () => onShowQr(product) })}
+          {...(onPrintLabel && product && { onPrintLabel: () => onPrintLabel(product) })}
         />
       )}
     </Modal>
@@ -68,11 +70,11 @@ export function ProductFormModal({
 function ProductForm({
   product,
   onClose,
-  onShowQr,
+  onPrintLabel,
 }: {
   product?: Product;
   onClose: () => void;
-  onShowQr?: () => void;
+  onPrintLabel?: () => void;
 }) {
   const { t, fmt } = useI18n();
   const errors = useErrorText();
@@ -159,9 +161,33 @@ function ProductForm({
         ]}
       />
 
-      <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+      {/* Top: the QR and its code on the left, the picture on the right. */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {/* The code is Solvia's own (its QR): nothing to type, shown right away. */}
+        <div className="flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-line bg-surface-2 p-3 text-center">
+          {product?.code ? (
+            <>
+              <QrImage code={product.code} size={144} />
+              <p className="text-[11px] font-medium text-muted">{t('products.form.qrCode')}</p>
+              <p className="-mt-1 font-mono text-lg font-semibold tracking-wider">{product.code}</p>
+              {onPrintLabel && (
+                <TextButton size="sm" onClick={onPrintLabel}>
+                  <Printer className="h-3.5 w-3.5" />
+                  {t('products.form.printLabel')}
+                </TextButton>
+              )}
+            </>
+          ) : (
+            <>
+              <span className="flex h-36 w-36 items-center justify-center rounded-2xl border-2 border-dashed border-line-strong text-subtle">
+                <QrCode className="h-10 w-10" />
+              </span>
+              <p className="max-w-56 text-xs text-muted">{t('products.form.qrAuto')}</p>
+            </>
+          )}
+        </div>
         {/* Picture: tap to choose; shown in the point of sale and the list. */}
-        <div className="flex shrink-0 flex-col items-center gap-1.5">
+        <div className="flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-line p-3">
           <button
             type="button"
             // With a picture: see it big; without one: choose it.
@@ -197,7 +223,7 @@ function ProductForm({
                 <Camera className="h-3.5 w-3.5" />
                 {t('products.form.changeImage')}
               </TextButton>
-              <TextButton size="sm" onClick={() => setPicture(null)}>
+              <TextButton size="sm" tone="danger" onClick={() => setPicture(null)}>
                 <Trash2 className="h-3.5 w-3.5" />
                 {t('products.form.removeImage')}
               </TextButton>
@@ -215,70 +241,64 @@ function ProductForm({
             }}
           />
         </div>
-        <div className="w-full min-w-0 flex-1 space-y-4">
-          <Field label={t('products.form.name')} error={errors.field(save.error, 'name')}>
+      </div>
+
+      <Field label={t('products.form.name')} error={errors.field(save.error, 'name')}>
+        {(id) => (
+          <input
+            id={id}
+            className="input"
+            required
+            minLength={2}
+            maxLength={120}
+            placeholder={t(
+              service ? 'products.form.servicePlaceholder' : 'products.form.namePlaceholder',
+            )}
+            value={form.name}
+            onChange={(event) => update('name', event.target.value)}
+          />
+        )}
+      </Field>
+      <div className={cx('grid gap-4', !service && 'sm:grid-cols-2')}>
+        <Field label={t('products.form.price')} error={errors.field(save.error, 'price')}>
+          {(id) => (
+            <MoneyInput id={id} required value={form.price} onChange={(v) => update('price', v)} />
+          )}
+        </Field>
+        {!service && (
+          <Field label={t('products.form.unit')} error={errors.field(save.error, 'unit')}>
             {(id) => (
-              <input
+              <select
                 id={id}
                 className="input"
-                required
-                minLength={2}
-                maxLength={120}
-                placeholder={t(
-                  service ? 'products.form.servicePlaceholder' : 'products.form.namePlaceholder',
-                )}
-                value={form.name}
-                onChange={(event) => update('name', event.target.value)}
-              />
+                value={form.unit}
+                onChange={(event) => update('unit', event.target.value as ProductUnit)}
+              >
+                {PRODUCT_UNITS.map((unit) => (
+                  <option key={unit} value={unit}>
+                    {t(`products.units.${unit}`)}
+                  </option>
+                ))}
+              </select>
             )}
           </Field>
-          <div className={cx('grid gap-4', !service && 'sm:grid-cols-2')}>
-            <Field label={t('products.form.price')} error={errors.field(save.error, 'price')}>
-              {(id) => (
-                <MoneyInput
-                  id={id}
-                  required
-                  value={form.price}
-                  onChange={(v) => update('price', v)}
-                />
-              )}
-            </Field>
-            {!service && (
-              <Field label={t('products.form.unit')} error={errors.field(save.error, 'unit')}>
-                {(id) => (
-                  <select
-                    id={id}
-                    className="input"
-                    value={form.unit}
-                    onChange={(event) => update('unit', event.target.value as ProductUnit)}
-                  >
-                    {PRODUCT_UNITS.map((unit) => (
-                      <option key={unit} value={unit}>
-                        {t(`products.units.${unit}`)}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </Field>
-            )}
-          </div>
-          <Field
-            label={t('categories.label')}
-            optionalLabel={t('common.optional')}
-            hint={t('categories.hint')}
-            error={errors.field(save.error, 'categoryId')}
-          >
-            {(id, describedBy) => (
-              <CategorySelect
-                id={id}
-                describedBy={describedBy}
-                value={form.categoryId}
-                onChange={(categoryId) => update('categoryId', categoryId)}
-              />
-            )}
-          </Field>
-        </div>
+        )}
       </div>
+      <Field
+        label={t('categories.label')}
+        optionalLabel={t('common.optional')}
+        hint={t('categories.hint')}
+        error={errors.field(save.error, 'categoryId')}
+      >
+        {(id, describedBy) => (
+          <CategorySelect
+            id={id}
+            describedBy={describedBy}
+            value={form.categoryId}
+            onChange={(categoryId) => update('categoryId', categoryId)}
+          />
+        )}
+      </Field>
 
       <Field
         label={t('products.form.cost')}
@@ -302,26 +322,6 @@ function ProductForm({
           />
         )}
       </Field>
-
-      {/* The code is Solvia's own (its QR): nothing to type. */}
-      <div className="flex items-center gap-3 rounded-xl border border-line bg-surface-2 px-3 py-2.5">
-        <QrCode className="h-5 w-5 shrink-0 text-primary" />
-        <div className="min-w-0 flex-1 text-sm">
-          {product?.code ? (
-            <>
-              <p className="font-medium">{t('products.form.qrCode')}</p>
-              <p className="font-mono text-xs tracking-wider text-muted">{product.code}</p>
-            </>
-          ) : (
-            <p className="text-muted">{t('products.form.qrAuto')}</p>
-          )}
-        </div>
-        {onShowQr && product?.code && (
-          <Button variant="secondary" onClick={onShowQr}>
-            {t('products.form.qrShow')}
-          </Button>
-        )}
-      </div>
 
       {!service && (
         <>

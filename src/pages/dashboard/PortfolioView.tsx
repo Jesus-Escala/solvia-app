@@ -11,6 +11,7 @@ import {
   Skeleton,
   Stat,
   useFeedback,
+  smallButtonClass,
 } from '@/ui';
 import { useAuth } from '../../auth/AuthContext';
 import { AgingStrip } from '../../components/charts/AgingStrip';
@@ -215,10 +216,7 @@ export function PortfolioView({
           title={t('dashboard.portfolio.risk.title')}
           subtitle={t('dashboard.portfolio.risk.subtitle')}
           actions={
-            <Link
-              to="/customers?risk=high"
-              className="text-xs font-medium text-primary-ink hover:underline"
-            >
+            <Link to="/customers?risk=high" className={smallButtonClass('xs')}>
               {t('dashboard.portfolio.risk.viewHigh')}
             </Link>
           }

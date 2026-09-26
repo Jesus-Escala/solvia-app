@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
-import { Button, Card, cx, EmptyState, Mascot, Page, Skeleton } from '@/ui';
+import { Button, Card, cx, EmptyState, Mascot, Page, Skeleton, smallButtonClass } from '@/ui';
 import { useAuth } from '../auth/AuthContext';
 import { ModulesOffer } from '../components/modules/ModulesOffer';
 import { PlanLimitNotice } from '../components/plan/PlanUsage';
@@ -155,10 +155,7 @@ function Figure({
         </p>
       )}
       {hint && <p className="mt-1 text-sm text-muted">{hint}</p>}
-      <Link
-        to={to}
-        className="mt-auto inline-flex items-center gap-1 pt-3 text-sm font-semibold text-primary-ink hover:underline"
-      >
+      <Link to={to} className={smallButtonClass('sm', 'mt-auto self-start')}>
         {linkLabel}
         <ChevronRight className="h-4 w-4" />
       </Link>

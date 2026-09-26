@@ -3,6 +3,7 @@ import { Check, Copy, KeyRound } from 'lucide-react';
 import { useState } from 'react';
 import { useUiI18n } from '../i18n/context';
 import { Button } from './Button';
+import { smallButtonClass } from './buttonStyles';
 import { Modal } from './Modal';
 
 /**
@@ -75,7 +76,7 @@ export function TemporaryPasswordDialog({
             href={`https://wa.me/?text=${encodeURIComponent(whatsappText)}`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 text-sm font-medium text-primary-ink hover:underline"
+            className={smallButtonClass('sm')}
           >
             <WhatsAppIcon />
             {t('tempPassword.whatsapp')}

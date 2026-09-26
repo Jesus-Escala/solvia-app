@@ -12,6 +12,11 @@ export {
   TextButton,
   type TextButtonProps,
 } from './components/Button';
+export {
+  smallButtonClass,
+  type SmallButtonSize,
+  type SmallButtonTone,
+} from './components/buttonStyles';
 export { cx } from './components/cx';
 export {
   DataTable,

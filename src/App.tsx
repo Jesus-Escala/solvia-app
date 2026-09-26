@@ -3,7 +3,7 @@ import { Link, Route, Routes } from 'react-router';
 import { ModuleRoute } from './components/modules/ModuleRoute';
 import { PublicOnly, RequireAuth } from './auth/RequireAuth';
 import { AppShell } from './components/layout/AppShell';
-import { Page } from '@/ui';
+import { Page, smallButtonClass } from '@/ui';
 import { useI18n } from './i18n/I18nProvider';
 import { ChangePasswordPage, LoginPage, RegisterPage } from './pages/AuthPages';
 import { CustomerDetailPage } from './pages/CustomerDetailPage';
@@ -31,7 +31,7 @@ function NotFoundPage() {
         </span>
         <p className="text-sm font-semibold text-primary-ink">404</p>
         <h1 className="mt-1 text-3xl font-semibold">{t('notFound.title')}</h1>
-        <Link to="/" className="mt-6 text-sm font-medium text-primary-ink hover:underline">
+        <Link to="/" className={smallButtonClass('sm', 'mt-6')}>
           {t('notFound.back')}
         </Link>
       </div>

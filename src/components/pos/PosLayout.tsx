@@ -1,6 +1,6 @@
-import { ChevronRight, ShoppingBasket } from 'lucide-react';
+import { ChevronRight, ShoppingBasket, Trash2 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { cx } from '@/ui';
+import { cx, TextButton } from '@/ui';
 import { useI18n } from '../../i18n/I18nProvider';
 
 /**
@@ -74,6 +74,17 @@ export function PosLayout({
 }
 
 /** Keyboard hint shown on large screens ("Alt S"). */
+/** "Vaciar": empties the ticket (after asking), reddish like every "remove" action. */
+export function ClearButton({ onClick }: { onClick: () => void }) {
+  const { t } = useI18n();
+  return (
+    <TextButton size="sm" tone="danger" onClick={onClick}>
+      <Trash2 />
+      {t('sales.pos.clear')}
+    </TextButton>
+  );
+}
+
 export function Kbd({ children }: { children: ReactNode }) {
   return (
     <kbd className="hidden rounded border border-current/30 px-1.5 py-0.5 font-sans text-[10px] font-semibold opacity-80 lg:inline">

@@ -213,16 +213,16 @@ export function PaymentForm({
               <FileCheck2 className="h-4 w-4 shrink-0 text-success" />
               <span className="truncate">{proof.name}</span>
             </span>
-            <button
-              type="button"
-              className="inline-flex items-center gap-1 text-xs text-muted hover:text-ink"
+            <TextButton
+              size="xs"
+              tone="danger"
               onClick={() => {
                 setProof(null);
                 if (fileInput.current) fileInput.current.value = '';
               }}
             >
               <X className="h-3.5 w-3.5" /> {t('payment.proofRemove')}
-            </button>
+            </TextButton>
           </div>
         ) : (
           <button

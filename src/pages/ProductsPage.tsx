@@ -451,7 +451,10 @@ function ProductsList() {
         open={editing !== null}
         {...(editing !== null && { product: editing })}
         onClose={() => setEditing(null)}
-        onShowQr={setQr}
+        onPrintLabel={(product) => {
+          setEditing(null);
+          setLabels([product]);
+        }}
       />
       <ProductQrModal
         product={qr}

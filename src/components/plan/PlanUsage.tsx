@@ -1,7 +1,7 @@
 import { MessageCircle, UserRound, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
-import { Alert, Card, cx, Skeleton, WhatsAppIcon } from '@/ui';
+import { Alert, Card, cx, Skeleton, WhatsAppIcon, smallButtonClass } from '@/ui';
 import { usePlanUsage } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { PlanUsage } from '../../lib/types';
@@ -150,7 +150,7 @@ export function PlanLimitNotice() {
             )
             .join(' ')}
         </span>
-        <Link to="/settings?tab=plan" className="font-semibold underline-offset-2 hover:underline">
+        <Link to="/settings?tab=plan" className={smallButtonClass('xs', 'ml-1')}>
           {t('plan.notice.link')}
         </Link>
       </span>

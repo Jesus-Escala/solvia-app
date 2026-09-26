@@ -1,6 +1,6 @@
-import { Camera, CheckCircle2 } from 'lucide-react';
+import { Camera, CheckCircle2, XCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Button, Modal, Spinner } from '@/ui';
+import { Alert, Button, cx, Modal, Spinner } from '@/ui';
 import { useI18n } from '../../i18n/I18nProvider';
 
 type ScannerState = 'starting' | 'scanning' | 'denied' | 'noCamera' | 'insecure' | 'failed';
@@ -42,7 +42,8 @@ export function CameraScanner({
 }: {
   open: boolean;
   onClose: () => void;
-  onCode: (code: string) => void;
+  /** Adds the product of the code; resolves with its name, or null when no product has it. */
+  onCode: (code: string) => Promise<string | null>;
 }) {
   const { t } = useI18n();
   return (
@@ -58,13 +59,28 @@ export function CameraScanner({
   );
 }
 
-function Scanner({ onCode, onClose }: { onCode: (code: string) => void; onClose: () => void }) {
+interface Read {
+  key: number;
+  code: string;
+  /** The product added, null when the code is not in the catalog, undefined while looking. */
+  name: string | null | undefined;
+}
+
+function Scanner({
+  onCode,
+  onClose,
+}: {
+  onCode: (code: string) => Promise<string | null>;
+  onClose: () => void;
+}) {
   const { t } = useI18n();
   const video = useRef<HTMLVideoElement>(null);
   const [state, setState] = useState<ScannerState>(() =>
     window.isSecureContext && navigator.mediaDevices ? 'starting' : 'insecure',
   );
-  const [last, setLast] = useState<string | null>(null);
+  // The last reads (newest first) and how many products were added while it was open.
+  const [reads, setReads] = useState<Read[]>([]);
+  const added = reads.filter((read) => typeof read.name === 'string').length;
   const latest = useRef(onCode);
   useEffect(() => {
     latest.current = onCode;
@@ -104,8 +120,15 @@ function Scanner({ onCode, onClose }: { onCode: (code: string) => void; onClose:
             if (code === '' || now - (seen.get(code) ?? 0) < REPEAT_MS) return;
             seen.set(code, now);
             signal();
-            setLast(code);
-            latest.current(code);
+            const key = now;
+            setReads((current) => [{ key, code, name: undefined }, ...current].slice(0, 20));
+            void latest
+              .current(code)
+              .then((name) =>
+                setReads((current) =>
+                  current.map((read) => (read.key === key ? { ...read, name } : read)),
+                ),
+              );
           },
         );
         if (cancelled) controls.stop();
@@ -162,22 +185,45 @@ function Scanner({ onCode, onClose }: { onCode: (code: string) => void; onClose:
           )}
         </div>
       )}
+      {/* What each scan did: added (and which product) or not in the catalog. */}
+      {reads.length > 0 ? (
+        <ul className="max-h-28 space-y-1 overflow-y-auto text-sm" aria-live="polite">
+          {reads.slice(0, 4).map((read, index) => (
+            <li
+              key={read.key}
+              className={cx(
+                'flex items-center gap-1.5',
+                index === 0 ? 'font-medium' : 'text-muted',
+                read.name === null && 'text-danger-ink',
+              )}
+            >
+              {read.name === undefined ? (
+                <Spinner className="h-4 w-4 shrink-0" />
+              ) : read.name === null ? (
+                <XCircle className="h-4 w-4 shrink-0" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
+              )}
+              <span className="truncate">
+                {read.name === undefined
+                  ? t('scanner.read', { code: read.code })
+                  : read.name === null
+                    ? t('scanner.notFound', { code: read.code })
+                    : t('scanner.added', { name: read.name })}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        !problem && (
+          <p className="flex items-center gap-1.5 text-sm text-muted">
+            <Camera className="h-4 w-4 shrink-0" />
+            {t('scanner.waiting')}
+          </p>
+        )
+      )}
       <div className="flex items-center justify-between gap-3">
-        <p className="flex min-w-0 items-center gap-1.5 text-sm text-muted">
-          {last ? (
-            <>
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
-              <span className="truncate">{t('scanner.read', { code: last })}</span>
-            </>
-          ) : (
-            !problem && (
-              <>
-                <Camera className="h-4 w-4 shrink-0" />
-                {t('scanner.waiting')}
-              </>
-            )
-          )}
-        </p>
+        <p className="text-sm font-semibold">{added > 0 && t('scanner.count', { count: added })}</p>
         <Button onClick={onClose}>{t('scanner.done')}</Button>
       </div>
     </div>
