@@ -1,6 +1,7 @@
 import { PackagePlus } from 'lucide-react';
 import { useState } from 'react';
 import { Button, Checkbox, Field, Modal, useErrorText, useErrorToast } from '@/ui';
+import { CategorySelect } from '../domain/CategorySelect';
 import { MoneyInput } from '../domain/MoneyInput';
 import { useSaveProduct } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -61,6 +62,7 @@ function NewProductForm({
   const [price, setPrice] = useState('');
   const [cost, setCost] = useState('');
   const [unit, setUnit] = useState<ProductUnit>('unit');
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const [service, setService] = useState(false);
   const ready = name.trim().length >= 2 && money(price) > 0 && (mode === 'sale' || money(cost) > 0);
 
@@ -72,6 +74,7 @@ function NewProductForm({
       price: money(price),
       unit,
       kind: service ? 'service' : 'product',
+      categoryId,
       trackStock: !service,
       ...(money(cost) > 0 && { cost: money(cost) }),
     });
@@ -140,6 +143,9 @@ function NewProductForm({
               ))}
             </select>
           )}
+        </Field>
+        <Field label={t('categories.label')} optionalLabel={t('common.optional')}>
+          {(id) => <CategorySelect id={id} value={categoryId} onChange={setCategoryId} />}
         </Field>
       </div>
       {mode === 'sale' && (

@@ -1,8 +1,18 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { Flame, PackageOpen, PackagePlus, Plus, ScanBarcode, X, ZoomIn } from 'lucide-react';
-import { useRef, useState, type RefObject } from 'react';
+import {
+  Flame,
+  PackageOpen,
+  PackagePlus,
+  Plus,
+  ScanBarcode,
+  Sparkles,
+  Tag,
+  X,
+  ZoomIn,
+} from 'lucide-react';
+import { useRef, useState, type ReactNode, type RefObject } from 'react';
 import { cx, Skeleton } from '@/ui';
-import { productLookupQuery, useProductCatalog } from '../../hooks/queries';
+import { productLookupQuery, useCategories, useProductCatalog } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { ProductOption } from '../../lib/types';
 import { ImageViewer } from '../domain/ImageViewer';
@@ -11,9 +21,10 @@ import { useDebouncedValue } from '../domain/useSearchBox';
 
 /**
  * The catalog of a point of sale: a search box that also takes a barcode scanner (Enter adds
- * the exact code, or the first result) and big tiles to tap — the best sellers first, or what
- * matches the search. Tiles show the price (or the cost in a purchase), what is left and how many
- * are already in the ticket.
+ * the exact code, or the first result), a row of categories ("Recomendados" first) and big tiles
+ * to tap — the best sellers, the products of the chosen category, or what matches the search
+ * (always in the whole catalog). Tiles show the price (or the cost in a purchase), what is left
+ * and how many are already in the ticket.
  */
 export function ProductCatalog({
   onPick,
@@ -43,14 +54,19 @@ export function ProductCatalog({
   const [text, setText] = useState('');
   const [notFound, setNotFound] = useState<string | null>(null);
   const [viewing, setViewing] = useState<{ url: string; title: string } | null>(null);
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const categories = (useCategories().data ?? []).filter((category) => category.products > 0);
   const typed = text.trim();
   const debounced = useDebouncedValue(typed);
-  const catalog = useProductCatalog(debounced);
+  // A search looks in the whole catalog; the category applies while nothing is typed.
+  const category =
+    typed === '' ? (categories.find((item) => item.id === categoryId) ?? null) : null;
+  const catalog = useProductCatalog(debounced, typed === '' ? (category?.id ?? null) : null);
   const found = catalog.data?.data ?? [];
   // Without a search only the recommended ones: what has sold (the rest is one search away). A
   // business that has not sold yet sees its first products instead of an empty screen.
   const sold = found.filter((product) => (product.sold ?? 0) > 0);
-  const recommended = typed === '' && sold.length > 0;
+  const recommended = typed === '' && category === null && sold.length > 0;
   const products = recommended ? sold : found;
   const fresh = !catalog.isPlaceholderData && debounced === typed && catalog.data !== undefined;
   const queryClient = useQueryClient();
@@ -125,13 +141,38 @@ export function ProductCatalog({
             </button>
           )}
         </div>
+        {typed === '' && categories.length > 0 && (
+          <div
+            role="radiogroup"
+            aria-label={t('pos.categories')}
+            className="-mx-3 flex gap-1.5 overflow-x-auto px-3 pb-1 [scrollbar-width:none] sm:-mx-4 sm:px-4"
+          >
+            <CategoryChip
+              active={category === null}
+              icon={<Sparkles className="h-3.5 w-3.5" />}
+              label={t('pos.recommendedChip')}
+              onClick={() => setCategoryId(null)}
+            />
+            {categories.map((item) => (
+              <CategoryChip
+                key={item.id}
+                active={category?.id === item.id}
+                icon={<Tag className="h-3.5 w-3.5" />}
+                label={item.name}
+                onClick={() => setCategoryId(item.id)}
+              />
+            ))}
+          </div>
+        )}
         <p className="flex items-center justify-between gap-2 text-xs text-muted">
           <span className="font-semibold tracking-[0.08em] uppercase">
             {typed !== ''
               ? t('sales.pos.results', { text: typed })
-              : recommended
-                ? t('pos.recommended', { count: products.length })
-                : t('pos.yourProducts')}
+              : category !== null
+                ? t('pos.category', { name: category.name, count: category.products })
+                : recommended
+                  ? t('pos.recommended', { count: products.length })
+                  : t('pos.yourProducts')}
           </span>
           {notFound !== null && (
             <span className="font-medium text-danger-ink">
@@ -161,7 +202,7 @@ export function ProductCatalog({
               <li key={product.id} className="relative">
                 <ProductTile
                   // The three best sellers get a mark (only in the default list).
-                  top={typed === '' && index < 3 && (product.sold ?? 0) > 0}
+                  top={recommended && index < 3}
                   product={product}
                   amount={amountOf(product)}
                   amountLabel={amountLabel}
@@ -206,7 +247,11 @@ export function ProductCatalog({
         {!catalog.isLoading && products.length === 0 && (
           <div className="mt-2 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line-strong px-4 py-8 text-center text-sm text-muted">
             <PackageOpen className="h-6 w-6 text-subtle" />
-            {typed === '' ? t('pos.noCatalog') : t('sales.form.noProducts')}
+            {typed !== ''
+              ? t('sales.form.noProducts')
+              : category !== null
+                ? t('pos.emptyCategory')
+                : t('pos.noCatalog')}
             <button
               type="button"
               onClick={() => {
@@ -220,12 +265,43 @@ export function ProductCatalog({
             </button>
           </div>
         )}
-        {products.length > 0 && typed === '' && (
+        {products.length > 0 && typed === '' && category === null && (
           <p className="mt-3 text-center text-sm text-muted">{t('pos.searchMore')}</p>
         )}
       </div>
       <ImageViewer image={viewing} onClose={() => setViewing(null)} />
     </div>
+  );
+}
+
+/** A category in the row over the catalog (one is always chosen: "Recomendados" by default). */
+function CategoryChip({
+  active,
+  icon,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      onClick={onClick}
+      className={cx(
+        'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-sm font-medium whitespace-nowrap transition',
+        active
+          ? 'border-primary bg-primary text-on-primary shadow-sm'
+          : 'border-line bg-surface text-muted hover:border-primary/40 hover:text-ink',
+      )}
+    >
+      {icon}
+      {label}
+    </button>
   );
 }
 

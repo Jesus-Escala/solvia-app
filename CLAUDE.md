@@ -53,7 +53,7 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
 - `src/hooks/queries.ts` — every API call as a TanStack Query hook (query keys + invalidation).
 - **Modules** (enabled per business from solvia-admin, `me.tenant.modules`): `useModules()` →
   `{ sales, inventory, catalog }`. Nav items with `module` only show when enabled; a module page
-  renders `ModuleOff` otherwise. Catalog: `ProductsPage` (`/products`) + `ProductFormModal` (product or service — a service has no unit, stock or sack; a picture via `useProductImage`; no code field: the API assigns each product its unique code, shown with its QR) + `ProductQrModal` (the QR to download, or print → labels) + `labels/LabelPrintModal` (QR labels for one product or many: pick products or all, copies each, size `shelf` 80×50 mm with a big price or `product` 50×30 mm, on an A4 sheet or a label printer; `labels/labels.ts` builds the HTML, `lib/print.ts` prints it; `qrcode` package). `ProductThumb` shows the picture or the initials.
+  renders `ModuleOff` otherwise. Catalog: `ProductsPage` (`/products`) + `ProductFormModal` (product or service — a service has no unit, stock or sack; a picture via `useProductImage`; no code field: the API assigns each product its unique code, shown with its QR) + `ProductQrModal` (the QR to download, or print → labels) + `labels/LabelPrintModal` (QR labels for one product or many: pick products or all, copies each, size `shelf` 80×50 mm with a big price or `product` 50×30 mm, on an A4 sheet or a label printer; `labels/labels.ts` builds the HTML, `lib/print.ts` prints it; `qrcode` package). `ProductThumb` shows the picture or the initials. Categories (`/products/categories`): `CategorySelect` in the product forms ("+ Nueva categoría…" creates one on the spot), `CategoriesModal` ("Categorías" on Products: add, rename, delete — products stay without one), a category filter and column in the list, and a chip row in the POS catalog ("Recomendados" first; a search always looks in the whole catalog).
   Selling and buying are **point-of-sale screens of their own** at `/sales/new` (`SalePosPage` →
   `pos/SalePos`) and `/purchases/new` (`PurchasePosPage` → `pos/PurchasePos`), outside the app
   shell (`PosScreen`: slim top bar, back asks before losing a ticket); `quick.open('sale' |
@@ -67,6 +67,7 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
   down payment), then the ticket (`saleTicket.ts`: print / WhatsApp). Keyboard (`pos/keys.ts`):
   Alt+S charge/confirm/save, Alt+B search (Option on a Mac), Esc back. Stock shortages are traced (sale/line badges, "Sin stock"
   filter, `KardexModal`) when the inventory module is on.
+- **Language of the automatic reminders**: one per business (`GET/PUT /settings/business`, admins), in Settings > Preferencias under the interface language (only with Cobranza); scheduled jobs run in it.
 - **Plan limits**: `components/plan/PlanUsage.tsx` — `PlanUsageCard` (Settings > Mi plan: automatic
   WhatsApp messages, users and customers of the month, from `GET /settings/plan`) and
   `PlanLimitNotice` (Home, admins, when a limit is reached or messages are nearly used up). The

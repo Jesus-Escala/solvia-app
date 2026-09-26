@@ -55,6 +55,23 @@ export interface Tenant {
   industry: string | null;
   plan: string;
   modules: TenantModule[];
+  /** Language of the automatic reminders (`/auth/me` only). */
+  language?: BusinessLanguage;
+}
+
+/** Language Solvia writes the automatic reminders of the business in. */
+export type BusinessLanguage = 'es' | 'en';
+
+export interface BusinessSettings {
+  language: BusinessLanguage;
+}
+
+/** Group of products of the business (e.g. "Bebidas"). */
+export interface ProductCategory {
+  id: string;
+  name: string;
+  /** Active products in it. */
+  products: number;
 }
 
 export type ProductUnit = 'unit' | 'kg' | 'liter' | 'box' | 'pack' | 'dozen' | 'meter';
@@ -66,6 +83,8 @@ export interface Product {
   id: string;
   kind: ProductKind;
   name: string;
+  categoryId: string | null;
+  category: { id: string; name: string } | null;
   /** Its own barcode, or the internal code Solvia gave it (printed as its QR). */
   code: string | null;
   /** Picture (`/files/products/...`). */
@@ -329,6 +348,7 @@ export type ProductOption = Pick<
   | 'kind'
   | 'name'
   | 'code'
+  | 'categoryId'
   | 'imageUrl'
   | 'unit'
   | 'price'

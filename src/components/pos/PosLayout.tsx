@@ -31,7 +31,10 @@ export function PosLayout({
   return (
     <div className="grid h-full min-h-0 lg:grid-cols-[minmax(0,1fr)_440px]">
       <section
-        className={cx('flex min-h-0 flex-col bg-surface-2/60', panelOpen && 'max-lg:hidden')}
+        className={cx(
+          'flex min-h-0 min-w-0 flex-col bg-surface-2/60',
+          panelOpen && 'max-lg:hidden',
+        )}
       >
         <div className="min-h-0 flex-1">{catalog}</div>
         {/* Phones: what is in the ticket, one tap away. */}

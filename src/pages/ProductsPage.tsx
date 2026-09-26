@@ -10,6 +10,7 @@ import {
   Pencil,
   Printer,
   QrCode,
+  Tags,
   Trash2,
   Wrench,
 } from 'lucide-react';
@@ -19,6 +20,7 @@ import {
   Alert,
   Badge,
   Button,
+  cx,
   DataTable,
   EmptyState,
   IconButton,
@@ -35,6 +37,7 @@ import {
 } from '@/ui';
 import { useAuth } from '../auth/AuthContext';
 import { AdjustStockModal } from '../components/domain/AdjustStockModal';
+import { CategoriesModal } from '../components/domain/CategoriesModal';
 import { KardexModal } from '../components/domain/KardexModal';
 import { ProductFormModal } from '../components/domain/ProductFormModal';
 import { ProductQrModal } from '../components/domain/ProductQrModal';
@@ -43,6 +46,7 @@ import { ImageViewer } from '../components/domain/ImageViewer';
 import { ProductThumb } from '../components/domain/ProductThumb';
 import { ModulesOffer } from '../components/modules/ModulesOffer';
 import {
+  useCategories,
   useDeleteProduct,
   useProducts,
   useSetProductActive,
@@ -56,6 +60,7 @@ const DEFAULTS = {
   search: '',
   status: 'all',
   kind: '',
+  category: '',
   page: '1',
   pageSize: '20',
   sortBy: '',
@@ -91,6 +96,8 @@ function ProductsList() {
   const { toast, confirm } = useFeedback();
   const [state, update] = useUrlState(DEFAULTS);
   const [creating, setCreating] = useState(false);
+  const [managing, setManaging] = useState(false);
+  const categories = useCategories();
   const [editing, setEditing] = useState<Product | null>(null);
   const [kardex, setKardex] = useState<Product | null>(null);
   const [adjusting, setAdjusting] = useState<Product | null>(null);
@@ -106,12 +113,14 @@ function ProductsList() {
     status: (state.status === 'low' ? 'active' : state.status) as ProductListParams['status'],
     lowStock: state.status === 'low' ? true : null,
     kind: (state.kind || null) as ProductKind | null,
+    categoryId: state.category || null,
     page: Number(state.page) || 1,
     pageSize: Number(state.pageSize) || 20,
     sortBy: (state.sortBy || null) as ProductListParams['sortBy'],
     sortDir: (state.sortDir || null) as SortDir | null,
   });
-  const filtered = Boolean(state.search) || state.status !== 'all';
+  const filtered =
+    Boolean(state.search) || state.status !== 'all' || Boolean(state.kind || state.category);
 
   // Archived products stay for history but are hidden from pickers.
   const toggleArchived = async (product: Product) => {
@@ -185,6 +194,13 @@ function ProductsList() {
           </div>
         </div>
       ),
+    },
+    {
+      id: 'category',
+      header: t('products.columns.category'),
+      sortable: true,
+      maxWidth: 200,
+      cell: (row) => row.category?.name ?? <span className="text-subtle">—</span>,
     },
     {
       id: 'unit',
@@ -271,6 +287,13 @@ function ProductsList() {
           <div className="flex flex-wrap gap-2">
             <Button
               variant="secondary"
+              icon={<Tags className="h-4 w-4" />}
+              onClick={() => setManaging(true)}
+            >
+              {t('categories.button')}
+            </Button>
+            <Button
+              variant="secondary"
               icon={<Printer className="h-4 w-4" />}
               onClick={() => setLabels([])}
             >
@@ -315,6 +338,25 @@ function ProductsList() {
                 { value: 'service', label: t('products.kinds.services'), icon: <Wrench /> },
               ]}
             />
+            <label className="flex min-w-0 items-center">
+              <span className="sr-only">{t('categories.label')}</span>
+              <select
+                className={cx(
+                  'input h-10 w-auto max-w-56',
+                  state.category && 'border-primary/50 bg-primary-soft/40 font-medium',
+                )}
+                value={state.category}
+                onChange={(event) => update({ category: event.target.value, page: '1' })}
+              >
+                <option value="">{t('categories.all')}</option>
+                {(categories.data ?? []).map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+                <option value="none">{t('categories.none')}</option>
+              </select>
+            </label>
           </>
         }
         columns={columns}
@@ -397,6 +439,7 @@ function ProductsList() {
         }}
       />
       <ProductFormModal open={creating} onClose={() => setCreating(false)} />
+      <CategoriesModal open={managing} onClose={() => setManaging(false)} />
       <KardexModal product={kardex} onClose={() => setKardex(null)} />
       <AdjustStockModal product={adjusting} onClose={() => setAdjusting(null)} />
       <ProductFormModal

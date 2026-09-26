@@ -7,6 +7,7 @@ import {
   History,
   Languages,
   MessageSquareText,
+  MessagesSquare,
   Monitor,
   Moon,
   Play,
@@ -40,9 +41,11 @@ import {
   Switch,
 } from '@/ui';
 import {
+  useBusinessSettings,
   useNotifications,
   useReminderRules,
   useRunReminders,
+  useSaveBusinessSettings,
   useSaveReminderRules,
   useSaveTemplate,
   useTemplates,
@@ -51,7 +54,12 @@ import { useUrlState } from '@/ui';
 import { useI18n, type TranslationKey } from '../i18n/I18nProvider';
 import { useModules } from '../hooks/useModules';
 import { UsersTab } from './UsersTab';
-import type { MessageTemplate, NotificationLogItem, ReminderRules } from '../lib/types';
+import type {
+  BusinessLanguage,
+  MessageTemplate,
+  NotificationLogItem,
+  ReminderRules,
+} from '../lib/types';
 import { PlanUsageCard } from '../components/plan/PlanUsage';
 
 type TabKey = 'reminders' | 'templates' | 'log' | 'users' | 'plan' | 'preferences';
@@ -531,8 +539,68 @@ function ChoiceCard({
   );
 }
 
+/**
+ * The language of the automatic reminders: they are sent without anyone in the app, so they
+ * cannot follow the language of the screen. One for the whole business; only admins change it.
+ */
+function BusinessLanguageCard() {
+  const { t } = useI18n();
+  const { isAdmin } = useAuth();
+  const { toast } = useFeedback();
+  const settings = useBusinessSettings();
+  const save = useSaveBusinessSettings();
+
+  const choose = (language: BusinessLanguage) => {
+    if (language === settings.data?.language) return;
+    save.mutate(
+      { language },
+      {
+        onSuccess: () => toast.success(t('settings.business.saved')),
+        onError: (error) => toast.apiError(error),
+      },
+    );
+  };
+
+  return (
+    <Card
+      title={t('settings.business.title')}
+      subtitle={t('settings.business.description')}
+      className="max-w-2xl"
+    >
+      {!isAdmin && (
+        <Alert tone="info" className="mb-4">
+          {t('settings.adminOnly')}
+        </Alert>
+      )}
+      {settings.isLoading || !settings.data ? (
+        <Skeleton className="h-24 w-full" />
+      ) : (
+        <fieldset
+          disabled={!isAdmin || save.isPending}
+          role="radiogroup"
+          aria-label={t('settings.business.title')}
+          className="flex gap-3 disabled:opacity-60"
+        >
+          {LOCALES.map((option) => (
+            <ChoiceCard
+              key={option.value}
+              active={
+                (save.isPending ? save.variables.language : settings.data.language) === option.value
+              }
+              onClick={() => choose(option.value)}
+              icon={<MessagesSquare />}
+              label={option.label}
+            />
+          ))}
+        </fieldset>
+      )}
+    </Card>
+  );
+}
+
 function PreferencesTab() {
   const { t, locale, setLocale } = useI18n();
+  const modules = useModules();
   const { preference, setPreference } = useTheme();
   const themes: Array<{ value: ThemePreference; label: TranslationKey; icon: ReactNode }> = [
     { value: 'light', label: 'prefs.themeLight', icon: <Sun /> },
@@ -541,50 +609,54 @@ function PreferencesTab() {
   ];
 
   return (
-    <Card
-      title={t('settings.preferences.title')}
-      subtitle={t('settings.preferences.description')}
-      className="max-w-2xl"
-    >
-      <div className="space-y-6">
-        <div>
-          <p className="label">{t('settings.preferences.language')}</p>
-          <div
-            role="radiogroup"
-            aria-label={t('settings.preferences.language')}
-            className="flex gap-3"
-          >
-            {LOCALES.map((option) => (
-              <ChoiceCard
-                key={option.value}
-                active={locale === option.value}
-                onClick={() => setLocale(option.value)}
-                icon={<Languages />}
-                label={option.label}
-              />
-            ))}
+    <div className="space-y-4">
+      <Card
+        title={t('settings.preferences.title')}
+        subtitle={t('settings.preferences.description')}
+        className="max-w-2xl"
+      >
+        <div className="space-y-6">
+          <div>
+            <p className="label">{t('settings.preferences.language')}</p>
+            <div
+              role="radiogroup"
+              aria-label={t('settings.preferences.language')}
+              className="flex gap-3"
+            >
+              {LOCALES.map((option) => (
+                <ChoiceCard
+                  key={option.value}
+                  active={locale === option.value}
+                  onClick={() => setLocale(option.value)}
+                  icon={<Languages />}
+                  label={option.label}
+                />
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="label">{t('settings.preferences.theme')}</p>
+            <div
+              role="radiogroup"
+              aria-label={t('settings.preferences.theme')}
+              className="flex gap-3"
+            >
+              {themes.map((option) => (
+                <ChoiceCard
+                  key={option.value}
+                  active={preference === option.value}
+                  onClick={() => setPreference(option.value)}
+                  icon={option.icon}
+                  label={t(option.label)}
+                />
+              ))}
+            </div>
           </div>
         </div>
-        <div>
-          <p className="label">{t('settings.preferences.theme')}</p>
-          <div
-            role="radiogroup"
-            aria-label={t('settings.preferences.theme')}
-            className="flex gap-3"
-          >
-            {themes.map((option) => (
-              <ChoiceCard
-                key={option.value}
-                active={preference === option.value}
-                onClick={() => setPreference(option.value)}
-                icon={option.icon}
-                label={t(option.label)}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </Card>
+      </Card>
+      {/* Automatic reminders belong to Cobranza. */}
+      {modules.collections && <BusinessLanguageCard />}
+    </div>
   );
 }
 

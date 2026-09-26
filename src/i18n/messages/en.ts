@@ -832,6 +832,10 @@ export const en: Messages = {
   },
   pos: {
     recommended: 'Recommended · your {count} best sellers',
+    recommendedChip: 'Recommended',
+    categories: 'Categories',
+    category: '{name} · {count|# product|# products}',
+    emptyCategory: 'This category has no products yet.',
     yourProducts: 'Your products',
     searchMore: 'Looking for another one? Type its name or scan its code above.',
     top: 'Best seller',
@@ -1149,6 +1153,30 @@ export const en: Messages = {
       correction: 'Correction',
     },
   },
+  categories: {
+    button: 'Categories',
+    title: 'Categories',
+    description:
+      'Group your products (for example Drinks, Cleaning or Groceries) to find them fast when selling.',
+    label: 'Category',
+    hint: 'Helps you find it fast when selling.',
+    none: 'No category',
+    all: 'All categories',
+    new: '+ New category…',
+    newTitle: 'New category',
+    namePlaceholder: 'For example: Drinks',
+    create: 'Create',
+    add: 'Add',
+    save: 'Save',
+    rename: 'Rename',
+    products: '{count|# product|# products}',
+    empty: 'You have no categories yet. Type the first one above.',
+    created: 'Category created',
+    renamed: 'Name changed',
+    deleted: 'Category deleted',
+    confirmDeleteTitle: 'Delete the category?',
+    confirmDeleteMessage: 'The products of “{name}” are not deleted: they stay without a category.',
+  },
   labels: {
     preview: 'This is how it prints',
     sample: 'Sample product',
@@ -1217,6 +1245,7 @@ export const en: Messages = {
       margin: 'Margin',
       stock: 'Left',
       minStock: 'Alert at',
+      category: 'Category',
     },
     units: {
       unit: 'Unit',
@@ -1444,6 +1473,12 @@ export const en: Messages = {
       description: 'Saved in this browser.',
       language: 'Interface language',
       theme: 'Appearance',
+    },
+    business: {
+      title: 'Language of the messages to your customers',
+      description:
+        'The reminders Solvia sends on its own over WhatsApp are written in this language. It applies to the whole business.',
+      saved: 'Message language saved',
     },
   },
   help: {

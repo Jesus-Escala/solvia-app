@@ -837,6 +837,10 @@ export const es = {
   },
   pos: {
     recommended: 'Recomendados · tus {count} más vendidos',
+    recommendedChip: 'Recomendados',
+    categories: 'Categorías',
+    category: '{name} · {count|# producto|# productos}',
+    emptyCategory: 'Esta categoría aún no tiene productos.',
     yourProducts: 'Tus productos',
     searchMore: '¿Buscas otro? Escribe su nombre o escanea su código arriba.',
     top: 'Más vendido',
@@ -1154,6 +1158,30 @@ export const es = {
       correction: 'Corrección',
     },
   },
+  categories: {
+    button: 'Categorías',
+    title: 'Categorías',
+    description:
+      'Agrupa tus productos (por ejemplo Bebidas, Limpieza o Abarrotes) para encontrarlos rápido al vender.',
+    label: 'Categoría',
+    hint: 'Te ayuda a encontrarlo rápido al vender.',
+    none: 'Sin categoría',
+    all: 'Todas las categorías',
+    new: '+ Nueva categoría…',
+    newTitle: 'Nueva categoría',
+    namePlaceholder: 'Por ejemplo: Bebidas',
+    create: 'Crear',
+    add: 'Agregar',
+    save: 'Guardar',
+    rename: 'Cambiar nombre',
+    products: '{count|# producto|# productos}',
+    empty: 'Aún no tienes categorías. Escribe la primera arriba.',
+    created: 'Categoría creada',
+    renamed: 'Nombre cambiado',
+    deleted: 'Categoría eliminada',
+    confirmDeleteTitle: '¿Eliminar la categoría?',
+    confirmDeleteMessage: 'Los productos de «{name}» no se borran: se quedan sin categoría.',
+  },
   labels: {
     preview: 'Así se imprime',
     sample: 'Ejemplo de producto',
@@ -1222,6 +1250,7 @@ export const es = {
       margin: 'Ganas',
       stock: 'Quedan',
       minStock: 'Avisar con',
+      category: 'Categoría',
     },
     units: {
       unit: 'Unidad',
@@ -1447,6 +1476,12 @@ export const es = {
       description: 'Se guardan en este navegador.',
       language: 'Idioma',
       theme: 'Apariencia',
+    },
+    business: {
+      title: 'Idioma de los mensajes a tus clientes',
+      description:
+        'Los recordatorios que Solvia manda solo por WhatsApp se escriben en este idioma. Es para todo el negocio.',
+      saved: 'Idioma de los mensajes guardado',
     },
   },
   help: {

@@ -12,6 +12,7 @@ import {
   useErrorToast,
   useFeedback,
 } from '@/ui';
+import { CategorySelect } from './CategorySelect';
 import { ImageViewer } from './ImageViewer';
 import { MoneyInput } from './MoneyInput';
 import { ProductThumb } from './ProductThumb';
@@ -80,6 +81,7 @@ function ProductForm({
   const [form, setForm] = useState({
     kind: product?.kind ?? ('product' as ProductKind),
     name: product?.name ?? '',
+    categoryId: product?.categoryId ?? null,
     price: product ? String(product.price) : '',
     unit: product?.unit ?? ('unit' as ProductUnit),
     cost: (product?.cost ?? null) === null ? '' : String(product?.cost),
@@ -115,6 +117,7 @@ function ProductForm({
     const saved = await save.mutateAsync({
       kind: form.kind,
       name: form.name,
+      categoryId: form.categoryId,
       price,
       unit: service ? 'unit' : form.unit,
       cost,
@@ -258,6 +261,21 @@ function ProductForm({
               </Field>
             )}
           </div>
+          <Field
+            label={t('categories.label')}
+            optionalLabel={t('common.optional')}
+            hint={t('categories.hint')}
+            error={errors.field(save.error, 'categoryId')}
+          >
+            {(id, describedBy) => (
+              <CategorySelect
+                id={id}
+                describedBy={describedBy}
+                value={form.categoryId}
+                onChange={(categoryId) => update('categoryId', categoryId)}
+              />
+            )}
+          </Field>
         </div>
       </div>
 

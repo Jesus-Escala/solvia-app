@@ -22,7 +22,9 @@ import type {
   PaymentLink,
   PaymentMethod,
   PlanUsage,
+  BusinessSettings,
   Product,
+  ProductCategory,
   ProductKind,
   ProductOption,
   ProductUnit,
@@ -59,6 +61,8 @@ export const queryKeys = {
   receivableList: (params: object) => ['receivables', 'list', params] as const,
   templates: ['settings', 'templates'] as const,
   reminderRules: ['settings', 'reminders'] as const,
+  business: ['settings', 'business'] as const,
+  categories: ['products', 'categories'] as const,
   notifications: (params: object) => ['notifications', params] as const,
   authConfig: ['auth-config'] as const,
   users: ['users'] as const,
@@ -382,11 +386,14 @@ export interface ProductListParams {
   /** Only counted products at or below their alert level. */
   lowStock?: boolean | null;
   kind?: ProductKind | null;
+  /** A category id, or `none` for products without one. */
+  categoryId?: string | null;
   page: number;
   pageSize?: number | null;
   sortBy?:
     | 'name'
     | 'code'
+    | 'category'
     | 'unit'
     | 'price'
     | 'cost'
@@ -427,15 +434,21 @@ export function useProductLookup(search: string) {
 
 /**
  * Point-of-sale catalog: without a search, the 20 best sellers (the recommended ones); with a
- * search, what matches it (up to 48, best sellers first).
+ * search, what matches it (up to 48, best sellers first). A category shows its products (up to
+ * 100, best sellers first), searched inside it when there is a text.
  */
-export function useProductCatalog(search: string) {
+export function useProductCatalog(search: string, categoryId: string | null = null) {
   return useQuery({
-    queryKey: ['products', 'lookup', search, 'popular'] as const,
+    queryKey: ['products', 'lookup', search, 'popular', categoryId] as const,
     queryFn: ({ signal }) =>
       api.get<{ data: ProductOption[] }>(
         '/products/lookup',
-        { search, limit: search === '' ? 20 : 48, sort: 'popular' },
+        {
+          search,
+          limit: categoryId !== null ? 100 : search === '' ? 20 : 48,
+          sort: 'popular',
+          categoryId,
+        },
         { signal },
       ),
     staleTime: LOOKUP_STALE_MS,
@@ -453,9 +466,42 @@ export function useCustomerLookup(search: string) {
   });
 }
 
+/** Product categories of the business, by name. */
+export function useCategories(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.categories,
+    queryFn: () => api.get<{ data: ProductCategory[] }>('/products/categories'),
+    select: (response) => response.data,
+    staleTime: 60_000,
+    enabled,
+  });
+}
+
+/** Creates (no `id`) or renames a category. Products refresh: they show its name. */
+export function useSaveCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, name }: { id?: string | null; name: string }) =>
+      id
+        ? api.patch<ProductCategory>(`/products/categories/${id}`, { name })
+        : api.post<ProductCategory>('/products/categories', { name }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
+  });
+}
+
+/** Deletes a category; its products stay, without a category. */
+export function useDeleteCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/products/categories/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
+  });
+}
+
 export interface ProductInput {
   kind?: ProductKind;
   name: string;
+  categoryId?: string | null;
   code?: string | null;
   unit?: ProductUnit;
   price?: number;
@@ -754,6 +800,25 @@ export function useSaveReminderRules() {
   return useMutation({
     mutationFn: (rules: ReminderRules) => api.put<ReminderRules>('/settings/reminders', rules),
     onSuccess: (rules) => queryClient.setQueryData(queryKeys.reminderRules, rules),
+  });
+}
+
+/** Language of the automatic reminders. */
+export function useBusinessSettings() {
+  return useQuery({
+    queryKey: queryKeys.business,
+    queryFn: () => api.get<BusinessSettings>('/settings/business'),
+  });
+}
+
+export function useSaveBusinessSettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: BusinessSettings) => api.put<BusinessSettings>('/settings/business', input),
+    onSuccess: (settings) => {
+      queryClient.setQueryData(queryKeys.business, settings);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.me });
+    },
   });
 }
 
