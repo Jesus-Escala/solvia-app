@@ -19,7 +19,11 @@ export function SalePosPage() {
       title={t('sales.form.title')}
       backTo="/sales"
       backLabel={t('nav.sales')}
-      keys={t('sales.pos.keys', { save: SAVE_KEY_LABEL, search: SEARCH_KEY_LABEL })}
+      shortcuts={[
+        { keys: SAVE_KEY_LABEL, label: t('sales.pos.keyCharge') },
+        { keys: SEARCH_KEY_LABEL, label: t('sales.pos.keySearch') },
+        { keys: 'Esc', label: t('sales.pos.keyBack') },
+      ]}
     >
       {({ onDirty, leave }) => (
         <SalePos

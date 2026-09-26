@@ -2,10 +2,10 @@
 const MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
 
 /** Label of the save shortcut on this keyboard ("Alt S" or "⌥S"). */
-export const SAVE_KEY_LABEL = MAC ? '⌥S' : 'Alt S';
+export const SAVE_KEY_LABEL = MAC ? '⌥S' : 'Alt+S';
 
 /** Label of the search shortcut ("Alt B" or "⌥B"). */
-export const SEARCH_KEY_LABEL = MAC ? '⌥B' : 'Alt B';
+export const SEARCH_KEY_LABEL = MAC ? '⌥B' : 'Alt+B';
 
 /**
  * Alt+S (Option+S on a Mac): charge / confirm / save. The physical key is read (`code`), because

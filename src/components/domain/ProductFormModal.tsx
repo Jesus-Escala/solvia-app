@@ -15,6 +15,7 @@ import {
 import { CategorySelect } from './CategorySelect';
 import { ImageViewer } from './ImageViewer';
 import { MoneyInput } from './MoneyInput';
+import { moneyText } from '../../lib/moneyText';
 import { ProductThumb } from './ProductThumb';
 import { useProductImage, useSaveProduct } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -82,9 +83,9 @@ function ProductForm({
     kind: product?.kind ?? ('product' as ProductKind),
     name: product?.name ?? '',
     categoryId: product?.categoryId ?? null,
-    price: product ? String(product.price) : '',
+    price: product ? moneyText(product.price) : '',
     unit: product?.unit ?? ('unit' as ProductUnit),
-    cost: (product?.cost ?? null) === null ? '' : String(product?.cost),
+    cost: product?.cost == null ? '' : moneyText(product.cost),
     trackStock: product?.trackStock ?? true,
     minStock: (product?.minStock ?? null) === null ? '' : String(product?.minStock),
     packSize: (product?.packSize ?? null) === null ? '' : String(product?.packSize),

@@ -15,6 +15,8 @@ import { Kbd, PosLayout } from './PosLayout';
 import { NewProductModal } from './NewProductForm';
 import { ProductCatalog } from './ProductCatalog';
 import { roundQuantity } from '../domain/quantity';
+import { MoneyInput } from '../domain/MoneyInput';
+import { moneyText } from '../../lib/moneyText';
 import { QuantityStepper } from '../domain/QuantityStepper';
 import { useCreatePurchase, useSaveSupplier } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -60,7 +62,7 @@ function switchPacks(line: Line, inPacks: boolean): Line {
         ...line,
         inPacks,
         quantity: Math.max(1, Math.round(units.quantity / size)),
-        unitCost: line.unitCost === '' ? '' : String(round2(cost * size)),
+        unitCost: line.unitCost === '' ? '' : moneyText(round2(cost * size)),
       }
     : {
         ...line,
@@ -108,6 +110,13 @@ export function PurchasePos({
     lines.reduce((sum, line) => sum + line.quantity * (Number(line.unitCost) || 0), 0),
   );
   const count = lines.length;
+  // Why it cannot be saved yet (shown over the button, which stays off).
+  const blocker =
+    lines.length > 0 && lines.some((line) => line.unitCost === '')
+      ? t('purchases.form.missingCost')
+      : payMethod === 'split' && total > 0 && !partsComplete(payParts, total)
+        ? t('split.notComplete', { amount: fmt.money(total) })
+        : null;
   const inCart = new Map(lines.map((line) => [line.product.id, line.quantity] as const));
 
   useEffect(() => onDirty(lines.length > 0), [lines.length, onDirty]);
@@ -125,7 +134,7 @@ export function PurchasePos({
       const cost =
         product.cost === null
           ? ''
-          : String(inPacks ? round2(product.cost * product.packSize!) : product.cost);
+          : moneyText(inPacks ? round2(product.cost * product.packSize!) : product.cost);
       return [...current, { product, quantity: 1, unitCost: cost, inPacks }];
     });
   const update = (id: string, changes: Partial<Line>) =>
@@ -182,8 +191,8 @@ export function PurchasePos({
       toast.warning(t('sales.form.empty'));
       return;
     }
-    if (payMethod === 'split' && !partsComplete(payParts, total)) {
-      toast.warning(t('split.notComplete', { amount: fmt.money(total) }));
+    if (blocker !== null) {
+      toast.warning(blocker);
       return;
     }
     const purchase = await create.mutateAsync({
@@ -315,27 +324,15 @@ export function PurchasePos({
                       onRemove={() => remove(line.product.id)}
                     />
                     <span className="text-xs text-muted">×</span>
-                    <label className="relative w-32">
+                    <label className="w-32">
                       <span className="sr-only">
                         {line.inPacks ? t('purchases.form.packCost') : t('purchases.form.unitCost')}
                       </span>
-                      <span className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-xs text-muted">
-                        S/
-                      </span>
-                      <input
-                        className="input h-9 pl-7 text-right tabular-nums"
-                        type="number"
-                        inputMode="decimal"
-                        min="0"
-                        step="0.01"
+                      <MoneyInput
+                        size="sm"
                         required
-                        placeholder={
-                          line.inPacks ? t('purchases.form.packCost') : t('purchases.form.unitCost')
-                        }
                         value={line.unitCost}
-                        onChange={(event) =>
-                          update(line.product.id, { unitCost: event.target.value })
-                        }
+                        onChange={(unitCost) => update(line.product.id, { unitCost })}
                       />
                     </label>
                     <span className="text-xs text-muted">
@@ -441,9 +438,14 @@ export function PurchasePos({
             {fmt.money(total)}
           </span>
         </p>
+        {blocker !== null && (
+          <p className="rounded-xl bg-warning-soft px-3 py-2 text-center text-sm font-medium text-warning-ink">
+            {blocker}
+          </p>
+        )}
         <button
           type="submit"
-          disabled={lines.length === 0 || create.isPending}
+          disabled={lines.length === 0 || create.isPending || blocker !== null}
           className="flex h-14 w-full items-center justify-center gap-3 rounded-2xl bg-primary text-lg font-semibold text-on-primary shadow-pop transition hover:brightness-110 active:scale-[0.99] disabled:bg-surface-3 disabled:text-muted disabled:shadow-none"
         >
           <Truck className="h-5 w-5" />

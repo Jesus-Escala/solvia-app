@@ -29,6 +29,7 @@ import { CustomerPicker, type PickedCustomer } from '../domain/CustomerPicker';
 import { DueDateField } from '../domain/DueDateField';
 import { addDaysIso, todayIso } from '../domain/dueLabel';
 import { MoneyInput } from '../domain/MoneyInput';
+import { limitMoneyText, padMoneyText } from '../../lib/moneyText';
 import { NewCustomerFields, type NewCustomer } from '../domain/NewCustomerFields';
 import { PaymentMethodMark } from '../domain/PaymentMethods';
 import { MethodRow, SplitMark, SplitPayments } from '../domain/SplitPayments';
@@ -216,17 +217,9 @@ export function SalePos({
       toast.warning(t('sales.form.empty'));
       return;
     }
-    if (downTooHigh) {
-      toast.warning(t('sales.form.downTooHigh'));
-      return;
-    }
-    const downSplit = down > 0 && downMethod === 'split';
-    if (split && !partsComplete(splitParts, total)) {
-      toast.warning(t('split.notComplete', { amount: fmt.money(total) }));
-      return;
-    }
-    if (downSplit && !partsComplete(downParts, down)) {
-      toast.warning(t('split.notComplete', { amount: fmt.money(down) }));
+    // Alt+S submits even while the button is off: say why.
+    if (blocker !== null) {
+      toast.warning(blocker);
       return;
     }
     let customerId = customer?.id ?? null;
@@ -358,7 +351,16 @@ export function SalePos({
                 autoFocus
                 placeholder={discountMode === 'percent' ? '10' : '0.00'}
                 value={discountText}
-                onChange={(event) => setDiscountText(event.target.value)}
+                onChange={(event) =>
+                  setDiscountText(
+                    discountMode === 'amount'
+                      ? limitMoneyText(event.target.value)
+                      : event.target.value,
+                  )
+                }
+                onBlur={() => {
+                  if (discountMode === 'amount') setDiscountText(padMoneyText(discountText));
+                }}
               />
               <span className="min-w-0 flex-1 text-right font-medium text-success-ink tabular-nums">
                 −{fmt.money(discount)}
@@ -407,6 +409,17 @@ export function SalePos({
       </div>
     </>
   );
+
+  // Why the sale cannot be saved yet (shown over the button, which stays off).
+  const blocker = downTooHigh
+    ? t('sales.form.downTooHigh')
+    : split && !partsComplete(splitParts, total)
+      ? t('split.notComplete', { amount: fmt.money(total) })
+      : pay === 'cash' && received > 0 && received < total - 0.005
+        ? t('sales.form.receivedShort', { amount: fmt.money(round2(total - received)) })
+        : credit && down > 0 && downMethod === 'split' && !partsComplete(downParts, down)
+          ? t('split.notComplete', { amount: fmt.money(down) })
+          : null;
 
   const payOptions: PayOption[] = [
     ...PAY_OPTIONS,
@@ -632,12 +645,17 @@ export function SalePos({
           )}
         </div>
       </div>
-      <div className="shrink-0 border-t border-line bg-surface-2/60 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div className="shrink-0 space-y-2 border-t border-line bg-surface-2/60 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        {blocker !== null && (
+          <p className="rounded-xl bg-warning-soft px-3 py-2 text-center text-sm font-medium text-warning-ink">
+            {blocker}
+          </p>
+        )}
         <Button
           type="submit"
           className="h-14 w-full text-lg"
           loading={create.isPending || saveCustomer.isPending}
-          disabled={downTooHigh}
+          disabled={blocker !== null}
         >
           {t(credit ? 'sales.pos.confirmCredit' : 'sales.pos.confirm', {
             amount: fmt.money(credit ? total - down : total),

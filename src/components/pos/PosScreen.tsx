@@ -22,14 +22,15 @@ export function PosScreen({
   title,
   backTo,
   backLabel,
-  keys,
+  shortcuts,
   children,
 }: {
   title: string;
   /** Where "back" goes (the list of sales or purchases). */
   backTo: string;
   backLabel: string;
-  keys: string;
+  /** Keyboard shortcuts shown in the bar (computers only): the key and what it does. */
+  shortcuts: Array<{ keys: string; label: string }>;
   children: (controls: PosControls) => ReactNode;
 }) {
   const { t } = useI18n();
@@ -83,7 +84,22 @@ export function PosScreen({
             <span className="truncate">{me.tenant.name}</span>
           </span>
         )}
-        <span className="ml-auto hidden text-xs text-subtle lg:inline">{keys}</span>
+        <ul
+          aria-label={t('sales.pos.shortcuts')}
+          className="ml-auto hidden items-center gap-1 rounded-xl border border-line bg-surface-2 p-1 lg:flex"
+        >
+          {shortcuts.map((shortcut) => (
+            <li
+              key={shortcut.keys}
+              className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-muted"
+            >
+              <kbd className="min-w-7 rounded-md border border-line-strong bg-surface px-1.5 py-0.5 text-center font-sans text-[11px] font-bold text-ink shadow-[0_1px_0_var(--color-line-strong)]">
+                {shortcut.keys}
+              </kbd>
+              {shortcut.label}
+            </li>
+          ))}
+        </ul>
         <span className="ml-auto flex items-center lg:ml-2">
           <PreferencesControls />
         </span>

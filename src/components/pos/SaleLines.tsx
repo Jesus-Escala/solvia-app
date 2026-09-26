@@ -1,13 +1,15 @@
-import { CheckCircle2, Pencil, Plus, Printer, X } from 'lucide-react';
+import { CheckCircle2, Pencil, Plus, X } from 'lucide-react';
 import { useState } from 'react';
-import { Button, cx, IconButton, WhatsAppIcon } from '@/ui';
+import { Button, cx, IconButton } from '@/ui';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { Sale } from '../../lib/types';
 import { MoneyInput } from '../domain/MoneyInput';
+import { limitMoneyText, moneyText } from '../../lib/moneyText';
 import { isWeighed, roundQuantity, WEIGHED_PRESETS } from '../domain/quantity';
 import { money, onEnter, round2, stepFor, type Line } from './saleMath';
 import { QuantityStepper } from '../domain/QuantityStepper';
-import { type CashGiven, useSaleTicket } from './saleTicket';
+import type { CashGiven } from './saleTicket';
+import { TicketActions } from './TicketActions';
 
 /** Bills a customer usually pays with (PEN), for the change. */
 const BILLS = [10, 20, 50, 100, 200];
@@ -65,7 +67,7 @@ export function LineRow({
             {priceText === null ? (
               <button
                 type="button"
-                onClick={() => setPriceText(String(line.price))}
+                onClick={() => setPriceText(moneyText(line.price))}
                 title={t('sales.form.editPrice')}
                 className="inline-flex items-center gap-1 rounded font-medium text-ink hover:text-primary-ink"
               >
@@ -75,11 +77,11 @@ export function LineRow({
             ) : (
               <input
                 aria-label={t('sales.form.editPrice')}
-                className="input h-7 w-24 text-xs tabular-nums"
+                className="input h-7 w-24 text-right text-xs tabular-nums"
                 inputMode="decimal"
                 autoFocus
                 value={priceText}
-                onChange={(event) => setPriceText(event.target.value)}
+                onChange={(event) => setPriceText(limitMoneyText(event.target.value))}
                 onBlur={commitPrice}
                 onKeyDown={onEnter(commitPrice)}
               />
@@ -195,7 +197,7 @@ export function ChangeCalculator({
           <button
             key={amount}
             type="button"
-            onClick={() => onChange(String(amount))}
+            onClick={() => onChange(moneyText(amount))}
             className={cx(
               'h-11 rounded-xl border text-sm font-semibold tabular-nums transition active:scale-[0.97]',
               received === amount
@@ -239,8 +241,6 @@ export function SaleDone({
   onClose: () => void;
 }) {
   const { t, fmt } = useI18n();
-  const ticket = useSaleTicket();
-  const whatsapp = ticket.whatsappUrl(sale);
   return (
     <div className="flex h-full items-center justify-center overflow-y-auto p-6">
       <div className="animate-page-in w-full max-w-md space-y-6">
@@ -265,24 +265,7 @@ export function SaleDone({
             </p>
           )}
         </div>
-        <div className={cx('grid gap-2', whatsapp !== null && 'sm:grid-cols-2')}>
-          <Button
-            variant="secondary"
-            icon={<Printer className="h-4 w-4" />}
-            onClick={() => ticket.print(sale, cash)}
-          >
-            {t('sales.done.print')}
-          </Button>
-          {whatsapp !== null && (
-            <Button
-              variant="secondary"
-              icon={<WhatsAppIcon className="h-4 w-4" />}
-              onClick={() => window.open(whatsapp, '_blank', 'noopener')}
-            >
-              {t('sales.done.whatsapp')}
-            </Button>
-          )}
-        </div>
+        <TicketActions sale={sale} cash={cash} className="sm:grid-cols-2" />
         <div className="grid gap-2">
           <Button
             className="h-12 text-base"

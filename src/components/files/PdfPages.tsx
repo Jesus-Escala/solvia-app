@@ -20,10 +20,13 @@ async function loadPdfJs() {
 export function PdfPages({
   blob,
   zoom,
+  maxWidth = null,
   onError,
 }: {
   blob: Blob;
   zoom: number;
+  /** Width of a page at 100% for narrow documents (a ticket); null fills the viewer. */
+  maxWidth?: number | null;
   onError: (error: unknown) => void;
 }) {
   const container = useRef<HTMLDivElement>(null);
@@ -74,7 +77,12 @@ export function PdfPages({
       ) : (
         <div className="flex flex-col items-center gap-4">
           {Array.from({ length: pdf.numPages }, (_, index) => (
-            <PdfPage key={index} pdf={pdf} number={index + 1} width={width * zoom} />
+            <PdfPage
+              key={index}
+              pdf={pdf}
+              number={index + 1}
+              width={(maxWidth === null ? width : Math.min(width, maxWidth)) * zoom}
+            />
           ))}
         </div>
       )}

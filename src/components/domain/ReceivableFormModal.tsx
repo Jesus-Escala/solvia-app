@@ -7,6 +7,8 @@ import type { Receivable } from '../../lib/types';
 import { CustomerPicker, type PickedCustomer } from './CustomerPicker';
 import { DueDateField } from './DueDateField';
 import { addDaysIso, todayIso } from './dueLabel';
+import { MoneyInput } from './MoneyInput';
+import { moneyText } from '../../lib/moneyText';
 
 interface Props {
   open: boolean;
@@ -57,7 +59,7 @@ function ReceivableForm({ onClose, customer: preset, receivable }: Omit<Props, '
   );
   // A customer created from this form (name typed in the search box).
   const [newCustomer, setNewCustomer] = useState<NewCustomer | null>(null);
-  const [amount, setAmount] = useState(receivable ? String(receivable.totalAmount) : '');
+  const [amount, setAmount] = useState(receivable ? moneyText(receivable.totalAmount) : '');
   const [description, setDescription] = useState(receivable?.description ?? '');
   const [issueDate, setIssueDate] = useState(receivable?.issueDate ?? today);
   const [dueDate, setDueDate] = useState(receivable?.dueDate ?? addDaysIso(today, 7));
@@ -122,24 +124,14 @@ function ReceivableForm({ onClose, customer: preset, receivable }: Omit<Props, '
         error={errors.field(save.error, 'totalAmount')}
       >
         {(id) => (
-          <div className="relative">
-            <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm font-semibold text-muted">
-              S/
-            </span>
-            <input
-              id={id}
-              className="input pl-9 text-lg font-semibold tabular-nums"
-              type="number"
-              inputMode="decimal"
-              min="0.01"
-              step="0.01"
-              required
-              autoFocus={Boolean(preset)}
-              placeholder="0.00"
-              value={amount}
-              onChange={(event) => setAmount(event.target.value)}
-            />
-          </div>
+          <MoneyInput
+            id={id}
+            size="lg"
+            required
+            autoFocus={Boolean(preset)}
+            value={amount}
+            onChange={setAmount}
+          />
         )}
       </Field>
 

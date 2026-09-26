@@ -20,6 +20,7 @@ import {
 } from '@/ui';
 import { PaymentMethodMark } from '../components/domain/PaymentMethods';
 import { PaymentPartsLabel } from '../components/domain/SplitPayments';
+import { TicketActions } from '../components/pos/TicketActions';
 import { useSales, useVoidSale, type SaleListParams } from '../hooks/queries';
 import { useModules } from '../hooks/useModules';
 import { useI18n } from '../i18n/I18nProvider';
@@ -182,6 +183,7 @@ function SaleDetail({ sale, onClose }: { sale: Sale; onClose: () => void }) {
             : t('sales.paidOff')}
         </p>
       )}
+      <TicketActions sale={sale} />
       {sale.status === 'completed' && (
         <div className="flex flex-col gap-3 rounded-xl border border-danger/30 bg-danger-soft/60 p-4 sm:flex-row sm:items-center">
           <p className="min-w-0 flex-1 text-sm text-danger-ink">

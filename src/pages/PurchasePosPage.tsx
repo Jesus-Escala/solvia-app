@@ -11,7 +11,10 @@ export function PurchasePosPage() {
       title={t('purchases.form.title')}
       backTo="/purchases"
       backLabel={t('nav.purchases')}
-      keys={t('purchases.pos.keys', { save: SAVE_KEY_LABEL, search: SEARCH_KEY_LABEL })}
+      shortcuts={[
+        { keys: SAVE_KEY_LABEL, label: t('purchases.pos.keySave') },
+        { keys: SEARCH_KEY_LABEL, label: t('sales.pos.keySearch') },
+      ]}
     >
       {({ onDirty, leave }) => <PurchasePos onClose={leave} onDirty={onDirty} />}
     </PosScreen>

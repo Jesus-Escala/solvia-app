@@ -13,7 +13,7 @@ export interface PartDraft {
 export const round2 = (value: number) => Math.round(value * 100) / 100;
 const amountOf = (text: string) => Math.max(0, round2(Number(text) || 0));
 /** An amount as the text of its input (empty for zero). */
-export const asText = (value: number) => (value > 0 ? String(round2(value)) : '');
+export const asText = (value: number) => (value > 0 ? round2(value).toFixed(2) : '');
 let nextKey = 0;
 export const newPartKey = () => `part-${(nextKey += 1)}`;
 

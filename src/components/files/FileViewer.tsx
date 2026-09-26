@@ -2,6 +2,7 @@ import { Download, FileSpreadsheet, FileText, Minus, Plus, RotateCcw } from 'luc
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Button, IconButton, Modal, Spinner, useFeedback, type DownloadedFile } from '@/ui';
 import { useI18n } from '../../i18n/I18nProvider';
+import { saveFile } from '../../lib/download';
 import { PdfPages } from './PdfPages';
 import { SheetGrid } from './SheetGrid';
 
@@ -14,18 +15,11 @@ export interface ViewerRequest {
   load: () => Promise<DownloadedFile>;
   /** Used when the server sends no file name. */
   fileName: string;
+  /** A narrow document (a ticket): its width at 100%, in a smaller window. */
+  pageWidth?: number;
 }
 
 const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2];
-
-function saveFile(blob: Blob, fileName: string) {
-  const url = URL.createObjectURL(blob);
-  const link = Object.assign(document.createElement('a'), { href: url, download: fileName });
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
 
 /**
  * Shows a PDF or an Excel file inside the page (nothing opens in another tab), with a button to
@@ -83,7 +77,7 @@ export function FileViewer({
     <Modal
       open={request !== null}
       onClose={onClose}
-      size="full"
+      size={request?.pageWidth ? 'md' : 'full'}
       flush
       closeLabel={t('common.close')}
       title={
@@ -155,7 +149,12 @@ export function FileViewer({
           <Alert tone="warning">{t('viewer.cannotPreview')}</Alert>
         </div>
       ) : kind === 'pdf' ? (
-        <PdfPages blob={file.blob} zoom={ZOOMS[zoomIndex]!} onError={onPreviewError} />
+        <PdfPages
+          blob={file.blob}
+          zoom={ZOOMS[zoomIndex]!}
+          maxWidth={current?.pageWidth ?? null}
+          onError={onPreviewError}
+        />
       ) : (
         <SheetGrid blob={file.blob} onError={onPreviewError} />
       )}

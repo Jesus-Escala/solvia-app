@@ -14,6 +14,8 @@ import {
 } from '@/ui';
 import type { PaymentMethod, Receivable } from '../../lib/types';
 import { todayIso } from './dueLabel';
+import { MoneyInput } from './MoneyInput';
+import { moneyText } from '../../lib/moneyText';
 import { PaymentMethodPicker } from './PaymentMethods';
 import { SplitPayments } from './SplitPayments';
 import { partsComplete, partsPayload, startParts, type PartDraft } from './splitParts';
@@ -55,7 +57,7 @@ export function PaymentForm({
   const { toast } = useFeedback();
   const register = useRegisterPayment();
   const fileInput = useRef<HTMLInputElement>(null);
-  const [amount, setAmount] = useState(String(receivable.outstandingAmount));
+  const [amount, setAmount] = useState(moneyText(receivable.outstandingAmount));
   const [method, setMethod] = useState<PaymentMethod>('yape');
   // Paid with several methods at once (part in cash, part with Yape…): null with one.
   const [parts, setParts] = useState<PartDraft[] | null>(null);
@@ -77,8 +79,8 @@ export function PaymentForm({
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     const value = Number(amount);
-    if (parts !== null && !partsComplete(parts, value)) {
-      toast.warning(t('split.notComplete', { amount: fmt.money(value) }));
+    if (blocker !== null) {
+      toast.warning(blocker);
       return;
     }
     await register.mutateAsync({
@@ -93,6 +95,15 @@ export function PaymentForm({
 
   const numericAmount = Number(amount) || 0;
   const isFull = numericAmount >= receivable.outstandingAmount;
+  // Why it cannot be saved yet (shown over the button, which stays off).
+  const blocker =
+    numericAmount <= 0
+      ? t('payment.noAmount')
+      : numericAmount > receivable.outstandingAmount + 0.005
+        ? t('payment.tooMuch', { amount: fmt.money(receivable.outstandingAmount) })
+        : parts !== null && !partsComplete(parts, numericAmount)
+          ? t('split.notComplete', { amount: fmt.money(numericAmount) })
+          : null;
   const paidShare = receivable.totalAmount > 0 ? receivable.paidAmount / receivable.totalAmount : 0;
 
   useErrorToast(register.error);
@@ -134,27 +145,20 @@ export function PaymentForm({
       >
         {(id, describedBy) => (
           <div className="space-y-2">
-            <div className="relative">
-              <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm font-semibold text-muted">
-                S/
-              </span>
-              <input
-                id={id}
-                aria-describedby={describedBy}
-                className="input pl-9 text-lg font-semibold tabular-nums"
-                type="number"
-                inputMode="decimal"
-                min="0.01"
-                step="0.01"
-                max={receivable.outstandingAmount}
-                required
-                autoFocus
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-            </div>
+            <MoneyInput
+              id={id}
+              {...(describedBy && { describedBy })}
+              size="lg"
+              required
+              autoFocus
+              value={amount}
+              onChange={setAmount}
+            />
             {!isFull && (
-              <TextButton size="xs" onClick={() => setAmount(String(receivable.outstandingAmount))}>
+              <TextButton
+                size="xs"
+                onClick={() => setAmount(moneyText(receivable.outstandingAmount))}
+              >
                 {t('payment.payAll', { amount: fmt.money(receivable.outstandingAmount) })}
               </TextButton>
             )}
@@ -251,10 +255,17 @@ export function PaymentForm({
         <Button variant="secondary" onClick={onClose}>
           {t('common.cancel')}
         </Button>
-        <Button type="submit" loading={register.isPending} disabled={Boolean(proofError)}>
+        <Button
+          type="submit"
+          loading={register.isPending}
+          disabled={Boolean(proofError) || blocker !== null}
+        >
           {t('payment.submit')}
         </Button>
       </div>
+      {blocker !== null && numericAmount > 0 && (
+        <p className="text-right text-xs font-medium text-warning-ink">{blocker}</p>
+      )}
     </form>
   );
 }

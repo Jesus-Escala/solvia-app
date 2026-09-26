@@ -57,14 +57,14 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
   Selling and buying are **point-of-sale screens of their own** at `/sales/new` (`SalePosPage` →
   `pos/SalePos`) and `/purchases/new` (`PurchasePosPage` → `pos/PurchasePos`), outside the app
   shell (`PosScreen`: slim top bar, back asks before losing a ticket); `quick.open('sale' |
-  'purchase')` navigates there. `components/pos/`: `PosLayout` (catalog left, ticket right;
+'purchase')` navigates there. `components/pos/`: `PosLayout` (catalog left, ticket right;
   phones: catalog + bottom bar that opens the ticket) and `ProductCatalog` (without a search only the 20
   best sellers, "Recomendados", from `/products/lookup?sort=popular`; the rest by search or barcode — Enter resolves scans in order, so fast
   scans are never lost). A product that is not in the catalog is created right there in a dialog (`pos/NewProductForm` → `NewProductModal`,
   also from "Crear «texto»" when a search finds nothing), so every line is a catalog product. The
   sale ticket (`pos/SaleLines.tsx`, helpers in `pos/saleMath.ts`) takes a price for this sale
   only, a discount and "Cobrar" → checkout (cash with change, Yape, Plin, transfer or credit with
-  down payment), then the ticket (`saleTicket.ts`: print / WhatsApp). Keyboard (`pos/keys.ts`):
+  down payment), then the ticket (`saleTicket.ts` + `TicketActions`: see the 80 mm PDF of `GET /sales/:id/ticket` in `FileViewer`, print, WhatsApp, download — also from the sale detail). While the money does not add up (split parts, cash received short) the confirm button stays off with the reason over it. Keyboard (`pos/keys.ts`):
   Alt+S charge/confirm/save, Alt+B search (Option on a Mac), Esc back. Stock shortages are traced (sale/line badges, "Sin stock"
   filter, `KardexModal`) when the inventory module is on.
 - **Several payment methods** (`components/domain/SplitPayments.tsx` + helpers in `splitParts.ts`): "Varios" in the sale checkout, the down payment of a credit sale and "¿Cómo pagaste?" of a purchase (`MethodRow`), and "Pagó con varios métodos" in "Me pagó". The last row keeps the rest while the others are typed; the API gets `payments` / `downPayments` / `parts` (`[{ method, amount }]`) and shows them with `PaymentPartsLabel`.
@@ -94,6 +94,7 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
 - **Tables**: every column sorts (`sortable` + server `sortBy` for paginated lists, spread
   `urlSort(state, update)` from `@/ui`; `sortValue` for tables with all rows). Rows have a fixed height: cells stay on one line and cut long text with "…" (`maxWidth`, default 320). `onRowEdit` (right-click / long press) and `onRowDelete` (double-click, the page
   confirms) shortcuts on `DataTable`; single click waits 260 ms when a delete shortcut exists.
+- **Money boxes**: `MoneyInput` (amount on the right, at most 2 decimals while typing, padded to 2 when left — `lib/moneyText.ts`); start values with `moneyText(n)`.
 - Code style: absent values are `null`, not `undefined`; omit optional props with a conditional
   spread instead of passing `undefined`.
 - `src/lib/api.ts` (client, session in `solvia.*` localStorage), `src/lib/types.ts` (**must mirror
