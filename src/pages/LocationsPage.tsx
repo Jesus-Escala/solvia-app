@@ -1,6 +1,7 @@
 import {
   ArrowLeft,
   ImagePlus,
+  Info,
   List,
   MapPinPlus,
   Map as MapIcon,
@@ -41,6 +42,7 @@ import { MapStage, type MapView, type SpotArea } from '../components/maps/MapSta
 import { spotPaint } from '../components/maps/spotTones';
 import { PLAN_IMAGE_TYPES, useUploadPlanImage } from '../components/maps/useUploadPlanImage';
 import { Kbd } from '../components/pos/PosLayout';
+import { ProductDetailModal } from '../components/pos/ProductInfoModal';
 import { ADD_KEY_LABEL } from '../components/pos/keys';
 import {
   useDeleteSpot,
@@ -576,6 +578,7 @@ function SpotDetail({
   const { t, fmt } = useI18n();
   const { toast, confirm } = useFeedback();
   const place = usePlaceProducts();
+  const [viewing, setViewing] = useState<string | null>(null);
   const unplace = useUnplaceProduct();
   const remove = useDeleteSpot();
 
@@ -667,23 +670,32 @@ function SpotDetail({
         ) : (
           <ul className="divide-y divide-line">
             {spot.products.map((product) => (
-              <li key={product.id} className="flex items-center gap-3 px-3 py-2">
-                <ProductThumb name={product.name} imageUrl={product.imageUrl} size={36} />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">{product.name}</span>
-                  <span className="block truncate text-xs text-muted">
-                    {product.code && <span className="font-mono">{product.code}</span>}
-                    {product.trackStock && (
-                      <>
-                        {product.code && ' · '}
-                        {t('locations.spot.stock', {
-                          count: fmt.number(product.stock),
-                          unit: t(`products.unitsShort.${product.unit}`),
-                        })}
-                      </>
-                    )}
+              <li key={product.id} className="flex items-center gap-1 pr-2">
+                {/* The whole row opens the product's detail. */}
+                <button
+                  type="button"
+                  onClick={() => setViewing(product.id)}
+                  title={t('locations.spot.seeProduct')}
+                  className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left transition hover:bg-surface-2"
+                >
+                  <ProductThumb name={product.name} imageUrl={product.imageUrl} size={36} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">{product.name}</span>
+                    <span className="block truncate text-xs text-muted">
+                      {product.code && <span className="font-mono">{product.code}</span>}
+                      {product.trackStock && (
+                        <>
+                          {product.code && ' · '}
+                          {t('locations.spot.stock', {
+                            count: fmt.number(product.stock),
+                            unit: t(`products.unitsShort.${product.unit}`),
+                          })}
+                        </>
+                      )}
+                    </span>
                   </span>
-                </span>
+                  <Info className="h-4 w-4 shrink-0 text-muted" />
+                </button>
                 <IconButton
                   size="sm"
                   label={t('locations.spot.removeProduct')}
@@ -697,6 +709,7 @@ function SpotDetail({
           </ul>
         )}
       </div>
+      <ProductDetailModal productId={viewing} onClose={() => setViewing(null)} />
     </>
   );
 }

@@ -1315,6 +1315,7 @@ export const en: Messages = {
       placed: '"{product}" is now in {spot}',
       removed: '"{product}" is no longer in {spot}',
       removeProduct: 'Take out of here',
+      seeProduct: 'See the product detail',
       stock: '{count} {unit} left',
     },
     product: {

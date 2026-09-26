@@ -48,14 +48,48 @@ export function ProductInfoModal({
   );
 }
 
+/**
+ * The same detail outside the point of sale (e.g. the products of a spot in Ubicaciones), only
+ * to look: loaded by id, without the button to add it. `productId` null: closed.
+ */
+export function ProductDetailModal({
+  productId,
+  onClose,
+}: {
+  productId: string | null;
+  onClose: () => void;
+}) {
+  const { t } = useI18n();
+  const product = useProduct(productId);
+  return (
+    <Modal
+      open={productId !== null}
+      title={product.data?.name ?? ''}
+      onClose={onClose}
+      closeLabel={t('common.close')}
+    >
+      {productId !== null &&
+        (product.data ? (
+          <ProductInfo product={product.data} mode={null} onAdd={null} />
+        ) : (
+          <div className="space-y-3">
+            <Skeleton className="h-44 rounded-2xl" />
+            <Skeleton className="h-52 rounded-2xl" />
+          </div>
+        ))}
+    </Modal>
+  );
+}
+
 function ProductInfo({
   product,
   mode,
   onAdd,
 }: {
   product: ProductOption;
-  mode: 'sale' | 'purchase';
-  onAdd: () => void;
+  /** null: only to look (no button to add it). */
+  mode: 'sale' | 'purchase' | null;
+  onAdd: (() => void) | null;
 }) {
   const { t, fmt } = useI18n();
   const modules = useModules();
@@ -177,9 +211,11 @@ function ProductInfo({
         )}
       </dl>
 
-      <Button className="h-12 w-full" icon={<Plus className="h-5 w-5" />} onClick={onAdd}>
-        {t(mode === 'sale' ? 'pos.info.addSale' : 'pos.info.addPurchase')}
-      </Button>
+      {mode !== null && onAdd && (
+        <Button className="h-12 w-full" icon={<Plus className="h-5 w-5" />} onClick={onAdd}>
+          {t(mode === 'sale' ? 'pos.info.addSale' : 'pos.info.addPurchase')}
+        </Button>
+      )}
       <ImageViewer image={viewing} onClose={() => setViewing(null)} />
       <SpotMapModal
         target={

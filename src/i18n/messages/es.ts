@@ -1323,6 +1323,7 @@ export const es = {
       placed: '«{product}» ahora está en {spot}',
       removed: '«{product}» ya no está en {spot}',
       removeProduct: 'Sacar de aquí',
+      seeProduct: 'Ver el detalle del producto',
       stock: 'Quedan {count} {unit}',
     },
     product: {
