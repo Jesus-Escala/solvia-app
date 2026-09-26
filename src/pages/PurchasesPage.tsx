@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router';
 import { Ban, Warehouse } from 'lucide-react';
+import { PurchaseTicketActions } from '../components/domain/PurchaseTicketActions';
 import { RowActions } from '../components/domain/RowActions';
 import { useState } from 'react';
 import {
@@ -105,6 +106,7 @@ function PurchaseDetail({ purchase, onClose }: { purchase: Purchase; onClose: ()
           </p>
         )}
       </div>
+      <PurchaseTicketActions purchase={purchase} />
       {purchase.status === 'completed' && (
         <div className="flex flex-col gap-3 rounded-xl border border-danger/30 bg-danger-soft/60 p-4 sm:flex-row sm:items-center">
           <p className="min-w-0 flex-1 text-sm text-danger-ink">

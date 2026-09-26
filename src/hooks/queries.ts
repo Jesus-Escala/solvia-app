@@ -29,7 +29,10 @@ import type {
   ProductKind,
   ProductOption,
   ProductUnit,
+  InsightReportId,
+  InsightTable,
   Purchase,
+  PurchasesDashboard,
   Receivable,
   ReceivableStatus,
   ReminderRules,
@@ -40,6 +43,7 @@ import type {
   RiskLevel,
   Sale,
   SaleDocType,
+  SalesDashboard,
   SortDir,
   StockMovement,
   Supplier,
@@ -864,6 +868,38 @@ export function useNotifications(
 // --- Tabular reports -------------------------------------------------------------
 
 /** One tabular report; the stock report ignores the period (it is a snapshot of today). */
+/** A self-describing report (columns, rows, totals and figures from the API). */
+export function useInsightTable(report: InsightReportId, period: ReportPeriod, enabled = true) {
+  return useQuery({
+    queryKey: ['reports', report, 'table', period] as const,
+    queryFn: ({ signal }) =>
+      api.get<InsightTable>(`/reports/${report}/table`, { ...period }, { signal }),
+    placeholderData: keepPreviousData,
+    enabled,
+  });
+}
+
+/** Sales dashboard of a range (sales module). */
+export function useSalesDashboard(period: ReportPeriod, enabled = true) {
+  return useQuery({
+    queryKey: ['dashboard', 'sales', period] as const,
+    queryFn: ({ signal }) => api.get<SalesDashboard>('/dashboard/sales', { ...period }, { signal }),
+    placeholderData: keepPreviousData,
+    enabled,
+  });
+}
+
+/** Purchases dashboard of a range (inventory module). */
+export function usePurchasesDashboard(period: ReportPeriod, enabled = true) {
+  return useQuery({
+    queryKey: ['dashboard', 'purchases', period] as const,
+    queryFn: ({ signal }) =>
+      api.get<PurchasesDashboard>('/dashboard/purchases', { ...period }, { signal }),
+    placeholderData: keepPreviousData,
+    enabled,
+  });
+}
+
 export function useReport<R extends ReportId>(
   report: R,
   period: ReportPeriod | null,

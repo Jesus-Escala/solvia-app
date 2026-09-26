@@ -625,6 +625,114 @@ export interface ReportTypes {
 
 export type ReportId = keyof ReportTypes;
 
+/** Reports that describe themselves: the API sends columns, rows, totals and figures. */
+export type InsightReportId =
+  | 'sales-detail'
+  | 'sales-by-day'
+  | 'sales-by-method'
+  | 'sales-by-category'
+  | 'sales-by-seller'
+  | 'purchases-detail'
+  | 'purchases-by-supplier'
+  | 'purchases-by-product';
+
+export type InsightCell = string | number | null;
+
+/** `GET /reports/:report/table`: texts already in the interface language. */
+export interface InsightTable {
+  title: string;
+  dated: boolean;
+  columns: Array<{
+    header: string;
+    kind: 'text' | 'money' | 'number' | 'date';
+    weight: number;
+    /** The main amount of the report (highlighted). */
+    main?: boolean;
+  }>;
+  rows: InsightCell[][];
+  totals: InsightCell[] | null;
+  empty: string;
+  kpis: Array<{
+    label: string;
+    value: number;
+    kind: 'money' | 'number';
+    tone: 'default' | 'success' | 'warning' | 'danger';
+  }>;
+}
+
+/** `GET /dashboard/sales`. */
+export interface SalesDashboard {
+  period: ReportPeriod;
+  previousPeriod: ReportPeriod;
+  totals: {
+    total: number;
+    sales: number;
+    average: number;
+    cash: number;
+    credit: number;
+    profit: number;
+    units: number;
+    customers: number;
+  };
+  previous: { total: number; sales: number; average: number };
+  byDay: Array<{ date: string; sales: number; total: number; cash: number; credit: number }>;
+  byHour: Array<{ hour: number; sales: number; total: number }>;
+  topProducts: Array<{
+    productId: string | null;
+    name: string;
+    unit: string;
+    quantity: number;
+    revenue: number;
+    profit: number | null;
+    sales: number;
+  }>;
+  topCustomers: Array<{
+    customerId: string | null;
+    name: string | null;
+    sales: number;
+    total: number;
+    lastSale: string;
+  }>;
+  walkIn: { sales: number; total: number } | null;
+  /** `method` null: on credit. */
+  byMethod: Array<{ method: PaymentMethod | null; sales: number; amount: number }>;
+  byCategory: Array<{
+    categoryId: string | null;
+    name: string | null;
+    revenue: number;
+    quantity: number;
+  }>;
+}
+
+/** `GET /dashboard/purchases`. */
+export interface PurchasesDashboard {
+  period: ReportPeriod;
+  previousPeriod: ReportPeriod;
+  totals: {
+    total: number;
+    purchases: number;
+    average: number;
+    suppliers: number;
+    products: number;
+  };
+  previous: { total: number; purchases: number };
+  byDay: Array<{ date: string; purchases: number; total: number }>;
+  topSuppliers: Array<{
+    supplierId: string | null;
+    name: string | null;
+    purchases: number;
+    total: number;
+  }>;
+  topProducts: Array<{
+    productId: string;
+    name: string;
+    unit: string;
+    quantity: number;
+    total: number;
+  }>;
+  byMethod: Array<{ method: PaymentMethod; purchases: number; amount: number }>;
+}
+
 // --- Plan usage (/settings/plan) ---------------------------------------------
 
 /** What the plan includes and what the business used this month (null limit = unlimited). */

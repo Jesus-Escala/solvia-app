@@ -49,3 +49,22 @@ export function pointsChange(metric: PeriodMetric | undefined): number | null {
   if (!metric || metric.value === null || metric.previous === null) return null;
   return metric.value - metric.previous;
 }
+
+/** Every day of the range, with 0 on the days without data (so the bars keep the calendar). */
+export function fillDays<T extends { date: string }>(
+  rows: T[],
+  from: string,
+  to: string,
+  empty: (date: string) => T,
+): T[] {
+  const byDate = new Map(rows.map((row) => [row.date, row]));
+  const days: T[] = [];
+  const end = Date.parse(`${to}T00:00:00Z`);
+  // A long range (more than ~4 months) shows only the days with data.
+  if ((end - Date.parse(`${from}T00:00:00Z`)) / 86_400_000 > 124) return rows;
+  for (let time = Date.parse(`${from}T00:00:00Z`); time <= end; time += 86_400_000) {
+    const date = new Date(time).toISOString().slice(0, 10);
+    days.push(byDate.get(date) ?? empty(date));
+  }
+  return days;
+}

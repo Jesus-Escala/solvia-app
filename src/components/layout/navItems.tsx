@@ -67,7 +67,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     title: 'nav.groups.numbers',
     items: [
-      { to: '/dashboard', label: 'nav.dashboard', icon: <BarChart3 />, module: 'collections' },
+      { to: '/dashboard', label: 'nav.dashboard', icon: <BarChart3 /> },
       { to: '/reports', label: 'nav.reports', icon: <FileSpreadsheet /> },
     ],
   },

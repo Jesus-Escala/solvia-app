@@ -1,11 +1,19 @@
 import {
   AlertTriangle,
   Boxes,
+  CalendarDays,
   FileSpreadsheet,
   FileText,
   HandCoins,
+  PackageSearch,
+  ReceiptText,
   ShoppingBag,
+  Tags,
+  Truck,
   UserRound,
+  Users,
+  Wallet,
+  Warehouse,
 } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -27,12 +35,15 @@ import {
 import { isValidRange, presetRange, type PeriodRange } from '../components/dashboard/period';
 import { PeriodPicker } from '../components/dashboard/PeriodPicker';
 import { FileViewer, type ViewerKind, type ViewerRequest } from '../components/files/FileViewer';
-import { useReport } from '../hooks/queries';
+import { useInsightTable, useReport } from '../hooks/queries';
 import { api } from '../lib/api';
 import { type Modules, useModules } from '../hooks/useModules';
 import { useI18n, type TranslationKey } from '../i18n/I18nProvider';
 import type {
   CollectionsByCustomerRow,
+  InsightCell,
+  InsightReportId,
+  InsightTable,
   ReportId,
   ReportTypes,
   SalesByCustomerRow,
@@ -42,13 +53,17 @@ import type {
   StockStatus,
 } from '../lib/types';
 
+type AnyReportId = ReportId | InsightReportId;
+
 interface ReportDef {
-  id: ReportId;
+  id: AnyReportId;
   icon: ReactNode;
   /** Business module the report needs. */
-  module: 'sales' | 'catalog' | 'collections';
+  module: 'sales' | 'catalog' | 'collections' | 'inventory';
   /** The stock report is a snapshot of today: no date range. */
   dated: boolean;
+  /** Its columns, rows and figures come from the API (`/reports/:report/table`). */
+  generic?: boolean;
 }
 
 /** The reports, in the order and groups the page shows them. */
@@ -56,8 +71,39 @@ const GROUPS: Array<{ title: TranslationKey; reports: ReportDef[] }> = [
   {
     title: 'reports.groups.sales',
     reports: [
-      { id: 'sales-by-customer', icon: <UserRound />, module: 'sales', dated: true },
+      { id: 'sales-detail', icon: <ReceiptText />, module: 'sales', dated: true, generic: true },
+      { id: 'sales-by-day', icon: <CalendarDays />, module: 'sales', dated: true, generic: true },
       { id: 'sales-by-product', icon: <ShoppingBag />, module: 'sales', dated: true },
+      { id: 'sales-by-customer', icon: <UserRound />, module: 'sales', dated: true },
+      { id: 'sales-by-category', icon: <Tags />, module: 'sales', dated: true, generic: true },
+      { id: 'sales-by-method', icon: <Wallet />, module: 'sales', dated: true, generic: true },
+      { id: 'sales-by-seller', icon: <Users />, module: 'sales', dated: true, generic: true },
+    ],
+  },
+  {
+    title: 'reports.groups.purchases',
+    reports: [
+      {
+        id: 'purchases-detail',
+        icon: <Warehouse />,
+        module: 'inventory',
+        dated: true,
+        generic: true,
+      },
+      {
+        id: 'purchases-by-supplier',
+        icon: <Truck />,
+        module: 'inventory',
+        dated: true,
+        generic: true,
+      },
+      {
+        id: 'purchases-by-product',
+        icon: <PackageSearch />,
+        module: 'inventory',
+        dated: true,
+        generic: true,
+      },
     ],
   },
   {
@@ -92,8 +138,8 @@ function ReportChooser({
   onChange,
 }: {
   groups: ReturnType<typeof availableGroups>;
-  value: ReportId;
-  onChange: (report: ReportId) => void;
+  value: AnyReportId;
+  onChange: (report: AnyReportId) => void;
 }) {
   const { t } = useI18n();
   return (
@@ -183,19 +229,27 @@ export function ReportsPage() {
   );
 }
 
-function ReportView({
-  report,
-  range,
-  onRangeChange,
-}: {
+function ReportView(props: {
   report: ReportDef;
   range: PeriodRange;
   onRangeChange: (range: PeriodRange) => void;
 }) {
+  return props.report.generic ? <InsightReportView {...props} /> : <TypedReportView {...props} />;
+}
+
+/** Dates, "Ver PDF" and "Ver Excel" of a report (the file opens in the in-page viewer). */
+function ReportToolbar({
+  report,
+  range,
+  onRangeChange,
+  ready,
+}: {
+  report: ReportDef;
+  range: PeriodRange;
+  onRangeChange: (range: PeriodRange) => void;
+  ready: boolean;
+}) {
   const { t } = useI18n();
-  const errors = useErrorText();
-  const query = useReport(report.id, report.dated ? range : null);
-  const table = useReportTable(report.id, query.data);
   const [viewing, setViewing] = useState<ViewerRequest | null>(null);
   const closeViewer = useCallback(() => setViewing(null), []);
   const view = (kind: ViewerKind) =>
@@ -209,7 +263,6 @@ function ReportView({
           ...(report.dated && { from: range.from, to: range.to }),
         }),
     });
-
   return (
     <>
       <p className="-mt-1 text-sm text-muted">{t(`reports.hints.${report.id}`)}</p>
@@ -228,7 +281,7 @@ function ReportView({
           <Button
             variant="secondary"
             icon={<FileText className="h-4 w-4 text-danger-ink" />}
-            disabled={!query.data}
+            disabled={!ready}
             onClick={() => view('pdf')}
           >
             {t('reports.viewPdf')}
@@ -236,13 +289,133 @@ function ReportView({
           <Button
             variant="secondary"
             icon={<FileSpreadsheet className="h-4 w-4 text-success-ink" />}
-            disabled={!query.data}
+            disabled={!ready}
             onClick={() => view('xlsx')}
           >
             {t('reports.viewExcel')}
           </Button>
         </div>
       </div>
+      <FileViewer request={viewing} onClose={closeViewer} />
+    </>
+  );
+}
+
+interface InsightRow {
+  key: string;
+  cells: InsightCell[];
+}
+
+/**
+ * A report whose columns come from the API: each column is text, an amount, a number or a
+ * date, formatted here (amounts and numbers on the right). Its totals line is the last row.
+ */
+function InsightReportView({
+  report,
+  range,
+  onRangeChange,
+}: {
+  report: ReportDef;
+  range: PeriodRange;
+  onRangeChange: (range: PeriodRange) => void;
+}) {
+  const { t, fmt } = useI18n();
+  const errors = useErrorText();
+  const query = useInsightTable(report.id as InsightReportId, range);
+  const data: InsightTable | undefined = query.data;
+  const format = (value: InsightCell, kind: InsightTable['columns'][number]['kind']) => {
+    if (value === null || value === '') return <span className="text-subtle">—</span>;
+    if (kind === 'money') return fmt.money(Number(value));
+    if (kind === 'number') return fmt.number(Number(value));
+    if (kind === 'date') return fmt.date(String(value));
+    return String(value);
+  };
+  // The main amount (or the first one): bold, and on the right of each row on phones.
+  const mainIndex = data?.columns.findIndex((column) => column.main) ?? -1;
+  const firstAmount =
+    mainIndex >= 0
+      ? mainIndex
+      : (data?.columns.findIndex((column) => column.kind === 'money') ?? -1);
+  const columns: Array<DataTableColumn<InsightRow>> = (data?.columns ?? []).map(
+    (column, index) => ({
+      id: `c${index}`,
+      header: column.header,
+      ...(column.kind !== 'text' && { align: 'right' as const }),
+      ...(index === 0 && { mobile: 'title' as const }),
+      ...(index === firstAmount && { mobile: 'aside' as const }),
+      ...(column.weight >= 4 && { minWidth: 240, maxWidth: 420 }),
+      cell: (row) => {
+        const content = format(row.cells[index] ?? null, column.kind);
+        return row.key === 'totals' || index === firstAmount ? (
+          <span className="font-semibold tabular-nums">{content}</span>
+        ) : (
+          content
+        );
+      },
+      sortValue: (row) => row.cells[index] ?? null,
+    }),
+  );
+  const rows: InsightRow[] | undefined = data && [
+    ...data.rows.map((cells, index) => ({ key: String(index), cells })),
+    ...(data.totals && data.rows.length > 0 ? [{ key: 'totals', cells: data.totals }] : []),
+  ];
+
+  return (
+    <>
+      <ReportToolbar
+        report={report}
+        range={range}
+        onRangeChange={onRangeChange}
+        ready={Boolean(data)}
+      />
+      <KpiRow>
+        {(data?.kpis ?? [{ label: '', value: 0, kind: 'money', tone: 'default' }]).map((kpi) => (
+          <KpiCard
+            key={kpi.label}
+            label={kpi.label}
+            value={kpi.kind === 'money' ? fmt.money(kpi.value) : fmt.number(kpi.value)}
+            tone={kpi.tone}
+            loading={query.isLoading}
+          />
+        ))}
+      </KpiRow>
+      <DataTable
+        caption={t(`reports.names.${report.id}`)}
+        columnsStorageKey={`report-${report.id}`}
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.key}
+        loading={query.isLoading}
+        fetching={query.isFetching && !query.isLoading}
+        error={query.error ? <Alert tone="danger">{errors.message(query.error)}</Alert> : undefined}
+        empty={{ title: t('reports.empty'), description: data?.empty ?? '' }}
+      />
+    </>
+  );
+}
+
+function TypedReportView({
+  report,
+  range,
+  onRangeChange,
+}: {
+  report: ReportDef;
+  range: PeriodRange;
+  onRangeChange: (range: PeriodRange) => void;
+}) {
+  const { t } = useI18n();
+  const errors = useErrorText();
+  const id = report.id as ReportId;
+  const query = useReport(id, report.dated ? range : null);
+  const table = useReportTable(id, query.data);
+  return (
+    <>
+      <ReportToolbar
+        report={report}
+        range={range}
+        onRangeChange={onRangeChange}
+        ready={Boolean(query.data)}
+      />
       <KpiRow>
         {table.kpis.map((kpi) => (
           <KpiCard key={kpi.label} {...kpi} loading={query.isLoading} />
@@ -257,9 +430,8 @@ function ReportView({
         loading={query.isLoading}
         fetching={query.isFetching && !query.isLoading}
         error={query.error ? <Alert tone="danger">{errors.message(query.error)}</Alert> : undefined}
-        empty={{ title: t('reports.empty'), description: t(`reports.emptyHints.${report.id}`) }}
+        empty={{ title: t('reports.empty'), description: t(`reports.emptyHints.${id}`) }}
       />
-      <FileViewer request={viewing} onClose={closeViewer} />
     </>
   );
 }

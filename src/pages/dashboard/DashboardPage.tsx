@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { CalendarRange, TrendingUp, Wallet } from 'lucide-react';
+import { CalendarRange, ShoppingCart, TrendingUp, Wallet, Warehouse } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { Alert, Page, Tabs, useErrorText, useUrlState } from '@/ui';
 import {
   allowedGranularities,
@@ -9,20 +10,30 @@ import {
   type Granularity,
 } from '../../components/dashboard/period';
 import { useDashboardSummary } from '../../hooks/queries';
+import { useModules } from '../../hooks/useModules';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { PaymentMethod } from '../../lib/types';
 import { CollectionView, type CollectionFilters } from './CollectionView';
 import { DashboardHeader } from './parts';
 import { PortfolioView } from './PortfolioView';
 import { ProjectionView } from './ProjectionView';
+import { PurchasesView } from './PurchasesView';
+import { SalesView } from './SalesView';
 
-type View = 'collection' | 'portfolio' | 'projection';
-const VIEWS: View[] = ['collection', 'portfolio', 'projection'];
+type View = 'sales' | 'purchases' | 'collection' | 'portfolio' | 'projection';
+
+const ICONS: Record<View, ReactNode> = {
+  sales: <ShoppingCart />,
+  purchases: <Warehouse />,
+  collection: <TrendingUp />,
+  portfolio: <Wallet />,
+  projection: <CalendarRange />,
+};
 
 // Everything the dashboard shows is in the URL (?view=&from=&to=&g=&method=&customer=&weekday=):
 // shareable and reload-safe.
 const DEFAULTS = {
-  view: 'collection',
+  view: '',
   from: '',
   to: '',
   g: '',
@@ -34,18 +45,28 @@ const METHODS: PaymentMethod[] = ['yape', 'plin', 'cash', 'bank_transfer'];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * Dashboard (charts), split into three views with a single purpose each: what you collected (any period vs
- * the previous one), what you are owed and its risk, and what you expect to collect. Each view
- * opens with one plain sentence answering its question. "Today" lives on the Home page.
+ * Dashboard (charts), one view per question, each opening with one plain sentence answering it:
+ * what you sold (best products and customers, how and when) and what you bought (Ventas and
+ * Inventario modules), and with Cobranza what you collected (any period vs the previous one),
+ * what you are owed and its risk, and what you expect to collect. "Today" lives on the Home page.
  */
 export function DashboardPage() {
   const { t } = useI18n();
   const errors = useErrorText();
   const queryClient = useQueryClient();
+  const modules = useModules();
   const [state, update] = useUrlState(DEFAULTS);
-  const view: View = VIEWS.includes(state.view as View) ? (state.view as View) : 'collection';
+  // Only the views of the modules the business has, sales first.
+  const views: View[] = [
+    ...(modules.sales ? (['sales'] as const) : []),
+    ...(modules.inventory ? (['purchases'] as const) : []),
+    ...(modules.collections ? (['collection', 'portfolio', 'projection'] as const) : []),
+  ];
+  const view: View | null = views.includes(state.view as View)
+    ? (state.view as View)
+    : (views[0] ?? null);
 
-  const summary = useDashboardSummary();
+  const summary = useDashboardSummary(modules.collections);
   const refreshing = summary.isFetching && !summary.isLoading;
 
   const urlRange = { from: state.from, to: state.to };
@@ -67,6 +88,8 @@ export function DashboardPage() {
     weekday: Number.isInteger(weekday) && weekday >= 1 && weekday <= 7 ? weekday : null,
   };
 
+  if (view === null) return <Page>{null}</Page>;
+
   return (
     <Page>
       <DashboardHeader
@@ -80,17 +103,31 @@ export function DashboardPage() {
         label={t('dashboard.tabs.label')}
         value={view}
         onChange={(next) => update({ view: next })}
-        items={[
-          { value: 'collection', label: t('dashboard.tabs.collection'), icon: <TrendingUp /> },
-          { value: 'portfolio', label: t('dashboard.tabs.portfolio'), icon: <Wallet /> },
-          { value: 'projection', label: t('dashboard.tabs.projection'), icon: <CalendarRange /> },
-        ]}
+        items={views.map((item) => ({
+          value: item,
+          label: t(`dashboard.tabs.${item}`),
+          icon: ICONS[item],
+        }))}
       />
       <p className="-mt-2 text-sm text-muted">{t(`dashboard.tabs.hints.${view}`)}</p>
 
-      {summary.error && <Alert tone="danger">{errors.message(summary.error)}</Alert>}
+      {summary.error && modules.collections && (
+        <Alert tone="danger">{errors.message(summary.error)}</Alert>
+      )}
 
       <div key={view} className="animate-page-in space-y-5">
+        {view === 'sales' && (
+          <SalesView
+            range={range}
+            onRangeChange={(next) => update({ from: next.from, to: next.to, g: '' })}
+          />
+        )}
+        {view === 'purchases' && (
+          <PurchasesView
+            range={range}
+            onRangeChange={(next) => update({ from: next.from, to: next.to, g: '' })}
+          />
+        )}
         {view === 'collection' && (
           <CollectionView
             range={range}
