@@ -39,8 +39,11 @@ export interface DataTableColumn<T> {
   /** Can the user hide this column from the columns menu? Default: true. */
   hideable?: boolean;
   defaultHidden?: boolean;
-  /** How the column appears in the mobile card view. Default: 'field' (label + value). */
-  mobile?: 'title' | 'subtitle' | 'aside' | 'field' | 'hidden';
+  /**
+   * How the column appears in the mobile card view. Default: 'field' (label + value, half the
+   * card); 'wide' is a field on the whole width (e.g. a row of badges).
+   */
+  mobile?: 'title' | 'subtitle' | 'aside' | 'field' | 'wide' | 'hidden';
   className?: string;
 }
 
@@ -362,7 +365,7 @@ export function DataTable<T>({
   const subtitleColumns = visibleColumns.filter((column) => column.mobile === 'subtitle');
   const asideColumns = visibleColumns.filter((column) => column.mobile === 'aside');
   const fieldColumns = visibleColumns.filter(
-    (column) => column !== titleColumn && (column.mobile ?? 'field') === 'field',
+    (column) => column !== titleColumn && ['field', 'wide'].includes(column.mobile ?? 'field'),
   );
 
   const firstRow = pagination ? (pagination.page - 1) * pagination.pageSize + 1 : 1;
@@ -650,11 +653,16 @@ export function DataTable<T>({
                       <>
                         <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 rounded-lg bg-surface-2 px-3 py-2.5 text-sm">
                           {shown.map((column) => (
-                            <div key={column.id} className="min-w-0">
+                            <div
+                              key={column.id}
+                              className={cx('min-w-0', column.mobile === 'wide' && 'col-span-2')}
+                            >
                               <dt className="text-[11px] tracking-wide text-subtle uppercase">
                                 {column.header}
                               </dt>
-                              <dd className="truncate">{column.cell(row)}</dd>
+                              <dd className={column.mobile === 'wide' ? 'min-w-0' : 'truncate'}>
+                                {column.cell(row)}
+                              </dd>
                             </div>
                           ))}
                         </dl>
