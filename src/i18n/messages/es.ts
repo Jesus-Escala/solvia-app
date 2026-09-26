@@ -920,6 +920,24 @@ export const es = {
       save: 'Guardar cambios',
     },
   },
+  scanner: {
+    button: 'Cámara',
+    open: 'Escanear con la cámara',
+    title: 'Escanear con la cámara',
+    hint: 'Apunta al QR o al código de barras del producto. Puedes escanear varios seguidos.',
+    starting: 'Encendiendo la cámara…',
+    waiting: 'Buscando un código…',
+    read: 'Leído: {code}',
+    done: 'Listo',
+    errors: {
+      denied:
+        'No diste permiso para usar la cámara. Tócalo en el candado junto a la dirección de la página, permite la cámara y vuelve a abrir el escáner.',
+      noCamera: 'No encontramos una cámara en este equipo.',
+      insecure:
+        'La cámara solo funciona en una conexión segura (https) o en este mismo equipo (localhost).',
+      failed: 'No se pudo encender la cámara. Ciérrala en otras apps y vuelve a intentarlo.',
+    },
+  },
   pos: {
     recommended: 'Recomendados · tus {count} más vendidos',
     recommendedChip: 'Recomendados',
@@ -1037,7 +1055,7 @@ export const es = {
       grams: '{count} g',
       milliliters: '{count} ml',
       title: 'Nueva venta',
-      search: 'Busca o escanea un producto',
+      search: 'Busca por nombre o código, o escanéalo',
       left: 'Quedan {count}',
       noStock: '(sin stock)',
       onlyLeft: '(solo quedan {count})',

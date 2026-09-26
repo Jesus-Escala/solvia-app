@@ -912,6 +912,24 @@ export const en: Messages = {
       save: 'Save changes',
     },
   },
+  scanner: {
+    button: 'Camera',
+    open: 'Scan with the camera',
+    title: 'Scan with the camera',
+    hint: 'Point at the QR or the barcode of the product. You can scan several in a row.',
+    starting: 'Turning the camera on…',
+    waiting: 'Looking for a code…',
+    read: 'Read: {code}',
+    done: 'Done',
+    errors: {
+      denied:
+        'You did not allow the camera. Tap the lock next to the page address, allow the camera and open the scanner again.',
+      noCamera: 'We could not find a camera on this device.',
+      insecure:
+        'The camera only works over a secure connection (https) or on this same device (localhost).',
+      failed: 'The camera could not be turned on. Close it in other apps and try again.',
+    },
+  },
   pos: {
     recommended: 'Recommended · your {count} best sellers',
     recommendedChip: 'Recommended',
@@ -1028,7 +1046,7 @@ export const en: Messages = {
       grams: '{count} g',
       milliliters: '{count} ml',
       title: 'New sale',
-      search: 'Search or scan a product',
+      search: 'Search by name or code, or scan it',
       left: '{count} left',
       noStock: '(out of stock)',
       onlyLeft: '(only {count} left)',

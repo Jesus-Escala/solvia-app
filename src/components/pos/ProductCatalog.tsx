@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import {
+  Camera,
   Flame,
   PackageOpen,
   PackagePlus,
@@ -15,6 +16,7 @@ import { cx, Skeleton } from '@/ui';
 import { productLookupQuery, useCategories, useProductCatalog } from '../../hooks/queries';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { ProductOption } from '../../lib/types';
+import { CameraScanner } from './CameraScanner';
 import { ImageViewer } from '../domain/ImageViewer';
 import { ProductThumb } from '../domain/ProductThumb';
 import { useDebouncedValue } from '../domain/useSearchBox';
@@ -72,6 +74,7 @@ export function ProductCatalog({
   const queryClient = useQueryClient();
   // Enters resolve in order, even when a scanner sends the next code before the first answer.
   const queue = useRef<Promise<void>>(Promise.resolve());
+  const [scanning, setScanning] = useState(false);
 
   const choose = (options: ProductOption[], code: string) =>
     options.find((product) => product.code !== null && product.code === code) ?? options[0] ?? null;
@@ -86,14 +89,26 @@ export function ProductCatalog({
       else setNotFound(typed);
       return;
     }
+    resolve(typed, false);
+  };
+
+  /**
+   * Looks a code up and adds its product, in the order the codes arrive (a fast scanner or the
+   * camera never loses one). `exact`: only a product with that very code (a scan).
+   */
+  const resolve = (code: string, exact: boolean) => {
     queue.current = queue.current.then(async () => {
       try {
-        const answer = await queryClient.fetchQuery(productLookupQuery(typed));
-        const chosen = choose(answer.data, typed);
-        if (chosen) onPick(chosen);
-        else setNotFound(typed);
+        const answer = await queryClient.fetchQuery(productLookupQuery(code));
+        const chosen = exact
+          ? (answer.data.find((product) => product.code === code) ?? null)
+          : choose(answer.data, code);
+        if (chosen) {
+          setNotFound(null);
+          onPick(chosen);
+        } else setNotFound(code);
       } catch {
-        setNotFound(typed);
+        setNotFound(code);
       }
     });
   };
@@ -101,46 +116,66 @@ export function ProductCatalog({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="shrink-0 space-y-2 px-3 pt-3 pb-1 sm:px-4 sm:pt-4">
-        <div className="relative">
-          <ScanBarcode className="pointer-events-none absolute top-1/2 left-3.5 h-5 w-5 -translate-y-1/2 text-subtle" />
-          <input
-            ref={searchRef}
-            className="input h-12 pr-10 pl-11 text-base"
-            aria-label={t('sales.form.search')}
-            autoComplete="off"
-            autoFocus
-            placeholder={t('sales.form.search')}
-            value={text}
-            onChange={(event) => {
-              setNotFound(null);
-              setText(event.target.value);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                enter();
-              } else if (event.key === 'Escape' && text !== '') {
-                // Clear the search, not close the screen.
-                event.preventDefault();
-                event.stopPropagation();
-                setText('');
-              }
-            }}
-          />
-          {text !== '' && (
-            <button
-              type="button"
-              aria-label={t('sales.pos.clearSearch')}
-              onClick={() => {
-                setText('');
-                searchRef.current?.focus();
+        <div className="flex gap-2">
+          <div className="relative min-w-0 flex-1">
+            <ScanBarcode className="pointer-events-none absolute top-1/2 left-3.5 h-5 w-5 -translate-y-1/2 text-subtle" />
+            <input
+              ref={searchRef}
+              className="input h-12 pr-10 pl-11 text-base"
+              aria-label={t('sales.form.search')}
+              autoComplete="off"
+              autoFocus
+              placeholder={t('sales.form.search')}
+              value={text}
+              onChange={(event) => {
+                setNotFound(null);
+                setText(event.target.value);
               }}
-              className="absolute top-1/2 right-2 -translate-y-1/2 rounded-md p-1.5 text-subtle hover:bg-surface-3 hover:text-ink"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  enter();
+                } else if (event.key === 'Escape' && text !== '') {
+                  // Clear the search, not close the screen.
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setText('');
+                }
+              }}
+            />
+            {text !== '' && (
+              <button
+                type="button"
+                aria-label={t('sales.pos.clearSearch')}
+                onClick={() => {
+                  setText('');
+                  searchRef.current?.focus();
+                }}
+                className="absolute top-1/2 right-2 -translate-y-1/2 rounded-md p-1.5 text-subtle hover:bg-surface-3 hover:text-ink"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setScanning(true)}
+            title={t('scanner.open')}
+            aria-label={t('scanner.open')}
+            className="flex h-12 shrink-0 items-center gap-2 rounded-xl border border-line bg-surface px-3.5 text-sm font-semibold text-ink shadow-xs transition hover:border-primary/40 hover:bg-primary-soft/40 [&>svg]:h-5 [&>svg]:w-5"
+          >
+            <Camera />
+            <span className="hidden sm:inline">{t('scanner.button')}</span>
+          </button>
         </div>
+        <CameraScanner
+          open={scanning}
+          onClose={() => {
+            setScanning(false);
+            searchRef.current?.focus();
+          }}
+          onCode={(code) => resolve(code, true)}
+        />
         {typed === '' && categories.length > 0 && (
           <div
             role="radiogroup"
