@@ -1244,11 +1244,32 @@ export const en: Messages = {
     empty: {
       title: 'You have no floor plan yet',
       description:
-        'Create the plan of your shop or storeroom, upload a photo or drawing and mark your shelves. Anyone will find products in no time.',
+        'Upload a photo of your floor plan or draw your shop right here, and mark your shelves. Anyone will find products in no time.',
     },
     noImage: {
-      title: 'Upload the picture of your floor plan',
-      description: 'Meanwhile you can mark on the grid.',
+      title: 'Mark the areas of your shop',
+      description:
+        'Draw them by dragging on the grid (shelves, fridges, till…) or upload the picture of your floor plan.',
+    },
+    start: {
+      title: 'How do you want to build your floor plan?',
+      image: {
+        title: 'Upload a picture of my plan',
+        description: 'A photo or drawing seen from above. Then you mark your shelves on it.',
+      },
+      draw: {
+        title: 'Draw my shop here',
+        description:
+          'You start with a grid and draw each area by dragging, like when you mark a location.',
+      },
+      drawNow: 'Create and start drawing',
+    },
+    shape: {
+      label: 'Shape of your shop',
+      square: 'Square',
+      wide: 'Rectangular',
+      long: 'Long',
+      hint: 'Just the outline: then you draw inside it the areas where your products go.',
     },
     view: { label: 'Floor plan view', flat: '2D', depth: '3D' },
     mark: 'Mark a location',

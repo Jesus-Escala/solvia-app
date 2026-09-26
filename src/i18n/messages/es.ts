@@ -1252,11 +1252,32 @@ export const es = {
     empty: {
       title: 'Todavía no tienes un plano',
       description:
-        'Crea el plano de tu tienda o almacén, sube una foto o dibujo y marca tus estantes. Así cualquiera encuentra los productos al toque.',
+        'Sube una foto de tu plano o dibuja tu tienda aquí mismo, y marca tus estantes. Así cualquiera encuentra los productos al toque.',
     },
     noImage: {
-      title: 'Sube la imagen de tu plano',
-      description: 'Mientras tanto puedes marcar sobre la cuadrícula.',
+      title: 'Marca las zonas de tu tienda',
+      description:
+        'Dibújalas arrastrando sobre la cuadrícula (estantes, refrigeradoras, caja…) o sube la imagen de tu plano.',
+    },
+    start: {
+      title: '¿Cómo quieres armar tu plano?',
+      image: {
+        title: 'Subir la imagen de mi plano',
+        description: 'Una foto o dibujo visto desde arriba. Luego marcas tus estantes encima.',
+      },
+      draw: {
+        title: 'Dibujar mi tienda aquí',
+        description:
+          'Empiezas con una cuadrícula y dibujas cada zona arrastrando, como al marcar una ubicación.',
+      },
+      drawNow: 'Crear y empezar a dibujar',
+    },
+    shape: {
+      label: 'Forma de tu local',
+      square: 'Cuadrada',
+      wide: 'Rectangular',
+      long: 'Alargada',
+      hint: 'Es solo el contorno: luego dibujas dentro las zonas donde van tus productos.',
     },
     view: { label: 'Vista del plano', flat: '2D', depth: '3D' },
     mark: 'Marcar ubicación',

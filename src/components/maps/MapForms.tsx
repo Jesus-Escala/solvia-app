@@ -1,4 +1,4 @@
-import { Check, ImagePlus } from 'lucide-react';
+import { Check, ImagePlus, PencilRuler } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
 import {
   Button,
@@ -20,16 +20,31 @@ import type { SpotArea } from './MapStage';
 import { DEFAULT_SPOT_COLOR, spotHex } from './spotTones';
 import { PLAN_IMAGE_TYPES, useUploadPlanImage } from './useUploadPlanImage';
 
-/** Creates a plan (name and, optionally, its picture) or renames one. `map` undefined: closed. */
+/** How a new plan is made: from a picture of it, or drawn right here on a grid. */
+export type MapStart = 'image' | 'draw';
+
+/** Shapes of a shop drawn in the app (width / height). */
+const SHAPES = [
+  { value: 'square', aspect: 1 },
+  { value: 'wide', aspect: 1.5 },
+  { value: 'long', aspect: 2.2 },
+] as const;
+
+/**
+ * Creates a plan — from a picture or drawn here — or renames one. `map` undefined: closed.
+ * `start` is the way a new plan begins (it can be changed in the form).
+ */
 export function MapFormModal({
   map,
+  start = 'image',
   onClose,
   onSaved,
 }: {
   /** null: a new plan. */
   map: StoreMap | null | undefined;
+  start?: MapStart;
   onClose: () => void;
-  onSaved: (map: StoreMap) => void;
+  onSaved: (map: StoreMap, start: MapStart) => void;
 }) {
   const { t } = useI18n();
   return (
@@ -38,14 +53,15 @@ export function MapFormModal({
       title={map ? t('locations.renameMap') : t('locations.newMap')}
       onClose={onClose}
       closeLabel={t('common.close')}
-      size="sm"
+      size={map ? 'sm' : 'md'}
     >
       {map !== undefined && (
         <MapForm
-          key={map?.id ?? 'new'}
+          key={map?.id ?? `new-${start}`}
           map={map}
-          onDone={(saved) => {
-            onSaved(saved);
+          start={start}
+          onDone={(saved, how) => {
+            onSaved(saved, how);
             onClose();
           }}
         />
@@ -54,23 +70,88 @@ export function MapFormModal({
   );
 }
 
-function MapForm({ map, onDone }: { map: StoreMap | null; onDone: (map: StoreMap) => void }) {
+/** The two ways to start a plan, as big cards (also the page's first screen). */
+export function MapStartChoice({
+  value,
+  onChange,
+}: {
+  value: MapStart | null;
+  onChange: (start: MapStart) => void;
+}) {
+  const { t } = useI18n();
+  const options = [
+    { value: 'image' as const, icon: <ImagePlus className="h-6 w-6" /> },
+    { value: 'draw' as const, icon: <PencilRuler className="h-6 w-6" /> },
+  ];
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          aria-pressed={value === option.value}
+          onClick={() => onChange(option.value)}
+          className={cx(
+            'flex items-start gap-3 rounded-2xl border-2 p-4 text-left transition',
+            value === option.value
+              ? 'border-primary bg-primary-soft/50'
+              : 'border-line bg-surface hover:border-line-strong',
+          )}
+        >
+          <span
+            className={cx(
+              'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
+              value === option.value ? 'bg-primary text-on-primary' : 'bg-surface-2 text-primary',
+            )}
+          >
+            {option.icon}
+          </span>
+          <span className="min-w-0">
+            <span className="block font-semibold">
+              {t(`locations.start.${option.value}.title`)}
+            </span>
+            <span className="mt-0.5 block text-sm text-muted">
+              {t(`locations.start.${option.value}.description`)}
+            </span>
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function MapForm({
+  map,
+  start,
+  onDone,
+}: {
+  map: StoreMap | null;
+  start: MapStart;
+  onDone: (map: StoreMap, start: MapStart) => void;
+}) {
   const { t } = useI18n();
   const errors = useErrorText();
   const { toast } = useFeedback();
   const save = useSaveStoreMap();
   const { upload, pending } = useUploadPlanImage();
   const [name, setName] = useState(map?.name ?? '');
+  const [how, setHow] = useState<MapStart>(start);
   const [file, setFile] = useState<File | null>(null);
+  const [shape, setShape] = useState<(typeof SHAPES)[number]['value']>('wide');
   const input = useRef<HTMLInputElement>(null);
   useErrorToast(save.error);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    const saved = await save.mutateAsync({ id: map?.id ?? null, name });
+    const aspect = SHAPES.find((item) => item.value === shape)?.aspect ?? 1.5;
+    const saved = await save.mutateAsync({
+      id: map?.id ?? null,
+      name,
+      ...(map === null && how === 'draw' && { aspect }),
+    });
     toast.success(t(map ? 'locations.mapRenamed' : 'locations.mapCreated'));
-    if (file) await upload(saved.id, file);
-    onDone(saved);
+    if (map === null && how === 'image' && file) await upload(saved.id, file);
+    onDone(saved, how);
   };
 
   return (
@@ -90,41 +171,86 @@ function MapForm({ map, onDone }: { map: StoreMap | null; onDone: (map: StoreMap
         )}
       </Field>
       {map === null && (
-        <Field
-          label={t('locations.mapImage')}
-          optionalLabel={t('common.optional')}
-          hint={t('locations.mapImageHint')}
-        >
-          {(id, describedBy) => (
-            <div className="flex min-w-0 items-center gap-2">
-              <button
-                id={id}
-                type="button"
-                aria-describedby={describedBy}
-                onClick={() => input.current?.click()}
-                className={smallButtonClass('sm', 'shrink-0')}
-              >
-                <ImagePlus className="h-4 w-4" />
-                {t('locations.chooseImage')}
-              </button>
-              {file && <span className="truncate text-sm text-muted">{file.name}</span>}
-              <input
-                ref={input}
-                type="file"
-                accept={PLAN_IMAGE_TYPES}
-                className="hidden"
-                onChange={(event) => {
-                  setFile(event.target.files?.[0] ?? null);
-                  event.target.value = '';
-                }}
-              />
-            </div>
+        <>
+          <fieldset className="space-y-2">
+            <legend className="mb-2 text-sm font-medium">{t('locations.start.title')}</legend>
+            <MapStartChoice value={how} onChange={setHow} />
+          </fieldset>
+          {how === 'image' ? (
+            <Field
+              label={t('locations.mapImage')}
+              optionalLabel={t('common.optional')}
+              hint={t('locations.mapImageHint')}
+            >
+              {(id, describedBy) => (
+                <div className="flex min-w-0 items-center gap-2">
+                  <button
+                    id={id}
+                    type="button"
+                    aria-describedby={describedBy}
+                    onClick={() => input.current?.click()}
+                    className={smallButtonClass('sm', 'shrink-0')}
+                  >
+                    <ImagePlus className="h-4 w-4" />
+                    {t('locations.chooseImage')}
+                  </button>
+                  {file && <span className="truncate text-sm text-muted">{file.name}</span>}
+                  <input
+                    ref={input}
+                    type="file"
+                    accept={PLAN_IMAGE_TYPES}
+                    className="hidden"
+                    onChange={(event) => {
+                      setFile(event.target.files?.[0] ?? null);
+                      event.target.value = '';
+                    }}
+                  />
+                </div>
+              )}
+            </Field>
+          ) : (
+            <fieldset>
+              <legend className="mb-2 text-sm font-medium">{t('locations.shape.label')}</legend>
+              <div className="grid grid-cols-3 gap-2">
+                {SHAPES.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={shape === option.value}
+                    onClick={() => setShape(option.value)}
+                    className={cx(
+                      'flex flex-col items-center gap-2 rounded-xl border-2 p-3 text-sm font-medium transition',
+                      shape === option.value
+                        ? 'border-primary bg-primary-soft/50 text-primary-ink'
+                        : 'border-line hover:border-line-strong',
+                    )}
+                  >
+                    {/* The outline of the shop in that shape, on a little grid. */}
+                    <span className="flex h-12 items-center">
+                      <span
+                        aria-hidden
+                        className="block rounded-sm border-2 border-current"
+                        style={{
+                          width: 30 * Math.sqrt(option.aspect),
+                          height: 30 / Math.sqrt(option.aspect),
+                          backgroundImage:
+                            'linear-gradient(var(--color-line) 1px, transparent 1px), linear-gradient(90deg, var(--color-line) 1px, transparent 1px)',
+                          backgroundSize: '6px 6px',
+                        }}
+                      />
+                    </span>
+                    {t(`locations.shape.${option.value}`)}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-muted">{t('locations.shape.hint')}</p>
+            </fieldset>
           )}
-        </Field>
+        </>
       )}
       <div className="flex justify-end">
         <Button type="submit" loading={save.isPending || pending}>
-          {t('common.save')}
+          {map === null && how === 'draw' ? t('locations.start.drawNow') : t('common.save')}
         </Button>
       </div>
     </form>

@@ -14,7 +14,6 @@ import { useSearchParams } from 'react-router';
 import {
   Alert,
   Button,
-  EmptyState,
   IconButton,
   MenuItems,
   Page,
@@ -31,7 +30,13 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { SearchPicker } from '../components/domain/SearchPicker';
 import { ProductThumb } from '../components/domain/ProductThumb';
-import { MapFormModal, SpotFormModal, type SpotTarget } from '../components/maps/MapForms';
+import {
+  MapFormModal,
+  MapStartChoice,
+  SpotFormModal,
+  type MapStart,
+  type SpotTarget,
+} from '../components/maps/MapForms';
 import { MapStage, type MapView, type SpotArea } from '../components/maps/MapStage';
 import { spotPaint } from '../components/maps/spotTones';
 import { PLAN_IMAGE_TYPES, useUploadPlanImage } from '../components/maps/useUploadPlanImage';
@@ -84,13 +89,19 @@ function Locations() {
   const [search, setSearch] = useState('');
   const [focus, setFocus] = useState<{ id: string; at: number } | null>(null);
   const [mapForm, setMapForm] = useState<StoreMap | null | undefined>(undefined);
+  // How a new plan begins: its picture, or drawn right here.
+  const [mapStart, setMapStart] = useState<MapStart>('image');
+  const newMap = (start: MapStart) => {
+    setMapStart(start);
+    setMapForm(null);
+  };
   const [spotForm, setSpotForm] = useState<SpotTarget | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const { upload } = useUploadPlanImage();
   const image = useStoreMapImage();
   const removeMap = useDeleteStoreMap();
   const moveSpot = useSaveSpot();
-  useAddShortcut(() => setMapForm(null), mapForm === undefined && spotForm === null);
+  useAddShortcut(() => newMap('image'), mapForm === undefined && spotForm === null);
 
   const list = maps.data ?? [];
   const current = list.find((map) => map.id === params.get('map')) ?? list[0] ?? null;
@@ -185,7 +196,7 @@ function Locations() {
   };
 
   const newMapButton = (
-    <Button icon={<MapIcon className="h-4 w-4" />} onClick={() => setMapForm(null)}>
+    <Button icon={<MapIcon className="h-4 w-4" />} onClick={() => newMap('image')}>
       {t('locations.newMap')}
       <Kbd>{ADD_KEY_LABEL}</Kbd>
     </Button>
@@ -204,13 +215,17 @@ function Locations() {
       ) : maps.isLoading ? (
         <Skeleton className="min-h-80 flex-1 rounded-2xl" />
       ) : !current ? (
-        <div className="rounded-2xl border border-line bg-surface">
-          <EmptyState
-            icon={<MapIcon className="h-5 w-5" />}
-            title={t('locations.empty.title')}
-            description={t('locations.empty.description')}
-            action={newMapButton}
-          />
+        <div className="space-y-5 rounded-2xl border border-line bg-surface p-5 sm:p-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+              <MapIcon className="h-6 w-6" />
+            </span>
+            <h2 className="text-lg font-semibold">{t('locations.empty.title')}</h2>
+            <p className="mt-1 text-sm text-muted">{t('locations.empty.description')}</p>
+          </div>
+          <div className="mx-auto max-w-2xl">
+            <MapStartChoice value={null} onChange={newMap} />
+          </div>
         </div>
       ) : (
         <>
@@ -346,17 +361,29 @@ function Locations() {
                 }}
                 onChange={(spot, area) => void move(spot, area)}
               />
-              {!current.imageUrl && !placing && (
+              {/* A plan without picture nor areas yet: the two ways to go on. */}
+              {!current.imageUrl && current.spots.length === 0 && !placing && (
                 <div className="pointer-events-none absolute inset-x-0 top-[5.5rem] flex justify-center px-3">
-                  <div className="pointer-events-auto flex max-w-sm items-center gap-3 rounded-xl border border-line bg-surface/95 p-3 shadow-pop">
-                    <ImagePlus className="h-5 w-5 shrink-0 text-primary" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold">{t('locations.noImage.title')}</p>
-                      <p className="text-xs text-muted">{t('locations.noImage.description')}</p>
+                  <div className="pointer-events-auto max-w-sm space-y-2 rounded-xl border border-line bg-surface/95 p-3 shadow-pop">
+                    <p className="text-sm font-semibold">{t('locations.noImage.title')}</p>
+                    <p className="text-xs text-muted">{t('locations.noImage.description')}</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        icon={<MapPinPlus className="h-4 w-4" />}
+                        onClick={startPlacing}
+                      >
+                        {t('locations.mark')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        icon={<ImagePlus className="h-4 w-4" />}
+                        onClick={() => fileInput.current?.click()}
+                      >
+                        {t('locations.uploadImage')}
+                      </Button>
                     </div>
-                    <Button size="sm" onClick={() => fileInput.current?.click()}>
-                      {t('locations.uploadImage')}
-                    </Button>
                   </div>
                 </div>
               )}
@@ -423,8 +450,13 @@ function Locations() {
 
       <MapFormModal
         map={mapForm}
+        start={mapStart}
         onClose={() => setMapForm(undefined)}
-        onSaved={(map) => select(map.id, null)}
+        onSaved={(map, start) => {
+          select(map.id, null);
+          // Drawn here: straight to marking its first area.
+          if (start === 'draw' && mapForm === null) startPlacing();
+        }}
       />
       <SpotFormModal
         target={spotForm}

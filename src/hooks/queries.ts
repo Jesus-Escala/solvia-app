@@ -557,8 +557,11 @@ function useMapMutation<V>(request: (variables: V) => Promise<StoreMap>) {
 
 /** Creates (no `id`) or renames a plan. */
 export function useSaveStoreMap() {
-  return useMapMutation(({ id, name }: { id: string | null; name: string }) =>
-    id ? api.patch<StoreMap>(`/maps/${id}`, { name }) : api.post<StoreMap>('/maps', { name }),
+  return useMapMutation(
+    ({ id, name, aspect }: { id: string | null; name: string; aspect?: number }) =>
+      id
+        ? api.patch<StoreMap>(`/maps/${id}`, { name })
+        : api.post<StoreMap>('/maps', { name, ...(aspect !== undefined && { aspect }) }),
   );
 }
 
