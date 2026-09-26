@@ -13,6 +13,8 @@ export {
   type TextButtonProps,
 } from './components/Button';
 export { FilterFoldButton } from './components/FilterFold';
+export { ColorInput } from './components/ColorInput';
+export { COLOR_PALETTE, normalizeHex, readableTextColor } from './components/colors';
 export {
   smallButtonClass,
   type SmallButtonSize,

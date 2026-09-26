@@ -591,6 +591,8 @@ export interface SpotInput {
   name?: string;
   x?: number;
   y?: number;
+  w?: number;
+  h?: number;
   color?: SpotColor;
 }
 

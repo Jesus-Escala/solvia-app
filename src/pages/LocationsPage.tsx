@@ -1,6 +1,7 @@
 import {
   ArrowLeft,
   ImagePlus,
+  List,
   MapPinPlus,
   Map as MapIcon,
   MoreHorizontal,
@@ -20,6 +21,7 @@ import {
   PageHeader,
   Popover,
   SearchInput,
+  SegmentedControl,
   Skeleton,
   Tabs,
   TextButton,
@@ -29,9 +31,9 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { SearchPicker } from '../components/domain/SearchPicker';
 import { ProductThumb } from '../components/domain/ProductThumb';
-import { MapFormModal, SpotFormModal } from '../components/maps/MapForms';
-import { MapStage, type MapView } from '../components/maps/MapStage';
-import { SPOT_TONES } from '../components/maps/spotTones';
+import { MapFormModal, SpotFormModal, type SpotTarget } from '../components/maps/MapForms';
+import { MapStage, type MapView, type SpotArea } from '../components/maps/MapStage';
+import { spotPaint } from '../components/maps/spotTones';
 import { PLAN_IMAGE_TYPES, useUploadPlanImage } from '../components/maps/useUploadPlanImage';
 import { Kbd } from '../components/pos/PosLayout';
 import { ADD_KEY_LABEL } from '../components/pos/keys';
@@ -77,14 +79,12 @@ function Locations() {
   const [params, setParams] = useSearchParams();
   const [view, setViewState] = useState<MapView>(storedView);
   const [placing, setPlacing] = useState(false);
+  // Phones show the plan or the list, each on the whole screen.
+  const [pane, setPane] = useState<'map' | 'list'>('map');
   const [search, setSearch] = useState('');
   const [focus, setFocus] = useState<{ id: string; at: number } | null>(null);
   const [mapForm, setMapForm] = useState<StoreMap | null | undefined>(undefined);
-  const [spotForm, setSpotForm] = useState<{
-    mapId: string;
-    spot: MapSpot | null;
-    at: { x: number; y: number } | null;
-  } | null>(null);
+  const [spotForm, setSpotForm] = useState<SpotTarget | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const { upload } = useUploadPlanImage();
   const image = useStoreMapImage();
@@ -122,6 +122,7 @@ function Locations() {
   const focusSpot = (spot: MapSpot) => {
     select(current?.id ?? null, spot.id);
     setFocus({ id: spot.id, at: Date.now() });
+    setPane('map');
   };
 
   // What the search finds: spots by their name or by a product kept there.
@@ -139,6 +140,7 @@ function Locations() {
   }, [current, search]);
 
   const startPlacing = () => {
+    setPane('map');
     setView('2d');
     setPlacing(true);
   };
@@ -172,10 +174,10 @@ function Locations() {
     }
   };
 
-  const move = async (spot: MapSpot, x: number, y: number) => {
+  const move = async (spot: MapSpot, area: SpotArea) => {
     if (!current) return;
     try {
-      await moveSpot.mutateAsync({ mapId: current.id, spotId: spot.id, input: { x, y } });
+      await moveSpot.mutateAsync({ mapId: current.id, spotId: spot.id, input: area });
       toast.success(t('locations.spot.moved'));
     } catch (error) {
       toast.apiError(error);
@@ -224,8 +226,33 @@ function Locations() {
               items={list.map((map) => ({ value: map.id, label: map.name }))}
             />
           )}
-          <div className="flex min-h-0 flex-1 flex-col gap-3 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-4">
-            <section className="relative flex h-[44dvh] shrink-0 flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-card lg:h-auto lg:min-h-0">
+          <div className="shrink-0 lg:hidden">
+            <SegmentedControl
+              label={t('locations.pane.label')}
+              value={pane}
+              onChange={setPane}
+              options={[
+                {
+                  value: 'map',
+                  label: t('locations.pane.map'),
+                  icon: <MapIcon className="h-4 w-4" />,
+                },
+                {
+                  value: 'list',
+                  label: t('locations.pane.list'),
+                  icon: <List className="h-4 w-4" />,
+                  count: current.spots.length,
+                },
+              ]}
+            />
+          </div>
+          <div className="flex min-h-0 flex-1 flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-4">
+            <section
+              className={cx(
+                'relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-card',
+                pane === 'list' && 'max-lg:hidden',
+              )}
+            >
               <header className="flex items-center gap-2 border-b border-line px-3 py-2">
                 <h2 className="min-w-0 flex-1 truncate font-semibold">{current.name}</h2>
                 {placing ? (
@@ -313,14 +340,14 @@ function Locations() {
                 editable
                 focus={focus}
                 onSelect={(spot) => select(current.id, spot?.id ?? null)}
-                onPlace={(x, y) => {
+                onPlace={(area) => {
                   setPlacing(false);
-                  setSpotForm({ mapId: current.id, spot: null, at: { x, y } });
+                  setSpotForm({ mapId: current.id, spot: null, area });
                 }}
-                onMove={(spot, x, y) => void move(spot, x, y)}
+                onChange={(spot, area) => void move(spot, area)}
               />
               {!current.imageUrl && !placing && (
-                <div className="pointer-events-none absolute inset-x-0 top-14 flex justify-center px-3">
+                <div className="pointer-events-none absolute inset-x-0 top-[5.5rem] flex justify-center px-3">
                   <div className="pointer-events-auto flex max-w-sm items-center gap-3 rounded-xl border border-line bg-surface/95 p-3 shadow-pop">
                     <ImagePlus className="h-5 w-5 shrink-0 text-primary" />
                     <div className="min-w-0 flex-1">
@@ -334,20 +361,50 @@ function Locations() {
                 </div>
               )}
               {placing && (
-                <p className="pointer-events-none absolute inset-x-0 top-14 mx-auto w-fit rounded-full bg-primary px-3 py-1 text-xs font-semibold text-on-primary shadow-pop">
+                <p className="pointer-events-none absolute inset-x-3 top-[5.5rem] mx-auto w-fit rounded-2xl bg-primary px-3 py-1.5 text-center text-xs font-semibold text-on-primary shadow-pop">
                   {t('locations.hint.mark')}
                 </p>
               )}
+              {/* Phones: the chosen area, with a button to its products. */}
+              {selected && !placing && (
+                <div className="absolute inset-x-2 top-[5.5rem] flex items-center gap-3 rounded-xl border border-line bg-surface/95 p-2.5 shadow-pop lg:hidden">
+                  <SpotDot spot={selected} className="h-4 w-4" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold">{selected.name}</p>
+                    <p className="text-xs text-muted">
+                      {t('locations.productsCount', { count: selected.products.length })}
+                    </p>
+                  </div>
+                  <span className="flex shrink-0 -space-x-2">
+                    {selected.products.slice(0, 3).map((product) => (
+                      <span
+                        key={product.id}
+                        className="overflow-hidden rounded-full ring-2 ring-surface"
+                      >
+                        <ProductThumb name={product.name} imageUrl={product.imageUrl} size={28} />
+                      </span>
+                    ))}
+                  </span>
+                  <Button size="sm" onClick={() => setPane('list')}>
+                    {t('locations.seeProducts')}
+                  </Button>
+                </div>
+              )}
             </section>
 
-            <aside className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
+            <aside
+              className={cx(
+                'flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-card',
+                pane === 'map' && 'max-lg:hidden',
+              )}
+            >
               {selected ? (
                 <SpotDetail
                   key={selected.id}
                   map={current}
                   spot={selected}
                   onBack={() => select(current.id, null)}
-                  onEdit={() => setSpotForm({ mapId: current.id, spot: selected, at: null })}
+                  onEdit={() => setSpotForm({ mapId: current.id, spot: selected, area: null })}
                 />
               ) : (
                 <SpotList
@@ -382,11 +439,8 @@ function SpotDot({ spot, className }: { spot: MapSpot; className?: string }) {
   return (
     <span
       aria-hidden
-      className={cx(
-        'h-3 w-3 shrink-0 rounded-full',
-        (SPOT_TONES[spot.color] ?? SPOT_TONES.primary).pin,
-        className,
-      )}
+      className={cx('h-3 w-3 shrink-0 rounded-full', className)}
+      style={{ background: spotPaint(spot.color).base }}
     />
   );
 }

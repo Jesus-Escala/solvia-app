@@ -106,8 +106,11 @@ export interface Product {
   updatedAt: string;
 }
 
-/** Pin colors of the spots on a floor plan (theme tokens). */
-export type SpotColor = 'primary' | 'info' | 'success' | 'warning' | 'danger' | 'accent';
+/**
+ * Color of an area on a floor plan: "#rrggbb" picked by the business, or a theme color
+ * ('primary', 'info', 'success', 'warning', 'danger', 'accent') of the first spots.
+ */
+export type SpotColor = string;
 
 export interface SpotProduct {
   id: string;
@@ -119,12 +122,15 @@ export interface SpotProduct {
   stock: number;
 }
 
-/** A place marked on a floor plan (a shelf, a fridge…); x and y are fractions of the plan. */
+/** An area marked on a floor plan (a shelf, a fridge…); x and y (its center) are fractions. */
 export interface MapSpot {
   id: string;
   name: string;
   x: number;
   y: number;
+  /** Size of the area, as fractions of the plan's width and height. */
+  w: number;
+  h: number;
   color: SpotColor;
   products: SpotProduct[];
 }

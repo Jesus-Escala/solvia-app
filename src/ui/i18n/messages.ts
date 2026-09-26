@@ -165,6 +165,12 @@ export const uiEs = {
     updateAction: 'Actualizar',
     updateLater: 'Más tarde',
   },
+  color: {
+    title: 'Color',
+    none: 'Sin color',
+    custom: 'Personalizado',
+    clear: 'Quitar',
+  },
   table: {
     actions: 'Acciones',
     empty: 'Sin datos',
@@ -429,6 +435,12 @@ export const uiEn: UiMessages = {
     updateBody: 'Update to get the latest improvements.',
     updateAction: 'Update',
     updateLater: 'Later',
+  },
+  color: {
+    title: 'Color',
+    none: 'No color',
+    custom: 'Custom',
+    clear: 'Remove',
   },
   table: {
     actions: 'Actions',
