@@ -192,21 +192,18 @@ export function MethodRow({
             type="button"
             role="radio"
             aria-checked={active}
+            title={option === 'split' ? t('split.option') : t(`methods.${option}`)}
             onClick={() => onChange(option)}
             className={cx(
-              'flex min-w-0 flex-col items-center gap-1 rounded-xl border px-1 py-2 text-[11px] font-semibold transition',
+              'flex min-w-0 flex-col items-center gap-1.5 rounded-xl border px-1 py-2.5 text-xs font-semibold transition active:scale-[0.97]',
               active
-                ? 'border-primary bg-primary-soft text-primary-ink'
-                : 'border-line text-muted hover:bg-surface-2',
+                ? 'border-primary bg-primary-soft text-primary-ink ring-2 ring-primary/25'
+                : 'border-line text-muted hover:bg-surface-2 hover:text-ink',
             )}
           >
-            {option === 'split' ? (
-              <SplitMark size="sm" />
-            ) : (
-              <PaymentMethodMark method={option} size="sm" />
-            )}
+            {option === 'split' ? <SplitMark /> : <PaymentMethodMark method={option} />}
             <span className="max-w-full truncate">
-              {option === 'split' ? t('split.option') : t(`methods.${option}`)}
+              {option === 'split' ? t('split.option') : t(`methodsShort.${option}`)}
             </span>
           </button>
         );

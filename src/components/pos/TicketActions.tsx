@@ -1,7 +1,10 @@
 import { Download, Printer, ReceiptText } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Button, cx, useFeedback, WhatsAppIcon } from '@/ui';
 import { useI18n } from '../../i18n/I18nProvider';
+import { api } from '../../lib/api';
+import { saveFile } from '../../lib/download';
 import type { Sale } from '../../lib/types';
 import { FileViewer, type ViewerRequest } from '../files/FileViewer';
 import { type CashGiven, useSaleTicket } from './saleTicket';
@@ -25,6 +28,39 @@ export function TicketActions({
   const ticket = useSaleTicket();
   const [viewing, setViewing] = useState<ViewerRequest | null>(null);
   const [downloading, setDownloading] = useState(false);
+  // The PDF is fetched ahead, so sharing starts right on the tap (browsers only share then).
+  const pdf = useQuery({
+    queryKey: ['sales', sale.id, 'ticket', sale.status],
+    queryFn: async () => {
+      const file = await api.file(`/sales/${sale.id}/ticket`);
+      const name = file.fileName ?? `ticket-${sale.number}.pdf`;
+      return new File([file.blob], name, { type: 'application/pdf' });
+    },
+    staleTime: Infinity,
+  });
+
+  /**
+   * WhatsApp with the PDF: the device's share menu (phones, Windows…) with the file attached, to
+   * pick WhatsApp and the contact. Without it, the PDF is downloaded and the chat opens with the
+   * ticket written out, to attach the file there.
+   */
+  const sendWhatsApp = async () => {
+    const file = pdf.data ?? null;
+    if (file && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: file.name });
+        return;
+      } catch (error) {
+        // Closing the menu is not an error; anything else falls back to the chat.
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+      }
+    }
+    window.open(ticket.whatsappUrl(sale), '_blank', 'noopener');
+    if (file) {
+      saveFile(file, file.name);
+      toast.info(t('sales.ticket.attachTitle'), t('sales.ticket.attachHint'));
+    }
+  };
 
   const download = async () => {
     setDownloading(true);
@@ -57,7 +93,7 @@ export function TicketActions({
         <Button
           variant="secondary"
           icon={<WhatsAppIcon className="h-4 w-4 shrink-0" />}
-          onClick={() => window.open(ticket.whatsappUrl(sale), '_blank', 'noopener')}
+          onClick={() => void sendWhatsApp()}
         >
           {t('sales.ticket.send')}
         </Button>

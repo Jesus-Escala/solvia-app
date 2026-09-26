@@ -308,6 +308,13 @@ export const es = {
     cash: 'Efectivo',
     bank_transfer: 'Transferencia',
   },
+  /** Short names for tight rows of methods. */
+  methodsShort: {
+    yape: 'Yape',
+    plin: 'Plin',
+    cash: 'Efectivo',
+    bank_transfer: 'Transf.',
+  },
   templateTypes: {
     pre_due_reminder: {
       title: 'Aviso antes de la fecha',
@@ -934,6 +941,7 @@ export const es = {
       removeDiscount: 'Quitar descuento',
       discountTooHigh: 'El descuento es mayor que la venta.',
       received: '¿Con cuánto paga?',
+      paymentMethod: 'Método de pago',
       exact: 'Exacto',
       change: 'Vuelto: {amount}',
       missing: 'Faltan {amount}',
@@ -995,6 +1003,8 @@ export const es = {
       print: 'Imprimir',
       send: 'WhatsApp',
       download: 'Descargar',
+      attachTitle: 'Se descargó el PDF del ticket',
+      attachHint: 'En el chat de WhatsApp toca el clip y adjunta el archivo descargado.',
       customer: 'Cliente: {name}',
       subtotal: 'Subtotal',
       discount: 'Descuento',

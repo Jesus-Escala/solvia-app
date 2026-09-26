@@ -31,8 +31,7 @@ import { addDaysIso, todayIso } from '../domain/dueLabel';
 import { MoneyInput } from '../domain/MoneyInput';
 import { limitMoneyText, padMoneyText } from '../../lib/moneyText';
 import { NewCustomerFields, type NewCustomer } from '../domain/NewCustomerFields';
-import { PaymentMethodMark } from '../domain/PaymentMethods';
-import { MethodRow, SplitMark, SplitPayments } from '../domain/SplitPayments';
+import { MethodRow, SplitPayments } from '../domain/SplitPayments';
 import {
   partsComplete,
   partsPayload,
@@ -51,9 +50,6 @@ import { useI18n } from '../../i18n/I18nProvider';
 import type { PaymentMethod, ProductOption, Sale, SaleDocType } from '../../lib/types';
 
 const DOC_TYPES: SaleDocType[] = ['sale_note', 'receipt', 'invoice'];
-/** How the customer pays: one of the four methods, several of them ("Varios"), or on credit. */
-type PayOption = PaymentMethod | 'split' | 'credit';
-const PAY_OPTIONS: PaymentMethod[] = ['cash', 'yape', 'plin', 'bank_transfer'];
 
 /**
  * A point of sale for any kind of business. Left: the catalog (best sellers as big tiles, search
@@ -92,7 +88,9 @@ export function SalePos({
   // Phones: the ticket is shown over the catalog.
   const [panelOpen, setPanelOpen] = useState(false);
   // Selling on credit creates a debt in Cobranza: without that module every sale is cash.
-  const [pay, setPay] = useState<PayOption>(preset && modules.collections ? 'credit' : 'cash');
+  // How: at once ("Al contado") or on credit ("Fiado"); then with what method (or several).
+  const [credit, setCredit] = useState(Boolean(preset) && modules.collections);
+  const [payMethod, setPayMethod] = useState<MethodChoice>('cash');
   const [customer, setCustomer] = useState<PickedCustomer | null>(preset ?? null);
   const [newCustomer, setNewCustomer] = useState<NewCustomer | null>(null);
   const [dueDate, setDueDate] = useState(addDaysIso(today, 7));
@@ -111,9 +109,9 @@ export function SalePos({
   const [downParts, setDownParts] = useState<PartDraft[]>([]);
   const [done, setDone] = useState<{ sale: Sale; cash: CashGiven | null } | null>(null);
 
-  const credit = pay === 'credit';
-  const split = pay === 'split';
-  const method: PaymentMethod = credit || split ? 'cash' : pay;
+  const split = !credit && payMethod === 'split';
+  const method: PaymentMethod = payMethod === 'split' ? 'cash' : payMethod;
+  const cashOnly = !credit && payMethod === 'cash';
   // Money, as the API computes it: each line rounded, then the discount.
   const subtotal = round2(lines.reduce((sum, line) => sum + round2(line.quantity * line.price), 0));
   const discountValue = showDiscount ? money(discountText) : 0;
@@ -123,7 +121,7 @@ export function SalePos({
       : discountValue;
   const discountTooHigh = discount > subtotal;
   const total = Math.max(0, round2(subtotal - discount));
-  const received = pay === 'cash' ? money(receivedText) : 0;
+  const received = cashOnly ? money(receivedText) : 0;
   const down = credit ? money(downText) : 0;
   const downTooHigh = down > 0 && down >= total;
   const count = lines.reduce((sum, line) => sum + line.quantity, 0);
@@ -167,6 +165,20 @@ export function SalePos({
     }
   };
 
+  /** Esc on the ticket: back to the list of sales (asking first with products in it). */
+  const leaveToList = async () => {
+    if (lines.length > 0) {
+      const ok = await confirm({
+        title: t('sales.pos.leaveTitle'),
+        message: t('sales.pos.leaveMessage'),
+        confirmLabel: t('sales.pos.leave'),
+        cancelLabel: t('common.cancel'),
+      });
+      if (!ok) return;
+    }
+    onClose();
+  };
+
   const goCheckout = () => {
     if (lines.length === 0) return;
     if (discountTooHigh) {
@@ -206,6 +218,14 @@ export function SalePos({
         event.preventDefault();
         event.stopPropagation();
         back();
+      } else if (
+        event.key === 'Escape' &&
+        // Esc with a search typed clears it; with a dialog open, closes it.
+        (searchRef.current?.value ?? '') === '' &&
+        !document.querySelector('dialog[open]')
+      ) {
+        event.preventDefault();
+        void leaveToList();
       }
     };
     window.addEventListener('keydown', onKey, true);
@@ -423,17 +443,12 @@ export function SalePos({
     ? t('sales.form.downTooHigh')
     : split && !partsComplete(splitParts, total)
       ? t('split.notComplete', { amount: fmt.money(total) })
-      : pay === 'cash' && received > 0 && received < total - 0.005
+      : cashOnly && received > 0 && received < total - 0.005
         ? t('sales.form.receivedShort', { amount: fmt.money(round2(total - received)) })
         : credit && down > 0 && downMethod === 'split' && !partsComplete(downParts, down)
           ? t('split.notComplete', { amount: fmt.money(down) })
           : null;
 
-  const payOptions: PayOption[] = [
-    ...PAY_OPTIONS,
-    'split',
-    ...(modules.collections ? (['credit'] as const) : []),
-  ];
   const checkout = (
     <form
       ref={formRef}
@@ -479,51 +494,51 @@ export function SalePos({
           }
         </Field>
 
-        <div>
-          <p className="label">{t('sales.form.howPays')}</p>
-          <div
-            role="radiogroup"
-            aria-label={t('sales.form.howPays')}
-            className="grid grid-cols-3 gap-2"
-          >
-            {payOptions.map((option) => {
-              const active = pay === option;
-              return (
+        {/* 1. At once or on credit (credit needs Cobranza). */}
+        {modules.collections && (
+          <div>
+            <p className="label">{t('sales.form.howPays')}</p>
+            <div
+              role="radiogroup"
+              aria-label={t('sales.form.howPays')}
+              className="grid grid-cols-2 gap-2"
+            >
+              {([false, true] as const).map((option) => (
                 <button
-                  key={option}
+                  key={String(option)}
                   type="button"
                   role="radio"
-                  aria-checked={active}
-                  onClick={() => {
-                    setPay(option);
-                    if (option === 'split' && pay !== 'split') setSplitParts(startParts(total));
-                  }}
+                  aria-checked={credit === option}
+                  onClick={() => setCredit(option)}
                   className={cx(
-                    'flex flex-col items-center gap-1.5 rounded-xl border px-2 py-2.5 text-xs font-semibold transition active:scale-[0.97]',
-                    active
+                    'flex items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold transition active:scale-[0.98] [&>svg]:h-5 [&>svg]:w-5',
+                    credit === option
                       ? 'border-primary bg-primary-soft text-primary-ink ring-2 ring-primary/25'
                       : 'border-line text-muted hover:bg-surface-2 hover:text-ink',
                   )}
                 >
-                  {option === 'credit' ? (
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning-soft text-warning-ink">
-                      <ReceiptText className="h-[18px] w-[18px]" />
-                    </span>
-                  ) : option === 'split' ? (
-                    <SplitMark />
-                  ) : (
-                    <PaymentMethodMark method={option} />
-                  )}
-                  {option === 'credit'
-                    ? t('sales.types.credit')
-                    : option === 'split'
-                      ? t('split.option')
-                      : t(`methods.${option}`)}
+                  {option ? <ReceiptText /> : <HandCoins />}
+                  {option ? t('sales.types.credit') : t('sales.types.cash')}
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* 2. With what: one method or several. */}
+        {!credit && (
+          <div>
+            <p className="label">{t('sales.form.paymentMethod')}</p>
+            <MethodRow
+              label={t('sales.form.paymentMethod')}
+              value={payMethod}
+              onChange={(value) => {
+                setPayMethod(value);
+                if (value === 'split' && payMethod !== 'split') setSplitParts(startParts(total));
+              }}
+            />
+          </div>
+        )}
 
         {split && (
           <div className="space-y-2 rounded-2xl border border-line p-3">
@@ -532,7 +547,7 @@ export function SalePos({
           </div>
         )}
 
-        {pay === 'cash' && total > 0 && (
+        {cashOnly && total > 0 && (
           <ChangeCalculator
             total={total}
             text={receivedText}

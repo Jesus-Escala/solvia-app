@@ -307,6 +307,12 @@ export const en: Messages = {
     cash: 'Cash',
     bank_transfer: 'Bank transfer',
   },
+  methodsShort: {
+    yape: 'Yape',
+    plin: 'Plin',
+    cash: 'Cash',
+    bank_transfer: 'Transfer',
+  },
   templateTypes: {
     pre_due_reminder: {
       title: 'Pre-due reminder',
@@ -927,7 +933,8 @@ export const en: Messages = {
       addDiscount: 'Add a discount',
       removeDiscount: 'Remove discount',
       discountTooHigh: 'The discount is more than the sale.',
-      received: 'How much do they pay with?',
+      received: 'How much do they hand over?',
+      paymentMethod: 'Payment method',
       exact: 'Exact',
       change: 'Change: {amount}',
       missing: '{amount} missing',
@@ -989,6 +996,8 @@ export const en: Messages = {
       print: 'Print',
       send: 'WhatsApp',
       download: 'Download',
+      attachTitle: 'The ticket PDF was downloaded',
+      attachHint: 'In the WhatsApp chat tap the clip and attach the downloaded file.',
       customer: 'Customer: {name}',
       subtotal: 'Subtotal',
       discount: 'Discount',

@@ -180,11 +180,30 @@ export function PurchasePos({
       } else if (isSaveKey(event)) {
         event.preventDefault();
         formRef.current?.requestSubmit();
+      } else if (
+        event.key === 'Escape' &&
+        (searchRef.current?.value ?? '') === '' &&
+        !document.querySelector('dialog[open]')
+      ) {
+        // Esc: back to the list of purchases (asking first with products in it).
+        event.preventDefault();
+        void (async () => {
+          if (lines.length > 0) {
+            const ok = await confirm({
+              title: t('sales.pos.leaveTitle'),
+              message: t('sales.pos.leaveMessage'),
+              confirmLabel: t('sales.pos.leave'),
+              cancelLabel: t('common.cancel'),
+            });
+            if (!ok) return;
+          }
+          onClose();
+        })();
       }
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [newName]);
+  });
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();

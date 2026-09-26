@@ -15,6 +15,7 @@ export function PurchasePosPage() {
         { keys: SAVE_KEY_LABEL, label: t('purchases.pos.keySave') },
         { keys: SEARCH_KEY_LABEL, label: t('sales.pos.keySearch') },
         { keys: ADD_KEY_LABEL, label: t('sales.pos.keyAdd') },
+        { keys: 'Esc', label: t('sales.pos.keyBack') },
       ]}
     >
       {({ onDirty, leave }) => <PurchasePos onClose={leave} onDirty={onDirty} />}

@@ -22,7 +22,7 @@ export function Page({
   return (
     <div
       className={cx(
-        'animate-page-in mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-8',
+        'animate-page-in w-full px-4 py-5 sm:px-6 lg:px-8',
         // min-h keeps tables usable on very short viewports; the shell scrolls in that case.
         fill && 'space-y-4 md:flex md:h-full md:min-h-[560px] md:flex-col md:gap-4 md:space-y-0',
         !fill && 'space-y-5',

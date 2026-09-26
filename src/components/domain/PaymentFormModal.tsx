@@ -12,13 +12,18 @@ import {
   useErrorToast,
   TextButton,
 } from '@/ui';
-import type { PaymentMethod, Receivable } from '../../lib/types';
+import type { Receivable } from '../../lib/types';
 import { todayIso } from './dueLabel';
 import { MoneyInput } from './MoneyInput';
 import { moneyText } from '../../lib/moneyText';
-import { PaymentMethodPicker } from './PaymentMethods';
-import { SplitPayments } from './SplitPayments';
-import { partsComplete, partsPayload, startParts, type PartDraft } from './splitParts';
+import { MethodRow, SplitPayments } from './SplitPayments';
+import {
+  partsComplete,
+  partsPayload,
+  startParts,
+  type MethodChoice,
+  type PartDraft,
+} from './splitParts';
 
 const MAX_PROOF_MB = 5;
 
@@ -58,9 +63,10 @@ export function PaymentForm({
   const register = useRegisterPayment();
   const fileInput = useRef<HTMLInputElement>(null);
   const [amount, setAmount] = useState(moneyText(receivable.outstandingAmount));
-  const [method, setMethod] = useState<PaymentMethod>('yape');
-  // Paid with several methods at once (part in cash, part with Yape…): null with one.
-  const [parts, setParts] = useState<PartDraft[] | null>(null);
+  const [method, setMethod] = useState<MethodChoice>('yape');
+  // Paid with several methods at once (part in cash, part with Yape…).
+  const [splitParts, setSplitParts] = useState<PartDraft[]>([]);
+  const parts = method === 'split' ? splitParts : null;
   const [date, setDate] = useState(todayIso());
   const [changeDate, setChangeDate] = useState(false);
   const [proof, setProof] = useState<File | null>(null);
@@ -85,7 +91,10 @@ export function PaymentForm({
     }
     await register.mutateAsync({
       receivableId: receivable.id,
-      parts: parts === null ? [{ method, amount: value }] : partsPayload(parts),
+      parts:
+        parts === null || method === 'split'
+          ? partsPayload(splitParts)
+          : [{ method, amount: value }],
       date,
       proof,
     });
@@ -168,21 +177,22 @@ export function PaymentForm({
 
       <div>
         <p className="label">{t('payment.method')}</p>
-        {parts === null ? (
-          <PaymentMethodPicker label={t('payment.method')} value={method} onChange={setMethod} />
-        ) : (
-          <div className="space-y-2 rounded-xl border border-line p-3">
+        <MethodRow
+          label={t('payment.method')}
+          value={method}
+          onChange={(value) => {
+            if (value === 'split' && method !== 'split') {
+              setSplitParts(startParts(numericAmount));
+            }
+            setMethod(value);
+          }}
+        />
+        {method === 'split' && (
+          <div className="mt-2 space-y-2 rounded-xl border border-line p-3">
             <p className="text-xs text-muted">{t('split.hint')}</p>
-            <SplitPayments parts={parts} onChange={setParts} target={numericAmount} />
+            <SplitPayments parts={splitParts} onChange={setSplitParts} target={numericAmount} />
           </div>
         )}
-        <TextButton
-          size="xs"
-          className="mt-2"
-          onClick={() => setParts(parts === null ? startParts(numericAmount, 'cash') : null)}
-        >
-          {parts === null ? t('split.toggle') : t('split.single')}
-        </TextButton>
       </div>
 
       <div>
