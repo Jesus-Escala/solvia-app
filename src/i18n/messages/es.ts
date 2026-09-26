@@ -144,6 +144,7 @@ export const es = {
       'Tablas con el detalle de tu negocio. Elige un reporte y las fechas; puedes bajarlo a Excel.',
     choose: 'Elige un reporte',
     area: 'Área de los reportes',
+    search: 'Buscar en el reporte',
     groups: {
       sales: 'Ventas',
       purchases: 'Compras',

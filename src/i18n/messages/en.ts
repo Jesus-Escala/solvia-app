@@ -142,6 +142,7 @@ export const en: Messages = {
       'Tables with the details of your business. Pick a report and the dates; you can download it for Excel.',
     choose: 'Pick a report',
     area: 'Area of the reports',
+    search: 'Search the report',
     groups: {
       sales: 'Sales',
       purchases: 'Purchases',

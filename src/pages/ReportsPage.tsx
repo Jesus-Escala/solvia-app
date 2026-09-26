@@ -27,17 +27,18 @@ import {
   DataTable,
   FilterFoldButton,
   Tabs,
-  KpiCard,
-  KpiRow,
   Page,
   PageHeader,
   useErrorText,
   useUrlState,
   type DataTableColumn,
+  SearchInput,
 } from '@/ui';
 import { isValidRange, presetRange, type PeriodRange } from '../components/dashboard/period';
 import { PeriodPicker } from '../components/dashboard/PeriodPicker';
 import { FileViewer, type ViewerKind, type ViewerRequest } from '../components/files/FileViewer';
+import { ReportSummary } from '../components/reports/ReportSummary';
+import { rowMatches } from '../lib/searchText';
 import { useInsightTable, useReport } from '../hooks/queries';
 import { api } from '../lib/api';
 import { type Modules, useModules } from '../hooks/useModules';
@@ -409,9 +410,15 @@ function InsightReportView({
       sortValue: (row) => row.cells[index] ?? null,
     }),
   );
+  const [search, setSearch] = useState('');
+  // Typing narrows the rows; the totals line is for the whole report, so it goes while searching.
   const rows: InsightRow[] | undefined = data && [
-    ...data.rows.map((cells, index) => ({ key: String(index), cells })),
-    ...(data.totals && data.rows.length > 0 ? [{ key: 'totals', cells: data.totals }] : []),
+    ...data.rows
+      .map((cells, index) => ({ key: String(index), cells }))
+      .filter((row) => rowMatches(row.cells, search)),
+    ...(data.totals && data.rows.length > 0 && search === ''
+      ? [{ key: 'totals', cells: data.totals }]
+      : []),
   ];
 
   return (
@@ -422,20 +429,20 @@ function InsightReportView({
         onRangeChange={onRangeChange}
         ready={Boolean(data)}
       />
-      <KpiRow compact>
-        {(data?.kpis ?? [{ label: '', value: 0, kind: 'money', tone: 'default' }]).map((kpi) => (
-          <KpiCard
-            key={kpi.label}
-            label={kpi.label}
-            value={kpi.kind === 'money' ? fmt.money(kpi.value) : fmt.number(kpi.value)}
-            tone={kpi.tone}
-            loading={query.isLoading}
-          />
-        ))}
-      </KpiRow>
+      <ReportSummary
+        loading={query.isLoading}
+        figures={(data?.kpis ?? []).map((kpi) => ({
+          label: kpi.label,
+          value: kpi.kind === 'money' ? fmt.money(kpi.value) : fmt.number(kpi.value),
+          tone: kpi.tone,
+        }))}
+      />
       <DataTable
         caption={t(`reports.names.${report.id}`)}
         columnsStorageKey={`report-${report.id}`}
+        search={
+          <SearchInput value={search} onChange={setSearch} placeholder={t('reports.search')} />
+        }
         columns={columns}
         rows={rows}
         rowKey={(row) => row.key}
@@ -462,6 +469,7 @@ function TypedReportView({
   const id = report.id as ReportId;
   const query = useReport(id, report.dated ? range : null);
   const table = useReportTable(id, query.data);
+  const [search, setSearch] = useState('');
   return (
     <>
       <ReportToolbar
@@ -470,16 +478,15 @@ function TypedReportView({
         onRangeChange={onRangeChange}
         ready={Boolean(query.data)}
       />
-      <KpiRow compact>
-        {table.kpis.map((kpi) => (
-          <KpiCard key={kpi.label} {...kpi} loading={query.isLoading} />
-        ))}
-      </KpiRow>
+      <ReportSummary loading={query.isLoading} figures={table.kpis} />
       <DataTable
         caption={t(`reports.names.${report.id}`)}
         columnsStorageKey={`report-${report.id}`}
+        search={
+          <SearchInput value={search} onChange={setSearch} placeholder={t('reports.search')} />
+        }
         columns={table.columns}
-        rows={table.rows}
+        rows={table.rows?.filter((row) => rowMatches(row, search))}
         rowKey={table.rowKey}
         loading={query.isLoading}
         fetching={query.isFetching && !query.isLoading}
