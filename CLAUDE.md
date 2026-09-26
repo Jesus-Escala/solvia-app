@@ -111,7 +111,7 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
 - Styling with the semantic tokens (`bg-surface`, `text-muted`, `border-line`, `bg-primary`,
   status colors…) so light/dark themes work; no hardcoded hex colors in pages.
 - Filters with "Todos" (`SegmentedControl`): "Todos" goes first and is the default.
-- Tables: `<Page fill>` + `<DataTable>` (content-sized, scrolls inside, never the page). Dialogs:
+- Tables: `<Page fill>` + `<DataTable>` (content-sized, scrolls inside, never the page — on phones too, like TSI's table-ultimate). The search box goes in `search` (full width on phones), the filters in `toolbar` (one row that scrolls sideways on phones). Dialogs:
   `<Modal>`; confirmations: `useFeedback().confirm`; notifications: `useFeedback().toast`.
   Errors from forms/actions are **toasts, not inline alerts**: `useErrorToast(mutation.error)` in the
   form, or `toast.apiError(err)` in a catch. `toast.success/error/info/warning(title, description?)`,

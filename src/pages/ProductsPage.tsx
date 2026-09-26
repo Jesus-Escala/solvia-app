@@ -313,13 +313,15 @@ function ProductsList() {
       <DataTable
         columnsStorageKey="products"
         caption={t('products.title')}
+        search={
+          <SearchInput
+            value={state.search}
+            onChange={(search) => update({ search, page: '1' })}
+            placeholder={t('products.searchPlaceholder')}
+          />
+        }
         toolbar={
           <>
-            <SearchInput
-              value={state.search}
-              onChange={(search) => update({ search, page: '1' })}
-              placeholder={t('products.searchPlaceholder')}
-            />
             <SegmentedControl
               label={t('products.filters.label')}
               value={state.status}
@@ -369,13 +371,13 @@ function ProductsList() {
         rowKey={(row) => row.id}
         loading={query.isLoading}
         fetching={query.isFetching && !query.isLoading}
-        {...(query.error && {
+        {...(query.error !== null && {
           error: <Alert tone="danger">{errors.message(query.error)}</Alert>,
         })}
         onRowClick={(row) => setEditing(row)}
         onRowEdit={(row) => setEditing(row)}
         {...(isAdmin && { onRowDelete: (row: Product) => void deleteProduct(row) })}
-        {...(state.sortBy && { sort: { id: state.sortBy, dir: state.sortDir as SortDir } })}
+        {...(state.sortBy !== '' && { sort: { id: state.sortBy, dir: state.sortDir as SortDir } })}
         onSortChange={(sort) =>
           update({ sortBy: sort?.id ?? '', sortDir: sort?.dir ?? '', page: '1' })
         }

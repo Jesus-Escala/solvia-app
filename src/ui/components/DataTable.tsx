@@ -83,7 +83,9 @@ export interface DataTableProps<T> extends Omit<HTMLAttributes<HTMLElement>, 'ch
    */
   onSortChange?: (sort: DataTableSort | null) => void;
   pagination?: DataTablePagination;
-  /** Left side of the toolbar (filters, search). */
+  /** The search box: first in the toolbar; on phones a full-width row of its own. */
+  search?: ReactNode;
+  /** Filters of the toolbar; on phones one row that scrolls sideways. */
   toolbar?: ReactNode;
   /** Right side of the toolbar (extra buttons). */
   toolbarEnd?: ReactNode;
@@ -142,6 +144,7 @@ export function DataTable<T>({
   sort: controlledSort,
   onSortChange,
   pagination,
+  search,
   toolbar,
   toolbarEnd,
   columnsStorageKey,
@@ -326,7 +329,7 @@ export function DataTable<T>({
       </Popover>
     ) : null;
 
-  const hasToolbar = Boolean(toolbar || toolbarEnd || columnsMenu);
+  const hasToolbar = Boolean(search || toolbar || toolbarEnd || columnsMenu);
   const titleColumn = columns.find((column) => column.mobile === 'title') ?? visibleColumns[0];
   const subtitleColumns = visibleColumns.filter((column) => column.mobile === 'subtitle');
   const asideColumns = visibleColumns.filter((column) => column.mobile === 'aside');
@@ -343,27 +346,48 @@ export function DataTable<T>({
     <section
       className={cx(
         'flex min-w-0 flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-card',
-        // flex: 0 1 auto -> content height, shrinking to the available space (then scrolls).
-        // Phones: natural height, the page scrolls (see <Page fill>).
-        fill && 'md:max-h-full md:min-h-0 md:shrink',
+        // flex: 0 1 auto -> content height, shrinking to the available space (then scrolls),
+        // on phones too: the list scrolls inside, the filters and the pages stay in place.
+        fill && 'max-h-full min-h-0 shrink',
         className,
       )}
       {...rest}
     >
       {hasToolbar && (
-        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-line px-4 py-3">
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">{toolbar}</div>
-          <div className="flex items-center gap-2">
-            {toolbarEnd}
-            {columnsMenu}
+        // Computers: one wrapping row (search, filters, then the buttons on the right). Phones:
+        // the search with the buttons, and below it the filters in one row that scrolls sideways
+        // (so they never take half the screen).
+        <div className="flex shrink-0 flex-col gap-2 border-b border-line px-3 py-2.5 md:flex-row md:flex-wrap md:items-center md:px-4 md:py-3">
+          <div className="flex items-center gap-2 md:contents">
+            {search && <div className="min-w-0 flex-1 md:flex-none">{search}</div>}
+            <div
+              className={cx(
+                'flex items-center gap-2 md:order-last md:ml-auto',
+                !search && 'max-md:hidden',
+              )}
+            >
+              {toolbarEnd}
+              {columnsMenu}
+            </div>
           </div>
+          {(toolbar || !search) && (
+            <div className="-mx-3 flex min-w-0 items-center gap-2 overflow-x-auto px-3 [scrollbar-width:none]! max-md:[&_[role=radiogroup]]:flex-nowrap max-md:[&_[role=radiogroup]]:rounded-full md:mx-0 md:flex-1 md:flex-wrap md:overflow-visible md:px-0 [&>*]:shrink-0">
+              {toolbar}
+              {!search && (
+                <div className="ml-auto flex items-center gap-2 md:hidden">
+                  {toolbarEnd}
+                  {columnsMenu}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
       <div
         className={cx(
           'relative min-h-0 shrink overflow-auto',
-          fill ? 'md:min-h-40' : 'md:max-h-(--table-max-h)',
+          fill ? 'min-h-32 md:min-h-40' : 'md:max-h-(--table-max-h)',
         )}
         style={fill ? undefined : ({ '--table-max-h': `${maxHeight}px` } as React.CSSProperties)}
         aria-busy={showSkeleton || showFetching}

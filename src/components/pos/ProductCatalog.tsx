@@ -200,7 +200,7 @@ export function ProductCatalog({
           <div
             role="radiogroup"
             aria-label={t('pos.categories')}
-            className="-mx-3 flex gap-1.5 overflow-x-auto px-3 pb-1 [scrollbar-width:none] sm:-mx-4 sm:px-4"
+            className="-mx-3 flex gap-1.5 overflow-x-auto px-3 pb-1 [scrollbar-width:none]! sm:-mx-4 sm:px-4"
           >
             <CategoryChip
               active={category === null}

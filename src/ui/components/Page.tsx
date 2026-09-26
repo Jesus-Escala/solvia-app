@@ -4,10 +4,10 @@ import { cx } from './cx';
 /**
  * Page wrapper inside the app shell.
  *
- * - `fill`: from `md` up, the page takes exactly the available height (no page scroll) and its
- *   last child (usually a DataTable) grows to fill the rest, scrolling internally. This mirrors
- *   the "table takes the remaining page height" behavior of the TSI component library. On
- *   phones there is too little height for that, so the page flows and scrolls normally.
+ * - `fill`: the page takes exactly the available height (no page scroll), on phones too, and its
+ *   last child (usually a DataTable) fills the rest, scrolling internally with its header and
+ *   filters kept in place. This mirrors the "table takes the remaining page height" behavior of
+ *   the TSI component library (table-ultimate).
  * - default: normal flowing content; the shell's content area scrolls.
  */
 export function Page({
@@ -24,7 +24,8 @@ export function Page({
       className={cx(
         'animate-page-in w-full px-4 py-5 sm:px-6 lg:px-8',
         // min-h keeps tables usable on very short viewports; the shell scrolls in that case.
-        fill && 'space-y-4 md:flex md:h-full md:min-h-[560px] md:flex-col md:gap-4 md:space-y-0',
+        // Phones too: the page stays still and only the table scrolls (like TSI's table-ultimate).
+        fill && 'flex h-full min-h-0 flex-col gap-3 max-md:py-3 md:min-h-[560px] md:gap-4',
         !fill && 'space-y-5',
         className,
       )}
@@ -46,18 +47,21 @@ export function PageHeader({
   eyebrow?: ReactNode;
 }) {
   return (
-    <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
       <div className="min-w-0">
         {eyebrow && (
           <div className="mb-1.5 text-[11px] font-semibold tracking-[0.14em] text-accent-ink uppercase">
             {eyebrow}
           </div>
         )}
-        <h1 className="text-[1.75rem] leading-tight font-semibold text-ink sm:text-[2.1rem]">
+        <h1 className="text-[1.5rem] leading-tight font-semibold text-ink sm:text-[2.1rem]">
           {title}
         </h1>
         {description && (
-          <div className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted">{description}</div>
+          // Phones: the room goes to the list (the description is for bigger screens).
+          <div className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted max-sm:hidden">
+            {description}
+          </div>
         )}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}

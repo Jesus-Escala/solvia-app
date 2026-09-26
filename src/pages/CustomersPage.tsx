@@ -171,13 +171,15 @@ export function CustomersPage() {
         data-tour="customers-table"
         columnsStorageKey="customers"
         caption={t('customers.title')}
+        search={
+          <SearchInput
+            value={state.search}
+            onChange={(search) => update({ search })}
+            placeholder={t('customers.searchPlaceholder')}
+          />
+        }
         toolbar={
           <>
-            <SearchInput
-              value={state.search}
-              onChange={(search) => update({ search })}
-              placeholder={t('customers.searchPlaceholder')}
-            />
             <SegmentedControl
               label={t('customers.columns.risk')}
               value={state.risk}

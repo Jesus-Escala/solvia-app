@@ -340,13 +340,15 @@ function SalesList() {
       <DataTable
         columnsStorageKey="sales"
         caption={t('sales.title')}
+        search={
+          <SearchInput
+            value={state.search}
+            onChange={(search) => update({ search, page: '1' })}
+            placeholder={t('sales.searchPlaceholder')}
+          />
+        }
         toolbar={
           <>
-            <SearchInput
-              value={state.search}
-              onChange={(search) => update({ search, page: '1' })}
-              placeholder={t('sales.searchPlaceholder')}
-            />
             <SegmentedControl
               label={t('sales.columns.payment')}
               value={state.type}

@@ -232,7 +232,7 @@ function SuppliersList() {
       <DataTable
         columnsStorageKey="suppliers"
         caption={t('suppliers.title')}
-        toolbar={
+        search={
           <SearchInput
             value={state.search}
             onChange={(search) => update({ search, page: '1' })}

@@ -55,7 +55,7 @@ export function AppShell() {
           <Sidebar collapsed={collapsed} />
           <div className="flex min-w-0 flex-1 flex-col">
             <Topbar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
-            <main className="min-h-0 flex-1 overflow-y-auto">
+            <main className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
               <Outlet />
             </main>
             <BottomNav />

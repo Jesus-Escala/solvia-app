@@ -84,6 +84,13 @@ export function ReceivablesPage() {
         data-tour="receivables-table"
         columnsStorageKey="receivables"
         caption={t('receivables.title')}
+        search={
+          <SearchInput
+            value={state.search}
+            onChange={(search) => update({ search })}
+            placeholder={t('receivables.searchPlaceholder')}
+          />
+        }
         toolbar={
           <>
             <SegmentedControl
@@ -114,11 +121,6 @@ export function ReceivablesPage() {
               onChange={(range) =>
                 update({ dueFrom: range?.from ?? '', dueTo: range?.to ?? '', page: '1' })
               }
-            />
-            <SearchInput
-              value={state.search}
-              onChange={(search) => update({ search })}
-              placeholder={t('receivables.searchPlaceholder')}
             />
           </>
         }
