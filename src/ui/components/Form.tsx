@@ -129,45 +129,76 @@ export function Tabs<T extends string>({
   items: Array<TabItem<T>>;
   onChange: (value: T) => void;
   label: string;
-  /** Phones: equal-width tabs with the icon above the label, so 4–5 tabs always fit. */
+  /** Phones: equal-width tabs with the icon above the label (they scroll when they do not fit). */
   stretch?: boolean;
 } & Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'>) {
+  // Phones with more than 4 tabs: a list to pick the section (tabs would hide off-screen).
+  const asList = items.length > 4;
+  const current = items.find((item) => item.value === value);
   return (
-    <div
-      role="tablist"
-      aria-label={label}
-      className="flex gap-1 overflow-x-auto overflow-y-hidden border-b border-line [scrollbar-width:none]! [&::-webkit-scrollbar]:hidden"
-      {...rest}
-    >
-      {items.map((item) => {
-        const active = item.value === value;
-        return (
-          <button
-            key={item.value}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            onClick={() => onChange(item.value)}
-            className={cx(
-              '-mb-px inline-flex items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium whitespace-nowrap transition',
-              stretch &&
-                'max-sm:min-w-0 max-sm:flex-1 max-sm:flex-col max-sm:gap-1 max-sm:px-1 max-sm:py-2 max-sm:text-[11px]',
-              active
-                ? 'border-primary text-ink'
-                : 'border-transparent text-muted hover:border-line-strong hover:text-ink',
-            )}
+    <>
+      {asList && (
+        <label className="relative block sm:hidden">
+          <span className="sr-only">{label}</span>
+          {current?.icon && (
+            <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-primary [&>svg]:h-4 [&>svg]:w-4">
+              {current.icon}
+            </span>
+          )}
+          <select
+            className={cx('input font-semibold', current?.icon ? 'pl-10' : null)}
+            value={value}
+            onChange={(event) => onChange(event.target.value as T)}
           >
-            {item.icon && <span className="[&>svg]:h-4 [&>svg]:w-4">{item.icon}</span>}
-            {item.label}
-            {item.count !== undefined && (
-              <span className="rounded-full bg-surface-3 px-1.5 text-[11px] text-muted tabular-nums">
-                {item.count}
-              </span>
-            )}
-          </button>
-        );
-      })}
-    </div>
+            {items.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+                {item.count !== undefined ? ` (${item.count})` : ''}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      <div
+        role="tablist"
+        aria-label={label}
+        className={cx(
+          'flex gap-1 overflow-x-auto overflow-y-hidden border-b border-line [scrollbar-width:none]! [&::-webkit-scrollbar]:hidden',
+          asList && 'max-sm:hidden',
+        )}
+        {...rest}
+      >
+        {items.map((item) => {
+          const active = item.value === value;
+          return (
+            <button
+              key={item.value}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => onChange(item.value)}
+              className={cx(
+                '-mb-px inline-flex items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium whitespace-nowrap transition',
+                stretch &&
+                  // Each tab keeps room for its name (two lines if needed); with many, they scroll.
+                  'max-sm:min-w-[4.75rem] max-sm:flex-1 max-sm:flex-col max-sm:gap-1 max-sm:px-1.5 max-sm:py-2 max-sm:text-center max-sm:text-[11px] max-sm:leading-tight max-sm:whitespace-normal',
+                active
+                  ? 'border-primary text-ink'
+                  : 'border-transparent text-muted hover:border-line-strong hover:text-ink',
+              )}
+            >
+              {item.icon && <span className="[&>svg]:h-4 [&>svg]:w-4">{item.icon}</span>}
+              {item.label}
+              {item.count !== undefined && (
+                <span className="rounded-full bg-surface-3 px-1.5 text-[11px] text-muted tabular-nums">
+                  {item.count}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </>
   );
 }
 

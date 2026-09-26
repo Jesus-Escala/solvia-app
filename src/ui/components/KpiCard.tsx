@@ -154,11 +154,21 @@ export function KpiCard({
 /** Responsive KPI row: 2 per row on phones, 3 on tablets, all in one row on wide screens. */
 export function KpiRow({
   children,
+  compact = false,
   ...rest
-}: { children: ReactNode } & React.HTMLAttributes<HTMLDivElement>) {
+}: {
+  children: ReactNode;
+  /** Phones: one row of small tiles that slides sideways (leaves room for a table below). */
+  compact?: boolean;
+} & React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className="stagger-in grid grid-cols-2 gap-3 max-md:[&>*:last-child:nth-child(odd)]:col-span-2 md:grid-cols-3 2xl:grid-flow-col 2xl:grid-cols-none 2xl:auto-cols-fr"
+      className={cx(
+        'stagger-in grid grid-cols-2 gap-3 md:grid-cols-3 2xl:grid-flow-col 2xl:grid-cols-none 2xl:auto-cols-fr',
+        compact
+          ? 'max-md:-mx-4 max-md:flex max-md:shrink-0 max-md:gap-2 max-md:overflow-x-auto max-md:px-4 max-md:[scrollbar-width:none]! max-md:[&>*]:w-40 max-md:[&>*]:shrink-0'
+          : 'max-md:[&>*:last-child:nth-child(odd)]:col-span-2',
+      )}
       {...rest}
     >
       {children}

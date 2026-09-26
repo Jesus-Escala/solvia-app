@@ -143,42 +143,63 @@ function ReportChooser({
 }) {
   const { t } = useI18n();
   return (
-    <div
-      className="flex flex-wrap gap-x-6 gap-y-2.5"
-      role="radiogroup"
-      aria-label={t('reports.choose')}
-    >
-      {groups.map((group) => (
-        <div key={group.title} className="min-w-0">
-          <div className="mb-1.5 text-[11px] font-semibold tracking-wide text-subtle uppercase">
-            {t(group.title)}
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {group.reports.map((report) => {
-              const active = report.id === value;
-              return (
-                <button
-                  key={report.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => onChange(report.id)}
-                  className={cx(
-                    'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition sm:px-3 sm:py-1.5 sm:text-sm [&>svg]:h-3.5 [&>svg]:w-3.5 sm:[&>svg]:h-4 sm:[&>svg]:w-4',
-                    active
-                      ? 'border-primary bg-primary text-on-primary shadow-sm shadow-primary/30'
-                      : 'border-line bg-surface text-muted hover:border-line-strong hover:text-ink',
-                  )}
-                >
-                  {report.icon}
+    <>
+      {/* Phones: a list to pick from (the buttons would take the whole screen). */}
+      <label className="block md:hidden">
+        <span className="label">{t('reports.choose')}</span>
+        <select
+          className="input"
+          value={value}
+          onChange={(event) => onChange(event.target.value as AnyReportId)}
+        >
+          {groups.map((group) => (
+            <optgroup key={group.title} label={t(group.title)}>
+              {group.reports.map((report) => (
+                <option key={report.id} value={report.id}>
                   {t(`reports.names.${report.id}`)}
-                </button>
-              );
-            })}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+      </label>
+      <div
+        className="flex flex-wrap gap-x-6 gap-y-2.5 max-md:hidden"
+        role="radiogroup"
+        aria-label={t('reports.choose')}
+      >
+        {groups.map((group) => (
+          <div key={group.title} className="min-w-0">
+            <div className="mb-1.5 text-[11px] font-semibold tracking-wide text-subtle uppercase">
+              {t(group.title)}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {group.reports.map((report) => {
+                const active = report.id === value;
+                return (
+                  <button
+                    key={report.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => onChange(report.id)}
+                    className={cx(
+                      'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition sm:px-3 sm:py-1.5 sm:text-sm [&>svg]:h-3.5 [&>svg]:w-3.5 sm:[&>svg]:h-4 sm:[&>svg]:w-4',
+                      active
+                        ? 'border-primary bg-primary text-on-primary shadow-sm shadow-primary/30'
+                        : 'border-line bg-surface text-muted hover:border-line-strong hover:text-ink',
+                    )}
+                  >
+                    {report.icon}
+                    {t(`reports.names.${report.id}`)}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -265,7 +286,7 @@ function ReportToolbar({
     });
   return (
     <>
-      <p className="-mt-1 text-sm text-muted">{t(`reports.hints.${report.id}`)}</p>
+      <p className="-mt-1 text-sm text-muted max-md:hidden">{t(`reports.hints.${report.id}`)}</p>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         {report.dated ? (
           <PeriodPicker
@@ -325,9 +346,13 @@ function InsightReportView({
   const data: InsightTable | undefined = query.data;
   const format = (value: InsightCell, kind: InsightTable['columns'][number]['kind']) => {
     if (value === null || value === '') return <span className="text-subtle">—</span>;
-    if (kind === 'money') return fmt.money(Number(value));
-    if (kind === 'number') return fmt.number(Number(value));
-    if (kind === 'date') return fmt.date(String(value));
+    // Only real numbers and dates are formatted: the totals line has words ("Total") there too.
+    if ((kind === 'money' || kind === 'number') && typeof value === 'number') {
+      return kind === 'money' ? fmt.money(value) : fmt.number(value);
+    }
+    if (kind === 'date' && typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return fmt.date(value);
+    }
     return String(value);
   };
   // The main amount (or the first one): bold, and on the right of each row on phones.
@@ -368,7 +393,7 @@ function InsightReportView({
         onRangeChange={onRangeChange}
         ready={Boolean(data)}
       />
-      <KpiRow>
+      <KpiRow compact>
         {(data?.kpis ?? [{ label: '', value: 0, kind: 'money', tone: 'default' }]).map((kpi) => (
           <KpiCard
             key={kpi.label}
@@ -416,7 +441,7 @@ function TypedReportView({
         onRangeChange={onRangeChange}
         ready={Boolean(query.data)}
       />
-      <KpiRow>
+      <KpiRow compact>
         {table.kpis.map((kpi) => (
           <KpiCard key={kpi.label} {...kpi} loading={query.isLoading} />
         ))}
@@ -598,7 +623,7 @@ function useReportTable<R extends ReportId>(
       const d = data as ReportTypes['sales-by-product'] | undefined;
       return build<SalesByProductRow>(
         d?.rows,
-        (row) => row.productId,
+        (row) => row.productId ?? `free-${row.name}`,
         [
           {
             id: 'product',

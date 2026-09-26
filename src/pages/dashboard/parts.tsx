@@ -29,10 +29,10 @@ export function DashboardHeader({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="text-[1.75rem] leading-tight font-semibold sm:text-[2.1rem]">
+        <h1 className="text-[1.5rem] leading-tight font-semibold sm:text-[2.1rem]">
           {t('dashboard.title')}
         </h1>
-        <p className="mt-1 text-sm text-muted">
+        <p className="mt-1 text-sm text-muted max-sm:hidden">
           {t('dashboard.subtitle', { business: me?.tenant.name ?? '' })}
         </p>
       </div>

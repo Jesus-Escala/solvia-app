@@ -553,7 +553,8 @@ export interface CollectionsByCustomerRow {
 }
 
 export interface SalesByProductRow {
-  productId: string;
+  /** Null for free lines (not a catalog product). */
+  productId: string | null;
   name: string;
   unit: ProductUnit;
   quantity: number;

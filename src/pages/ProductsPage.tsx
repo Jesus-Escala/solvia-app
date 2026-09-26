@@ -313,6 +313,10 @@ function ProductsList() {
       <DataTable
         columnsStorageKey="products"
         caption={t('products.title')}
+        foldFilters={{
+          active: [state.status !== 'all', state.kind !== '', state.category !== ''].filter(Boolean)
+            .length,
+        }}
         search={
           <SearchInput
             value={state.search}
@@ -349,7 +353,7 @@ function ProductsList() {
               <span className="sr-only">{t('categories.label')}</span>
               <select
                 className={cx(
-                  'input h-10 w-auto max-w-56',
+                  'input h-10 w-full md:w-auto md:max-w-56',
                   state.category && 'border-primary/50 bg-primary-soft/40 font-medium',
                 )}
                 value={state.category}

@@ -1,4 +1,13 @@
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Columns3 } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Columns3,
+  SlidersHorizontal,
+} from 'lucide-react';
 import {
   useEffect,
   useMemo,
@@ -85,8 +94,13 @@ export interface DataTableProps<T> extends Omit<HTMLAttributes<HTMLElement>, 'ch
   pagination?: DataTablePagination;
   /** The search box: first in the toolbar; on phones a full-width row of its own. */
   search?: ReactNode;
-  /** Filters of the toolbar; on phones one row that scrolls sideways. */
+  /** Filters of the toolbar; on phones each one on a full line, every option visible. */
   toolbar?: ReactNode;
+  /**
+   * Phones: the filters fold under a "Filtros" button (with how many are active) so the list
+   * keeps its room — for pages with several filters. Omit it to always show them.
+   */
+  foldFilters?: { active: number };
   /** Right side of the toolbar (extra buttons). */
   toolbarEnd?: ReactNode;
   /** Persist column visibility in localStorage under this key. */
@@ -146,6 +160,7 @@ export function DataTable<T>({
   pagination,
   search,
   toolbar,
+  foldFilters,
   toolbarEnd,
   columnsStorageKey,
   fill = true,
@@ -330,6 +345,8 @@ export function DataTable<T>({
     ) : null;
 
   const hasToolbar = Boolean(search || toolbar || toolbarEnd || columnsMenu);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const folded = Boolean(foldFilters && toolbar);
   const titleColumn = columns.find((column) => column.mobile === 'title') ?? visibleColumns[0];
   const subtitleColumns = visibleColumns.filter((column) => column.mobile === 'subtitle');
   const asideColumns = visibleColumns.filter((column) => column.mobile === 'aside');
@@ -355,11 +372,33 @@ export function DataTable<T>({
     >
       {hasToolbar && (
         // Computers: one wrapping row (search, filters, then the buttons on the right). Phones:
-        // the search with the buttons, and below it the filters in one row that scrolls sideways
-        // (so they never take half the screen).
+        // the search with the buttons, and below it each filter on a full line with all of its
+        // options in sight (they wrap; none is hidden off-screen).
         <div className="flex shrink-0 flex-col gap-2 border-b border-line px-3 py-2.5 md:flex-row md:flex-wrap md:items-center md:px-4 md:py-3">
           <div className="flex items-center gap-2 md:contents">
             {search && <div className="min-w-0 flex-1 md:flex-none">{search}</div>}
+            {folded && (
+              <button
+                type="button"
+                aria-expanded={filtersOpen}
+                onClick={() => setFiltersOpen((open) => !open)}
+                className={cx(
+                  'inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl border px-3 text-sm font-semibold transition md:hidden [&>svg]:h-4 [&>svg]:w-4',
+                  foldFilters!.active > 0 || filtersOpen
+                    ? 'border-primary/40 bg-primary-soft/60 text-primary-ink'
+                    : 'border-line bg-surface text-ink',
+                )}
+              >
+                <SlidersHorizontal />
+                {t('table.filters')}
+                {foldFilters!.active > 0 && (
+                  <span className="rounded-full bg-primary px-1.5 text-[11px] text-on-primary tabular-nums">
+                    {foldFilters!.active}
+                  </span>
+                )}
+                <ChevronDown className={cx('transition', filtersOpen && 'rotate-180')} />
+              </button>
+            )}
             <div
               className={cx(
                 'flex items-center gap-2 md:order-last md:ml-auto',
@@ -371,7 +410,12 @@ export function DataTable<T>({
             </div>
           </div>
           {(toolbar || !search) && (
-            <div className="-mx-3 flex min-w-0 items-center gap-2 overflow-x-auto px-3 [scrollbar-width:none]! max-md:[&_[role=radiogroup]]:flex-nowrap max-md:[&_[role=radiogroup]]:rounded-full md:mx-0 md:flex-1 md:flex-wrap md:overflow-visible md:px-0 [&>*]:shrink-0">
+            <div
+              className={cx(
+                'flex min-w-0 flex-col gap-2 max-md:[&>*]:w-full md:flex-1 md:flex-row md:flex-wrap md:items-center',
+                folded && !filtersOpen && 'max-md:hidden',
+              )}
+            >
               {toolbar}
               {!search && (
                 <div className="ml-auto flex items-center gap-2 md:hidden">
