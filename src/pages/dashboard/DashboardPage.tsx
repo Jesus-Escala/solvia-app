@@ -10,6 +10,7 @@ import {
   type Granularity,
 } from '../../components/dashboard/period';
 import { useDashboardSummary } from '../../hooks/queries';
+import { ModuleOff } from '../../components/modules/ModuleOff';
 import { useModules } from '../../hooks/useModules';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { PaymentMethod } from '../../lib/types';
@@ -88,7 +89,8 @@ export function DashboardPage() {
     weekday: Number.isInteger(weekday) && weekday >= 1 && weekday <= 7 ? weekday : null,
   };
 
-  if (view === null) return <Page>{null}</Page>;
+  // A business without sales, purchases nor collections has nothing to chart.
+  if (view === null) return <ModuleOff />;
 
   return (
     <Page>

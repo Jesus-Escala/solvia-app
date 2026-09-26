@@ -1764,28 +1764,64 @@ export const es = {
   help: {
     title: 'Centro de ayuda',
     subtitle: 'Aprende a usar Solvia paso a paso.',
-    tourTitle: 'Recorrido guiado',
+    tourTitle: 'Recorridos por sección',
     tourDescription:
-      'Te mostramos dónde está cada cosa, sobre la pantalla de verdad. Dura unos 2 minutos.',
-    startTour: 'Iniciar recorrido',
+      'Elige una sección y te muestro cada cosa sobre la pantalla de verdad. También está el botón «Recorrido» arriba en cada pantalla.',
+    startTour: 'Ver los recorridos',
     stepLabel: 'Paso {number}',
     guides: {
       start: {
         title: 'Primeros pasos',
         step1: 'Entra con tu correo y contraseña.',
-        step2: 'Toca el botón «+ Anotar» y elige «Anotar fiado».',
-        step3: 'Escribe el nombre del cliente, cuánto te debe y para cuándo te paga. ¡Listo!',
+        step2: 'El menú tiene cada parte de tu negocio: ventas, cobranza, inventario y resultados.',
+        step3:
+          '¿No sabes cómo se usa una pantalla? Toca «Recorrido» arriba y te la muestro paso a paso.',
+      },
+      sell: {
+        title: 'Vender',
+        step1: 'Toca «Nueva venta» (o «+ Anotar» → «Venta»).',
+        step2: 'Busca el producto por código o descripción, o escanéalo; cada toque suma uno.',
+        step3:
+          'Toca «Cobrar»: elige al contado o fiado y cómo pagó (puede ser con varios métodos).',
+        step4:
+          'Imprime el ticket o envíalo por WhatsApp; también lo ves luego en el detalle de la venta.',
+      },
+      buy: {
+        title: 'Registrar una compra',
+        step1: 'Toca «Nueva compra».',
+        step2: 'Agrega los productos con su cantidad (o en sacos) y lo que te costaron.',
+        step3:
+          'Elige el proveedor y cómo pagaste, y guarda: el stock sube y el costo se actualiza.',
+      },
+      products: {
+        title: 'Tus productos',
+        step1: 'En Productos toca «Nuevo producto»: nombre, precio y, si quieres, costo y foto.',
+        step2: 'Agrúpalos con «Categorías» para encontrarlos rápido al vender.',
+        step3:
+          'Cada producto tiene su código y QR: imprime sus etiquetas con «Imprimir etiquetas».',
+      },
+      stock: {
+        title: 'Controlar el stock',
+        step1: 'El filtro «Por acabarse» te muestra lo que tienes que comprar.',
+        step2: 'Si contaste o algo se malogró, en el menú «…» del producto elige «Ajustar stock».',
+        step3: 'El «Kardex» muestra cada entrada y salida del producto.',
+      },
+      locations: {
+        title: 'Ubicar tus productos',
+        step1: 'En Ubicaciones sube la imagen de tu plano o dibuja tu tienda.',
+        step2: 'Toca «Marcar ubicación» y arrastra para dibujar cada estante o zona.',
+        step3:
+          'Agrega los productos de cada zona y busca «¿Dónde está?» para encontrarlos al toque.',
       },
       customers: {
         title: 'Agregar clientes',
-        step1:
-          'Toca «+ Anotar» y elige «Nuevo cliente» (o escribe un nombre nuevo al anotar un fiado).',
+        step1: 'Toca «+ Anotar» y elige «Nuevo cliente» (o créalo al vender o anotar un fiado).',
         step2: 'Escribe su nombre y su WhatsApp, por ejemplo 987 654 321.',
         step3: 'En Clientes, toca a alguien para ver lo que te debe y lo que te pagó.',
       },
       receivables: {
         title: 'Anotar un fiado',
-        step1: 'Toca «+ Anotar» y elige «Anotar fiado».',
+        step1: 'Toca «+ Anotar» y elige «Anotar fiado» (o vende al fiado).',
         step2: 'Busca al cliente, escribe cuánto te debe y elige para cuándo te paga.',
         step3: 'En «Cobranza» ves todo lo que falta cobrar; arriba puedes ver solo las atrasadas.',
       },
@@ -1803,15 +1839,20 @@ export const es = {
           'Le escribe a tu cliente unos días antes, el día que debe pagar y, si se atrasa, cada pocos días.',
         step3: 'Puedes ver todos los mensajes en Configuración > Mensajes enviados.',
       },
-      dashboard: {
-        title: 'Entender los reportes',
-        step1: 'En Inicio ves cuánto te deben, cuánto te pagaron este mes y a quién cobrarle hoy.',
-        step2:
-          'En Reportes ves los números con más detalle: por mes, por cliente y por medio de pago.',
-        step3: '«¿A quién cobrarle primero?» te muestra los pocos clientes que te deben casi todo.',
+      reports: {
+        title: 'Tus números',
+        step1: 'En Dashboard ves en gráficos cuánto vendes, compras, cobras y te deben.',
+        step2: 'En Reportes eliges el área (Ventas, Compras, Cobranza, Inventario) y el reporte.',
+        step3: 'Ábrelo en PDF o Excel para guardarlo o enviarlo.',
+      },
+      team: {
+        title: 'Tu equipo y tu negocio',
+        step1: 'En Configuración > Usuarios agregas a quienes te ayudan (vendedor, cobrador…).',
+        step2: 'En Empresa eliges el idioma de todo el equipo.',
+        step3: 'En Mi plan ves tus mensajes, usuarios y clientes del mes.',
       },
     },
-    helloHint: 'Te acompaño mientras aprendes a cobrar sin perseguir a nadie.',
+    helloHint: 'Te acompaño mientras aprendes a vender, cobrar y ordenar tu negocio.',
     searchPlaceholder: 'Busca una guía o una pregunta…',
     noResults: 'No encontramos nada con "{query}". Prueba con otra palabra.',
     guidesTitle: 'Guías rápidas',
@@ -1820,7 +1861,7 @@ export const es = {
     faqSubtitle: 'Respuestas cortas a las dudas más comunes.',
     clearSearch: 'Limpiar búsqueda',
     stuckTitle: '¿Sigues con dudas?',
-    stuckDescription: 'Haz el recorrido guiado: te mostramos cada pantalla en 2 minutos.',
+    stuckDescription: 'Toca «Recorrido» arriba en cualquier pantalla y te muestro cómo se usa.',
     faqTitle: 'Preguntas frecuentes',
     faq: {
       q1: '¿Cómo sabe Solvia si un cliente paga bien?',
@@ -1839,6 +1880,14 @@ export const es = {
       a7: 'En el idioma que tengas elegido arriba. Si cambiaste el texto de un mensaje, se manda tal como lo escribiste.',
       q8: '¿Qué significan los colores de los clientes?',
       a8: 'Verde: paga bien. Amarillo: a veces se atrasa. Rojo: se atrasa mucho, conviene cobrarle primero.',
+      q9: '¿Puedo cobrar una venta con varios métodos?',
+      a9: 'Sí. Al cobrar elige «Varios» y reparte el total entre efectivo, Yape, Plin o transferencia; no se guarda hasta que la suma cuadre.',
+      q10: '¿Puedo vender algo que no tiene stock?',
+      a10: 'Sí, la venta se guarda y queda marcada «Vendido sin stock» para que lo revises en la lista y en el Kardex.',
+      q11: '¿Cómo anulo una venta?',
+      a11: 'En Ventas toca «Anular» en la fila de la venta. El stock vuelve y la venta queda marcada como anulada.',
+      q12: '¿Cómo imprimo las etiquetas con QR?',
+      a12: 'En Productos toca «Imprimir etiquetas», elige los productos, cuántas de cada uno y el tamaño (hoja A4 o impresora de etiquetas).',
     },
   },
   assistant: {
@@ -1851,13 +1900,24 @@ export const es = {
     helpCenter: 'Ir al centro de ayuda',
     comingSoon: 'Muy pronto podrás chatear conmigo aquí.',
   },
+  pageError: {
+    eyebrow: 'Algo falló',
+    title: 'Esta pantalla tuvo un problema',
+    description:
+      'El resto de Solvia sigue funcionando. Prueba de nuevo; si se repite, avísanos qué estabas haciendo.',
+    retry: 'Reintentar',
+    home: 'Ir al inicio',
+    updateEyebrow: 'Versión nueva',
+    updateTitle: 'Hay una versión nueva de Solvia',
+    updateDescription: 'Actualiza para seguir: tus datos están guardados.',
+    update: 'Actualizar',
+  },
   tour: {
     sectionButton: 'Recorrido',
     sectionButtonTitle: '¿Cómo se usa {name}? Te lo muestro paso a paso',
     sectionTitle: 'Recorridos por sección',
     sectionHint:
       '¿Olvidaste cómo se hace algo? Elige la sección y te la muestro paso a paso. También está el botón «Recorrido» arriba en cada pantalla.',
-    general: 'Recorrido general',
     thisSection: 'Recorrido de esta sección ({name})',
     names: {
       home: 'Inicio',
@@ -2152,57 +2212,11 @@ export const es = {
         },
       },
     },
-    welcomeTitle: 'Bienvenido a Solvia',
-    welcomeBody: '¿Te muestro rápido cómo funciona? Son menos de 2 minutos.',
-    start: 'Comenzar recorrido',
-    later: 'Ahora no',
     next: 'Siguiente',
     previous: 'Anterior',
     finish: 'Finalizar',
     skip: 'Salir del recorrido',
     progress: '{current} de {total}',
-    steps: {
-      sectionTours: {
-        title: 'Recorrido de cada sección',
-        body: 'En cada pantalla, este botón te muestra paso a paso cómo se usa. Úsalo cuando olvides cómo hacer algo.',
-      },
-      homeActions: {
-        title: 'Lo de todos los días',
-        body: 'Desde aquí anotas un fiado, registras un pago o agregas un cliente.',
-      },
-      quickAdd: {
-        title: 'Siempre a mano',
-        body: 'Este botón «+ Anotar» está en todas las pantallas: úsalo cuando fíes algo o te paguen.',
-      },
-      homeToday: {
-        title: 'A quién cobrarle hoy',
-        body: 'Aquí aparecen los atrasados y los que te pagan pronto. Toca «Me pagó» o «WhatsApp».',
-      },
-      navigation: {
-        title: 'Menú',
-        body: 'Inicio, lo que te deben, tus clientes y los reportes.',
-      },
-      rowActions: {
-        title: 'Cobra desde aquí',
-        body: '«Me pagó» cuando te pagan; «WhatsApp» para recordarle a tu cliente.',
-      },
-      customersTable: {
-        title: 'Tus clientes',
-        body: 'Lo que te debe cada uno y si paga bien. Toca a alguien para ver su detalle.',
-      },
-      kpis: {
-        title: 'Reportes',
-        body: 'Cuánto te deben, cuánto te pagaron y más números, cuando los necesites.',
-      },
-      reminderRules: {
-        title: 'Recordatorios solos',
-        body: 'Elige cuándo Solvia le escribe a tu cliente: antes, el mismo día y si se atrasa.',
-      },
-      help: {
-        title: 'Bowl te ayuda',
-        body: 'Toca a Bowl, nuestro búho, para repetir este recorrido o ver la ayuda.',
-      },
-    },
   },
   notFound: {
     title: 'Página no encontrada',

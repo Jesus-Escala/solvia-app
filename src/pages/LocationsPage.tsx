@@ -60,7 +60,7 @@ import { useModules } from '../hooks/useModules';
 import { useI18n } from '../i18n/I18nProvider';
 import { normalizeSearch, rowMatches } from '../lib/searchText';
 import type { MapSpot, StoreMap } from '../lib/types';
-import { ModuleOff } from './ProductsPage';
+import { ModuleOff } from '../components/modules/ModuleOff';
 
 const VIEW_KEY = 'solvia.mapView';
 

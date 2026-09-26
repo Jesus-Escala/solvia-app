@@ -8,6 +8,7 @@ import { QuickActionsProvider } from '../quick/QuickActions';
 import { BottomNav } from './BottomNav';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { PageFrame } from './PageErrorBoundary';
 
 const COLLAPSED_KEY = 'solvia.sidebar.collapsed';
 
@@ -54,7 +55,9 @@ export function AppShell() {
         <div className="flex min-w-0 flex-1 flex-col">
           <Topbar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
           <main className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
-            <Outlet />
+            <PageFrame>
+              <Outlet />
+            </PageFrame>
           </main>
           <BottomNav />
         </div>

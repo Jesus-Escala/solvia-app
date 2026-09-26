@@ -28,7 +28,7 @@ import { Kbd } from '../components/pos/PosLayout';
 import { ADD_KEY_LABEL } from '../components/pos/keys';
 import { useAddShortcut } from '../hooks/useAddShortcut';
 import type { Sale } from '../lib/types';
-import { ModuleOff } from './ProductsPage';
+import { ModuleOff } from '../components/modules/ModuleOff';
 
 // Empty sort = newest first.
 const DEFAULTS = { search: '', type: '', page: '1', pageSize: '20', sortBy: '', sortDir: '' };

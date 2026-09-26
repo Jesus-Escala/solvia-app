@@ -1,4 +1,4 @@
-import { BookOpen, ChevronRight, Compass, MessageCircleHeart, Route } from 'lucide-react';
+import { BookOpen, ChevronRight, Compass, MessageCircleHeart } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../../auth/AuthContext';
@@ -79,14 +79,6 @@ export function AssistantMenu() {
               onClick={() => {
                 close();
                 tour.start(section);
-              }}
-            />
-            <Action
-              icon={<Route />}
-              label={t('tour.general')}
-              onClick={() => {
-                close();
-                tour.start('general');
               }}
             />
             <Action

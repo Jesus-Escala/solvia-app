@@ -1,27 +1,55 @@
 import { Compass } from 'lucide-react';
+import { lazy } from 'react';
 import { Link, Outlet, Route, Routes } from 'react-router';
 import { TourProvider } from './tour/TourProvider';
 import { ModuleRoute } from './components/modules/ModuleRoute';
 import { PublicOnly, RequireAuth } from './auth/RequireAuth';
 import { AppShell } from './components/layout/AppShell';
+import { PageFrame } from './components/layout/PageErrorBoundary';
 import { Page, smallButtonClass } from '@/ui';
 import { useI18n } from './i18n/I18nProvider';
 import { ChangePasswordPage, LoginPage, RegisterPage } from './pages/AuthPages';
-import { CustomerDetailPage } from './pages/CustomerDetailPage';
-import { CustomersPage } from './pages/CustomersPage';
-import { DashboardPage } from './pages/dashboard/DashboardPage';
-import { ReportsPage } from './pages/ReportsPage';
-import { HelpPage } from './pages/HelpPage';
-import { HomePage } from './pages/HomePage';
-import { ProductsPage } from './pages/ProductsPage';
-import { PurchasePosPage } from './pages/PurchasePosPage';
-import { PurchasesPage } from './pages/PurchasesPage';
-import { SalePosPage } from './pages/SalePosPage';
-import { SalesPage } from './pages/SalesPage';
-import { SuppliersPage } from './pages/SuppliersPage';
-import { LocationsPage } from './pages/LocationsPage';
-import { ReceivablesPage } from './pages/ReceivablesPage';
-import { SettingsPage } from './pages/SettingsPage';
+
+// Each screen loads when it is opened, so the app starts fast (sign-in stays in the first load).
+const CustomerDetailPage = lazy(() =>
+  import('./pages/CustomerDetailPage').then((m) => ({ default: m.CustomerDetailPage })),
+);
+const CustomersPage = lazy(() =>
+  import('./pages/CustomersPage').then((m) => ({ default: m.CustomersPage })),
+);
+const DashboardPage = lazy(() =>
+  import('./pages/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })),
+);
+const ReportsPage = lazy(() =>
+  import('./pages/ReportsPage').then((m) => ({ default: m.ReportsPage })),
+);
+const HelpPage = lazy(() => import('./pages/HelpPage').then((m) => ({ default: m.HelpPage })));
+const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })));
+const ProductsPage = lazy(() =>
+  import('./pages/ProductsPage').then((m) => ({ default: m.ProductsPage })),
+);
+const PurchasePosPage = lazy(() =>
+  import('./pages/PurchasePosPage').then((m) => ({ default: m.PurchasePosPage })),
+);
+const PurchasesPage = lazy(() =>
+  import('./pages/PurchasesPage').then((m) => ({ default: m.PurchasesPage })),
+);
+const SalePosPage = lazy(() =>
+  import('./pages/SalePosPage').then((m) => ({ default: m.SalePosPage })),
+);
+const SalesPage = lazy(() => import('./pages/SalesPage').then((m) => ({ default: m.SalesPage })));
+const SuppliersPage = lazy(() =>
+  import('./pages/SuppliersPage').then((m) => ({ default: m.SuppliersPage })),
+);
+const LocationsPage = lazy(() =>
+  import('./pages/LocationsPage').then((m) => ({ default: m.LocationsPage })),
+);
+const ReceivablesPage = lazy(() =>
+  import('./pages/ReceivablesPage').then((m) => ({ default: m.ReceivablesPage })),
+);
+const SettingsPage = lazy(() =>
+  import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })),
+);
 
 function NotFoundPage() {
   const { t } = useI18n();
@@ -53,7 +81,9 @@ export function App() {
         <Route
           element={
             <TourProvider>
-              <Outlet />
+              <PageFrame>
+                <Outlet />
+              </PageFrame>
             </TourProvider>
           }
         >
@@ -66,8 +96,9 @@ export function App() {
           </Route>
           <Route element={<AppShell />}>
             <Route index element={<HomePage />} />
+            {/* The dashboard shows the views of the modules the business has. */}
+            <Route path="dashboard" element={<DashboardPage />} />
             <Route element={<ModuleRoute need="collections" />}>
-              <Route path="dashboard" element={<DashboardPage />} />
               <Route path="receivables" element={<ReceivablesPage />} />
             </Route>
             <Route path="reports" element={<ReportsPage />} />

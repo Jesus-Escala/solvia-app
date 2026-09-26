@@ -103,7 +103,8 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
   the backend responses**), `src/lib/config.ts` (URLs from env).
 - `src/auth/` — AuthContext (login, Google, change password), RequireAuth (forces
   `/change-password` while `mustChangePassword`).
-- `src/tour/` — guided tours (`data-tour` attributes mark targets): the general first-time tour and **one per section** (`SECTION_TOURS` in `steps.ts`, texts under `tour.sections.<tour>`). The "Recorrido" button (`TourButton`, top bar and POS bar) starts the tour of the page on screen, showing only the steps whose element is visible; Help lists every section's tour (`startAt`). Kit elements carry generic targets (`page-title`, `page-actions`, `table-search`, `table-filters`, `table-columns`, `table`), so a new list page gets a tour by adding its entry and texts. `TourProvider` wraps the authenticated routes (POS screens included).
+- `src/tour/` — guided tours, **one per section** (`SECTION_TOURS` in `steps.ts`, texts under `tour.sections.<tour>`; there is no general tour). The "Recorrido" button (`TourButton`, top bar and POS bar) starts the tour of the page on screen, showing only the steps whose element is visible; Help's hero lists every section's tour (`startAt` opens the page first). Kit elements carry generic targets (`page-title`, `page-actions`, `table-search`, `table-filters`, `table-columns`, `table`), so a new list page gets a tour by adding its entry and texts. `TourProvider` wraps the authenticated routes (POS screens included).
+- **Screens load when opened** (`React.lazy` in `App.tsx`; sign-in stays in the first load) and each one runs inside `PageFrame` (`components/layout/PageErrorBoundary.tsx`): a spinner while its code arrives and, if it fails, a friendly screen with "Reintentar" (or "Actualizar" when a new version was published). Recharts only loads with the dashboard.
 
 ## Rules
 

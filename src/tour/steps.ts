@@ -1,12 +1,8 @@
 /**
- * Guided tours. Each step points at an element marked with `data-tour="<target>"`.
- *
- * - `general`: the first-time tour across the app; its steps say on which route they live and
- *   the tour goes there. Texts under `tour.steps.<id>`.
- * - One tour per section (the "Recorrido" button in the top bar): it runs on the page you are
- *   on, showing only the steps whose element is on screen (so a module or a phone layout without
- *   that element just skips it). Texts under `tour.sections.<tour>.<id>`; the section's name is
- *   `tour.names.<tour>`.
+ * Guided tours, one per section (the "Recorrido" button in the top bar). Each step points at an
+ * element marked with `data-tour="<target>"`; a tour runs on the page you are on and shows only
+ * the steps whose element is on screen (so a module or a phone layout without that element just
+ * skips it). Texts under `tour.sections.<tour>.<id>`; the section's name is `tour.names.<tour>`.
  *
  * To add a step: mark the element, add an entry here and its two strings (es + en). Kit
  * elements carry generic targets: `page-title`, `page-actions`, `table-search`,
@@ -17,8 +13,6 @@ import type { ModuleRequirement } from '../hooks/useModules';
 export interface TourStepDef {
   id: string;
   target: string;
-  /** General tour only: the page the step lives on (null: any). */
-  route?: string | null;
   module?: ModuleRequirement;
   /** Only on phones (e.g. the "+" lives in the bottom bar there). */
   phoneOnly?: boolean;
@@ -40,21 +34,6 @@ export type SectionTourId =
   | 'reports'
   | 'settings'
   | 'help';
-
-export type TourId = 'general' | SectionTourId;
-
-export const GENERAL_TOUR: ReadonlyArray<TourStepDef> = [
-  { id: 'homeActions', route: '/', target: 'home-actions' },
-  { id: 'quickAdd', route: '/', target: 'quick-add', phoneOnly: true },
-  { id: 'homeToday', route: '/', target: 'home-today', module: 'collections' },
-  { id: 'navigation', route: '/', target: 'nav' },
-  { id: 'rowActions', route: '/receivables', target: 'receivables-table', module: 'collections' },
-  { id: 'customersTable', route: '/customers', target: 'customers-table', module: 'customers' },
-  { id: 'kpis', route: '/dashboard?view=collection', target: 'period', module: 'collections' },
-  { id: 'reminderRules', route: '/settings', target: 'reminder-rules', module: 'collections' },
-  { id: 'sectionTours', route: null, target: 'section-tour' },
-  { id: 'help', route: null, target: 'help' },
-];
 
 const intro = { id: 'intro', target: 'page-title' };
 const list = [
@@ -143,7 +122,7 @@ export const SECTION_ROUTES: Record<
   products: { route: '/products', module: 'catalog' },
   suppliers: { route: '/suppliers', module: 'inventory' },
   locations: { route: '/locations', module: 'inventory' },
-  dashboard: { route: '/dashboard', module: 'collections' },
+  dashboard: { route: '/dashboard' },
   reports: { route: '/reports' },
   settings: { route: '/settings' },
   help: null,

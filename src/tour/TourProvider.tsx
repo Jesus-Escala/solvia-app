@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Check, Compass, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, X } from 'lucide-react';
 import {
   createContext,
   useCallback,
@@ -11,60 +11,45 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { useLocation, useNavigate } from 'react-router';
-import { useAuth } from '../auth/AuthContext';
-import { Mascot, Button, cx, Modal, IconButton } from '@/ui';
+import { useNavigate } from 'react-router';
+import { Mascot, Button, cx, IconButton } from '@/ui';
 import { useI18n, type TranslationKey } from '../i18n/I18nProvider';
 import { useModules, type Modules } from '../hooks/useModules';
-import {
-  GENERAL_TOUR,
-  SECTION_ROUTES,
-  SECTION_TOURS,
-  type SectionTourId,
-  type TourId,
-  type TourStepDef,
-} from './steps';
+import { SECTION_ROUTES, SECTION_TOURS, type SectionTourId, type TourStepDef } from './steps';
 
 interface TourContextValue {
-  /** Starts a tour: the general one, or a section's on the page you are on. */
-  start: (tour?: TourId) => void;
+  /** Starts a section's tour on the page you are on. */
+  start: (tour: SectionTourId) => void;
   /** Goes to a section's page and starts its tour there (from the help center). */
   startAt: (section: SectionTourId) => void;
   active: boolean;
 }
 
 interface RunningTour {
-  tour: TourId;
+  tour: SectionTourId;
   steps: TourStepDef[];
 }
 
 const isPhone = () => window.matchMedia('(max-width: 1023px)').matches;
 
-/** The steps a tour shows here: its module's, for this screen size and (sections) on screen. */
-function stepsOf(tour: TourId, modules: Modules): TourStepDef[] {
+/** The steps a tour shows here: its module's, for this screen size and on screen. */
+function stepsOf(tour: SectionTourId, modules: Modules): TourStepDef[] {
   const allowed = (step: TourStepDef) =>
     (!step.module || modules[step.module]) && (!step.phoneOnly || isPhone());
-  if (tour === 'general') return GENERAL_TOUR.filter(allowed);
   const all = SECTION_TOURS[tour].filter(allowed);
   const shown = all.filter((step) => findVisibleTarget(step.target) !== null);
   // Nothing marked on screen: at least the section's introduction, centered.
   return shown.length > 0 ? shown : all.slice(0, 1);
 }
 
-/** Text of a step: the general tour's, or the section's. */
-function stepText(tour: TourId, step: TourStepDef, part: 'title' | 'body') {
-  return (
-    tour === 'general'
-      ? `tour.steps.${step.id}.${part}`
-      : `tour.sections.${tour}.${step.id}.${part}`
-  ) as TranslationKey;
+function stepText(tour: SectionTourId, step: TourStepDef, part: 'title' | 'body') {
+  return `tour.sections.${tour}.${step.id}.${part}` as TranslationKey;
 }
 
 const TourContext = createContext<TourContextValue | null>(null);
 const SPOTLIGHT_PADDING = 6;
 const CARD_WIDTH = 360;
 
-const storageKey = (userId: string) => `solvia.tour.seen.${userId}`;
 const GAP = 14;
 const MARGIN = 20;
 
@@ -118,23 +103,6 @@ function placeCard(
   return { bottom: MARGIN * 2, right: MARGIN * 2, width };
 }
 
-function markSeen(userId: string | undefined) {
-  if (!userId) return;
-  try {
-    localStorage.setItem(storageKey(userId), '1');
-  } catch {
-    // Not persisted.
-  }
-}
-
-function hasSeen(userId: string) {
-  try {
-    return localStorage.getItem(storageKey(userId)) === '1';
-  } catch {
-    return true; // Without storage, do not nag on every load.
-  }
-}
-
 /**
  * First visible element with the given data-tour attribute. The same target can exist twice
  * (e.g. "nav" in the desktop sidebar and in the mobile bottom bar); only one is displayed.
@@ -166,42 +134,43 @@ function waitForTarget(
 }
 
 export function TourProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
   const modules = useModules();
   const navigate = useNavigate();
   const [running, setRunning] = useState<RunningTour | null>(null);
   const [index, setIndex] = useState(0);
-  // The provider only mounts inside the authenticated routes, so `user` is known here.
-  const [welcomeOpen, setWelcomeOpen] = useState(() => Boolean(user && !hasSeen(user.id)));
 
   const start = useCallback(
-    (tour: TourId = 'general') => {
-      setWelcomeOpen(false);
-      markSeen(user?.id);
+    (tour: SectionTourId) => {
       setIndex(0);
       setRunning({ tour, steps: stepsOf(tour, modules) });
     },
-    [user?.id, modules],
+    [modules],
   );
 
   const startAt = useCallback(
     (section: SectionTourId) => {
       const place = SECTION_ROUTES[section];
       if (!place) return start(section);
+      // Wait for that page (screens load when opened; meanwhile the old one stays on screen),
+      // then find its elements.
+      const before = findVisibleTarget('page-title');
       navigate(place.route);
-      // Once the page is drawn, its elements can be found.
-      const signal = { cancelled: false };
-      void waitForTarget('page-title', signal).then(() =>
-        window.setTimeout(() => start(section), 150),
-      );
+      const started = performance.now();
+      const check = () => {
+        const title = findVisibleTarget('page-title');
+        const there = window.location.pathname === place.route;
+        if (there && title && title !== before) {
+          window.setTimeout(() => start(section), 150);
+        } else if (performance.now() - started < 5000) {
+          window.setTimeout(check, 80);
+        }
+      };
+      check();
     },
     [navigate, start],
   );
 
-  const stop = useCallback(() => {
-    markSeen(user?.id);
-    setRunning(null);
-  }, [user?.id]);
+  const stop = useCallback(() => setRunning(null), []);
 
   const value = useMemo(
     () => ({ start, startAt, active: running !== null }),
@@ -211,14 +180,6 @@ export function TourProvider({ children }: { children: ReactNode }) {
   return (
     <TourContext.Provider value={value}>
       {children}
-      <WelcomeModal
-        open={welcomeOpen}
-        onStart={start}
-        onLater={() => {
-          setWelcomeOpen(false);
-          markSeen(user?.id);
-        }}
-      />
       {running && running.steps.length > 0 && (
         <TourOverlay
           key={`${running.tour}-${index}`}
@@ -233,42 +194,6 @@ export function TourProvider({ children }: { children: ReactNode }) {
   );
 }
 
-function WelcomeModal({
-  open,
-  onStart,
-  onLater,
-}: {
-  open: boolean;
-  onStart: () => void;
-  onLater: () => void;
-}) {
-  const { t } = useI18n();
-  return (
-    <Modal
-      open={open}
-      title={t('tour.welcomeTitle')}
-      size="sm"
-      onClose={onLater}
-      closeLabel={t('common.close')}
-      footer={
-        <>
-          <Button variant="secondary" onClick={onLater}>
-            {t('tour.later')}
-          </Button>
-          <Button icon={<Compass className="h-4 w-4" />} onClick={onStart}>
-            {t('tour.start')}
-          </Button>
-        </>
-      }
-    >
-      <div className="flex flex-col items-center gap-3 text-center">
-        <Mascot size={120} mood="wave" />
-        <p className="text-sm text-muted">{t('tour.welcomeBody')}</p>
-      </div>
-    </Modal>
-  );
-}
-
 function TourOverlay({
   tour,
   steps,
@@ -276,15 +201,13 @@ function TourOverlay({
   setIndex,
   onClose,
 }: {
-  tour: TourId;
+  tour: SectionTourId;
   steps: TourStepDef[];
   index: number;
   setIndex: (index: number) => void;
   onClose: () => void;
 }) {
   const { t } = useI18n();
-  const navigate = useNavigate();
-  const location = useLocation();
   const step = steps[Math.min(index, steps.length - 1)]!;
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [ready, setReady] = useState(false);
@@ -292,20 +215,10 @@ function TourOverlay({
   const [cardHeight, setCardHeight] = useState(200);
   const isLast = index >= steps.length - 1;
 
-  // Navigate to the step's page, then find and focus its target.
+  // Find the step's element on the page and point at it.
   useEffect(() => {
     // Each step remounts this component (key={index}), so `ready` starts false.
     const signal = { cancelled: false };
-    // Routes may include a query (e.g. a dashboard view): compare it too when present.
-    const current = step.route?.includes('?')
-      ? location.pathname + location.search
-      : location.pathname;
-    if (step.route && current !== step.route) {
-      navigate(step.route);
-      return () => {
-        signal.cancelled = true;
-      };
-    }
     void waitForTarget(step.target, signal).then((element) => {
       if (signal.cancelled) return;
       if (element) {
@@ -333,7 +246,7 @@ function TourOverlay({
     return () => {
       signal.cancelled = true;
     };
-  }, [step, location.pathname, location.search, navigate]);
+  }, [step]);
 
   // Keep the spotlight aligned on resize/scroll.
   useEffect(() => {
@@ -412,11 +325,9 @@ function TourOverlay({
         <div className="mb-3 flex items-center justify-between gap-3">
           <span className="flex min-w-0 items-center gap-2">
             <Mascot variant="avatar" size={28} mood="happy" />
-            {tour !== 'general' && (
-              <span className="truncate text-xs font-semibold text-muted">
-                {t(`tour.names.${tour}`)}
-              </span>
-            )}
+            <span className="truncate text-xs font-semibold text-muted">
+              {t(`tour.names.${tour}`)}
+            </span>
             <span className="rounded-full bg-primary-soft px-2.5 py-0.5 text-[11px] font-semibold text-primary-ink tabular-nums">
               {t('tour.progress', { current: index + 1, total: steps.length })}
             </span>

@@ -1,15 +1,21 @@
 import {
   BellRing,
+  Boxes,
   Compass,
   HandCoins,
   LayoutDashboard,
+  Map as MapIcon,
   MessageCircleQuestion,
+  Package,
   Plus,
   ReceiptText,
   Rocket,
   Search,
+  ShoppingCart,
   Sparkles,
+  UserCog,
   Users,
+  Warehouse,
   X,
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
@@ -17,19 +23,88 @@ import { Mascot, Button, cx, Page, PageHeader, Reveal } from '@/ui';
 import { useI18n, type TranslationKey } from '../i18n/I18nProvider';
 import { SECTION_ROUTES, type SectionTourId } from '../tour/steps';
 import { useTour } from '../tour/TourProvider';
-import { useModules } from '../hooks/useModules';
+import { useModules, type ModuleRequirement } from '../hooks/useModules';
 
-/** Guide sections, how many steps each has (texts under help.guides.<id>.stepN) and a colour. */
-const GUIDES: Array<{ id: string; steps: number; icon: ReactNode; tone: string }> = [
+/**
+ * Guide sections, how many steps each has (texts under help.guides.<id>.stepN), a colour and the
+ * module they need (a business only sees the guides of what it has).
+ */
+const GUIDES: Array<{
+  id: string;
+  steps: number;
+  icon: ReactNode;
+  tone: string;
+  module?: ModuleRequirement;
+}> = [
   { id: 'start', steps: 3, icon: <Rocket />, tone: 'from-emerald-400 to-teal-600' },
-  { id: 'customers', steps: 3, icon: <Users />, tone: 'from-sky-400 to-indigo-500' },
-  { id: 'receivables', steps: 3, icon: <ReceiptText />, tone: 'from-amber-300 to-orange-500' },
-  { id: 'payments', steps: 4, icon: <HandCoins />, tone: 'from-teal-400 to-cyan-600' },
-  { id: 'reminders', steps: 3, icon: <BellRing />, tone: 'from-fuchsia-400 to-purple-600' },
-  { id: 'dashboard', steps: 3, icon: <LayoutDashboard />, tone: 'from-rose-400 to-pink-600' },
+  {
+    id: 'sell',
+    steps: 4,
+    icon: <ShoppingCart />,
+    tone: 'from-teal-400 to-cyan-600',
+    module: 'sales',
+  },
+  {
+    id: 'buy',
+    steps: 3,
+    icon: <Warehouse />,
+    tone: 'from-sky-400 to-indigo-500',
+    module: 'inventory',
+  },
+  {
+    id: 'products',
+    steps: 3,
+    icon: <Package />,
+    tone: 'from-lime-400 to-emerald-600',
+    module: 'catalog',
+  },
+  {
+    id: 'stock',
+    steps: 3,
+    icon: <Boxes />,
+    tone: 'from-amber-300 to-orange-500',
+    module: 'inventory',
+  },
+  {
+    id: 'locations',
+    steps: 3,
+    icon: <MapIcon />,
+    tone: 'from-violet-400 to-purple-600',
+    module: 'inventory',
+  },
+  {
+    id: 'customers',
+    steps: 3,
+    icon: <Users />,
+    tone: 'from-sky-400 to-blue-600',
+    module: 'customers',
+  },
+  {
+    id: 'receivables',
+    steps: 3,
+    icon: <ReceiptText />,
+    tone: 'from-amber-300 to-orange-500',
+    module: 'collections',
+  },
+  {
+    id: 'payments',
+    steps: 4,
+    icon: <HandCoins />,
+    tone: 'from-teal-400 to-cyan-600',
+    module: 'collections',
+  },
+  {
+    id: 'reminders',
+    steps: 3,
+    icon: <BellRing />,
+    tone: 'from-fuchsia-400 to-purple-600',
+    module: 'collections',
+  },
+  { id: 'reports', steps: 3, icon: <LayoutDashboard />, tone: 'from-rose-400 to-pink-600' },
+  { id: 'team', steps: 3, icon: <UserCog />, tone: 'from-slate-400 to-slate-600' },
 ];
 
-const FAQ_COUNT = 8;
+const FAQ_COUNT = 12;
 
 /** Case- and accent-insensitive text used by the search box. */
 const normalize = (text: string) =>
@@ -40,21 +115,28 @@ const normalize = (text: string) =>
 
 export function HelpPage() {
   const { t } = useI18n();
-  const tour = useTour();
+  // The help center's tour buttons lead to the tours of each section.
+  const seeTours = () =>
+    document
+      .getElementById('section-tours')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   const key = (path: string) => path as TranslationKey;
+  const modules = useModules();
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState<number | null>(0);
 
   const needle = normalize(query.trim());
   const matches = (...texts: string[]) => !needle || normalize(texts.join(' ')).includes(needle);
 
-  const guides = GUIDES.map((guide) => ({
-    ...guide,
-    title: t(key(`help.guides.${guide.id}.title`)),
-    steps: Array.from({ length: guide.steps }, (_, index) =>
-      t(key(`help.guides.${guide.id}.step${index + 1}`)),
-    ),
-  })).filter((guide) => matches(guide.title, ...guide.steps));
+  const guides = GUIDES.filter((guide) => !guide.module || modules[guide.module])
+    .map((guide) => ({
+      ...guide,
+      title: t(key(`help.guides.${guide.id}.title`)),
+      steps: Array.from({ length: guide.steps }, (_, index) =>
+        t(key(`help.guides.${guide.id}.step${index + 1}`)),
+      ),
+    }))
+    .filter((guide) => matches(guide.title, ...guide.steps));
 
   const faqs = Array.from({ length: FAQ_COUNT }, (_, index) => ({
     index,
@@ -109,14 +191,9 @@ export function HelpPage() {
               </h2>
               <p className="mt-1 max-w-xl text-sm text-muted">{t('help.tourDescription')}</p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button
-                icon={<Compass className="h-4 w-4" />}
-                onClick={() => tour.start('general')}
-                className="help-shine"
-              >
-                {t('help.startTour')}
-              </Button>
+            {/* The tours of each section, right here: pick one and it starts on that screen. */}
+            <SectionTours />
+            <div className="flex">
               <label className="relative flex-1 sm:max-w-sm">
                 <span className="sr-only">{t('help.searchPlaceholder')}</span>
                 <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-subtle" />
@@ -265,10 +342,6 @@ export function HelpPage() {
       )}
 
       <Reveal>
-        <SectionTours />
-      </Reveal>
-
-      <Reveal>
         <section className="flex flex-col items-center gap-4 rounded-2xl border border-line bg-surface-2 p-5 text-center sm:flex-row sm:text-left">
           <div className="help-float">
             <Mascot size={64} mood="happy" />
@@ -277,11 +350,7 @@ export function HelpPage() {
             <h2 className="font-semibold">{t('help.stuckTitle')}</h2>
             <p className="text-sm text-muted">{t('help.stuckDescription')}</p>
           </div>
-          <Button
-            variant="secondary"
-            icon={<Compass className="h-4 w-4" />}
-            onClick={() => tour.start('general')}
-          >
+          <Button variant="secondary" icon={<Compass className="h-4 w-4" />} onClick={seeTours}>
             {t('help.startTour')}
           </Button>
         </section>
@@ -300,25 +369,18 @@ function SectionTours() {
     return place !== null && (!place.module || modules[place.module]);
   });
   return (
-    <section className="rounded-2xl border border-line bg-surface p-5">
-      <h2 className="flex items-center gap-2 font-semibold">
-        <Compass className="h-4 w-4 text-primary" />
-        {t('tour.sectionTitle')}
-      </h2>
-      <p className="mt-1 text-sm text-muted">{t('tour.sectionHint')}</p>
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-        {sections.map((section) => (
-          <button
-            key={section}
-            type="button"
-            onClick={() => tour.startAt(section)}
-            className="flex items-center justify-between gap-2 rounded-xl border border-line px-3 py-2.5 text-left text-sm font-medium transition hover:border-primary/40 hover:bg-primary-soft/40"
-          >
-            <span className="truncate">{t(`tour.names.${section}`)}</span>
-            <Compass className="h-4 w-4 shrink-0 text-primary" />
-          </button>
-        ))}
-      </div>
-    </section>
+    <div id="section-tours" className="flex flex-wrap gap-2">
+      {sections.map((section) => (
+        <button
+          key={section}
+          type="button"
+          onClick={() => tour.startAt(section)}
+          className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface/80 px-3 py-1.5 text-sm font-medium shadow-xs transition hover:border-primary/40 hover:bg-primary-soft/60"
+        >
+          <Compass className="h-3.5 w-3.5 text-primary" />
+          {t(`tour.names.${section}`)}
+        </button>
+      ))}
+    </div>
   );
 }

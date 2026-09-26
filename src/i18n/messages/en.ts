@@ -1758,55 +1758,97 @@ export const en: Messages = {
   help: {
     title: 'Help center',
     subtitle: 'Learn how to use Solvia step by step.',
-    tourTitle: 'Guided tour',
+    tourTitle: 'Tours by section',
     tourDescription:
-      'We walk you through every part of the platform on the real screen. It takes about 2 minutes.',
-    startTour: 'Start tour',
+      'Pick a section and I will show you each thing on the real screen. There is also the "Tour" button at the top of every screen.',
+    startTour: 'See the tours',
     stepLabel: 'Step {number}',
     guides: {
       start: {
-        title: 'Getting started',
-        step1: 'Register your business or sign in with your email and password.',
-        step2: 'In Settings, review the reminder rules and the message texts.',
-        step3: 'Change the language or the theme (light or dark) from the top bar at any time.',
+        title: 'First steps',
+        step1: 'Sign in with your email and password.',
+        step2:
+          'The menu has each part of your business: sales, collections, inventory and results.',
+        step3:
+          'Not sure how a screen works? Tap "Tour" at the top and I will show you step by step.',
+      },
+      sell: {
+        title: 'Sell',
+        step1: 'Tap "New sale" (or "+ Add" → "Sale").',
+        step2: 'Find the product by code or description, or scan it; each tap adds one.',
+        step3: 'Tap "Charge": choose cash or credit and how they paid (it can be several methods).',
+        step4:
+          'Print the ticket or send it by WhatsApp; you also find it later in the sale detail.',
+      },
+      buy: {
+        title: 'Record a purchase',
+        step1: 'Tap "New purchase".',
+        step2: 'Add the products with their quantity (or in sacks) and what they cost you.',
+        step3:
+          'Pick the supplier and how you paid, and save: stock goes up and the cost is updated.',
+      },
+      products: {
+        title: 'Your products',
+        step1: 'In Products tap "New product": name, price and, if you want, cost and picture.',
+        step2: 'Group them with "Categories" to find them fast when selling.',
+        step3: 'Every product has its code and QR: print its labels with "Print labels".',
+      },
+      stock: {
+        title: 'Keep track of stock',
+        step1: 'The "Running low" filter shows what you need to buy.',
+        step2:
+          'If you counted or something broke, choose "Adjust stock" in the product\'s "…" menu.',
+        step3: 'The "Kardex" shows every product entry and exit.',
+      },
+      locations: {
+        title: 'Place your products',
+        step1: 'In Locations upload a picture of your plan or draw your shop.',
+        step2: 'Tap "Mark a location" and drag to draw each shelf or area.',
+        step3: 'Add each area\'s products and search "Where is it?" to find them in no time.',
       },
       customers: {
         title: 'Add customers',
-        step1: 'Go to Customers and click "New customer".',
-        step2: 'Enter the name and the WhatsApp number with country code (e.g. +51987654321).',
-        step3: 'Open a customer to see their receivables, payments, messages and risk score.',
+        step1:
+          'Tap "+ Add" and choose "New customer" (or create one when selling or noting credit).',
+        step2: 'Type their name and WhatsApp, for example 987 654 321.',
+        step3: 'In Customers, tap someone to see what they owe and what they paid.',
       },
       receivables: {
-        title: 'Add receivables',
-        step1: 'In Receivables (or inside a customer) click "New receivable".',
-        step2: 'Enter the description, amount, issue date and due date.',
-        step3: 'Use the status filters to see pending, partial, overdue or paid receivables.',
+        title: 'Note down credit',
+        step1: 'Tap "+ Add" and choose "Note down credit" (or sell on credit).',
+        step2: 'Find the customer, type how much they owe and when they will pay.',
+        step3:
+          'In "Collections" you see everything still to collect; at the top you can see only the overdue.',
       },
       payments: {
-        title: 'Collect and register payments',
-        step1: 'In the receivable row click "Collect".',
-        step2: 'Enter the amount (full or partial), date, method and optionally the proof.',
-        step3:
-          'Solvia updates the balance and sends the account statement to the customer via WhatsApp.',
-        step4: 'From the row menu you can send a reminder or copy a payment link.',
+        title: 'When they pay you',
+        step1: 'In the debt, tap "Paid" (or "+ Add" → "Record payment").',
+        step2: 'Type how much they paid and how (Yape, Plin, cash…). The picture is optional.',
+        step3: 'Solvia takes it off the debt by itself.',
+        step4: 'To remind someone to pay, tap "WhatsApp" on their debt.',
       },
       reminders: {
         title: 'Automatic reminders',
-        step1: 'The engine checks your receivables every hour.',
+        step1: 'Solvia checks your debts every hour.',
         step2:
-          'It sends a reminder before the due date, another on the day, and then every few days while overdue.',
-        step3: 'Everything is recorded in Settings > Send log.',
+          'It writes to your customer a few days before, on the due day and, if late, every few days.',
+        step3: 'You can see every message in Settings > Sent messages.',
       },
-      dashboard: {
-        title: 'Understand the dashboard',
-        step1:
-          'The indicators show how much you are owed, how much is overdue and how much you collected this month.',
+      reports: {
+        title: 'Your numbers',
+        step1: 'In Dashboard you see in charts how much you sell, buy, collect and are owed.',
         step2:
-          'The projected cash flow tells you how much money should come in each week or month.',
-        step3: 'Receivables aging and top debtors help you decide whom to collect from first.',
+          'In Reports you choose the area (Sales, Purchases, Collections, Inventory) and the report.',
+        step3: 'Open it as PDF or Excel to save or send it.',
+      },
+      team: {
+        title: 'Your team and business',
+        step1: 'In Settings > Users you add the people who help you (seller, collector…).',
+        step2: 'In Business you choose the language of the whole team.',
+        step3: 'In My plan you see your messages, users and customers of the month.',
       },
     },
-    helloHint: 'I will keep you company while you learn to collect without chasing anyone.',
+    helloHint: 'I am with you while you learn to sell, collect and keep your business in order.',
     searchPlaceholder: 'Search a guide or a question…',
     noResults: 'Nothing matches "{query}". Try another word.',
     guidesTitle: 'Quick guides',
@@ -1815,7 +1857,7 @@ export const en: Messages = {
     faqSubtitle: 'Short answers to the most common questions.',
     clearSearch: 'Clear search',
     stuckTitle: 'Still have questions?',
-    stuckDescription: 'Take the guided tour: we show you every screen in 2 minutes.',
+    stuckDescription: 'Tap "Tour" at the top of any screen and I will show you how it works.',
     faqTitle: 'Frequently asked questions',
     faq: {
       q1: 'How is a customer’s risk calculated?',
@@ -1834,6 +1876,14 @@ export const en: Messages = {
       a7: 'In the language chosen in the top bar. If you customised a template, it is sent exactly as you wrote it.',
       q8: 'What do the risk colours mean?',
       a8: 'Green is low risk (usually pays on time), amber is medium and red is high: prioritise those customers.',
+      q9: 'Can I charge a sale with several methods?',
+      a9: 'Yes. When charging choose "Several" and split the total between cash, Yape, Plin or transfer; it is not saved until the parts add up.',
+      q10: 'Can I sell something that is out of stock?',
+      a10: 'Yes, the sale is saved and marked "Sold without stock" so you can check it in the list and in the Kardex.',
+      q11: 'How do I void a sale?',
+      a11: 'In Sales tap "Void" on the sale row. The stock comes back and the sale is marked as voided.',
+      q12: 'How do I print the QR labels?',
+      a12: 'In Products tap "Print labels", pick the products, how many of each and the size (A4 sheet or label printer).',
     },
   },
   assistant: {
@@ -1846,13 +1896,24 @@ export const en: Messages = {
     helpCenter: 'Go to the help center',
     comingSoon: 'Soon you will be able to chat with me here.',
   },
+  pageError: {
+    eyebrow: 'Something failed',
+    title: 'This screen had a problem',
+    description:
+      'The rest of Solvia keeps working. Try again; if it happens again, tell us what you were doing.',
+    retry: 'Try again',
+    home: 'Go home',
+    updateEyebrow: 'New version',
+    updateTitle: 'There is a new version of Solvia',
+    updateDescription: 'Update to go on: your data is saved.',
+    update: 'Update',
+  },
   tour: {
     sectionButton: 'Tour',
     sectionButtonTitle: 'How does {name} work? I will show you step by step',
     sectionTitle: 'Tours by section',
     sectionHint:
       'Forgot how to do something? Pick the section and I will show you step by step. There is also the "Tour" button at the top of every screen.',
-    general: 'General tour',
     thisSection: 'Tour of this section ({name})',
     names: {
       home: 'Home',
@@ -2150,58 +2211,11 @@ export const en: Messages = {
         },
       },
     },
-    welcomeTitle: 'Welcome to Solvia',
-    welcomeBody:
-      'Would you like a quick tour of the platform? We will show you where everything is in under 2 minutes.',
-    start: 'Start tour',
-    later: 'Not now',
     next: 'Next',
     previous: 'Previous',
     finish: 'Finish',
     skip: 'Exit tour',
     progress: '{current} of {total}',
-    steps: {
-      sectionTours: {
-        title: 'Tour of each section',
-        body: 'On every screen, this button shows you step by step how it works. Use it when you forget how to do something.',
-      },
-      homeActions: {
-        title: 'Everyday actions',
-        body: 'From here you add a sale on credit, record a payment or add a customer.',
-      },
-      quickAdd: {
-        title: 'Always at hand',
-        body: 'This “+ Add” button is on every screen: use it when you sell on credit or get paid.',
-      },
-      homeToday: {
-        title: 'Who to collect from today',
-        body: 'Late customers and those who pay soon show up here. Tap “Paid me” or “WhatsApp”.',
-      },
-      navigation: {
-        title: 'Menu',
-        body: 'Home, what you are owed, your customers and reports.',
-      },
-      rowActions: {
-        title: 'Collect from here',
-        body: '“Paid me” when they pay; “WhatsApp” to remind your customer.',
-      },
-      customersTable: {
-        title: 'Your customers',
-        body: 'What each one owes you and whether they pay well. Tap someone to see details.',
-      },
-      kpis: {
-        title: 'Reports',
-        body: 'How much you are owed, how much you were paid and more numbers, whenever you need them.',
-      },
-      reminderRules: {
-        title: 'Automatic reminders',
-        body: 'Choose when Solvia messages your customer: before, on the day and if they are late.',
-      },
-      help: {
-        title: 'Bowl helps you',
-        body: 'Tap Bowl, our owl, to repeat this tour or open the help.',
-      },
-    },
   },
   notFound: {
     title: 'Page not found',

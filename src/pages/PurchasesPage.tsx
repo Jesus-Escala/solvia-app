@@ -26,7 +26,7 @@ import { ADD_KEY_LABEL } from '../components/pos/keys';
 import { useAddShortcut } from '../hooks/useAddShortcut';
 import type { Purchase } from '../lib/types';
 import { PaymentPartsLabel } from '../components/domain/SplitPayments';
-import { ModuleOff } from './ProductsPage';
+import { ModuleOff } from '../components/modules/ModuleOff';
 
 // Empty sort = newest first.
 const DEFAULTS = { search: '', page: '1', pageSize: '20', sortBy: '', sortDir: '' };

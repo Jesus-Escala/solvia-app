@@ -22,7 +22,6 @@ import {
   Button,
   cx,
   DataTable,
-  EmptyState,
   IconButton,
   MenuItems,
   Page,
@@ -44,7 +43,7 @@ import { ProductQrModal } from '../components/domain/ProductQrModal';
 import { LabelPrintModal } from '../components/labels/LabelPrintModal';
 import { ImageViewer } from '../components/domain/ImageViewer';
 import { ProductThumb } from '../components/domain/ProductThumb';
-import { ModulesOffer } from '../components/modules/ModulesOffer';
+import { ModuleOff } from '../components/modules/ModuleOff';
 import {
   useCategories,
   useDeleteProduct,
@@ -69,21 +68,6 @@ const DEFAULTS = {
   sortBy: '',
   sortDir: '',
 };
-
-/** Shown instead of a module's page when the business does not have that module. */
-export function ModuleOff() {
-  const { t } = useI18n();
-  return (
-    <Page>
-      <EmptyState
-        icon={<Package className="h-5 w-5" />}
-        title={t('modules.off.title')}
-        description={t('modules.off.description')}
-      />
-      <ModulesOffer className="mx-auto w-full max-w-3xl" />
-    </Page>
-  );
-}
 
 export function ProductsPage() {
   const modules = useModules();
