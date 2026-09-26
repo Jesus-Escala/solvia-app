@@ -41,7 +41,8 @@ export const en: Messages = {
     groups: {
       commercial: 'Sales',
       receivables: 'Receivables',
-      inventory: 'Inventory',
+      logistics: 'Logistics',
+      masters: 'Records',
       numbers: 'Results',
       tools: 'Tools',
     },
@@ -145,12 +146,6 @@ export const en: Messages = {
     choose: 'Pick a report',
     area: 'Area of the reports',
     search: 'Search the report',
-    groups: {
-      sales: 'Sales',
-      purchases: 'Purchases',
-      collections: 'Collections',
-      inventory: 'Inventory',
-    },
     names: {
       'sales-detail': 'Tickets (sales detail)',
       'sales-by-day': 'Sales by day',
@@ -364,8 +359,7 @@ export const en: Messages = {
   },
   dashboard: {
     title: 'Dashboard',
-    subtitle:
-      'The numbers of {business} in charts: what you collected, what you are owed and what is coming.',
+    subtitle: 'The numbers of {business} in charts, by the modules of your business.',
     answers: {
       collected: 'From {from} to {to} you were paid ⟦{amount}⟧ in {count|# payment|# payments}.',
       more: 'That is ⟦{percent} more⟧ than the same time before.',
@@ -1322,7 +1316,7 @@ export const en: Messages = {
     },
     product: {
       label: 'Location',
-      hint: 'Where it is on your floor plan (Inventory > Locations).',
+      hint: 'Where it is on your floor plan (Tools > Locations).',
       none: 'No location',
       see: 'See on the plan',
     },
@@ -1623,7 +1617,7 @@ export const en: Messages = {
       cta: 'I want it',
       note: 'An extra charge on your plan. You can remove it whenever you want.',
       collections: {
-        name: 'Collections',
+        name: 'Receivables',
         a: 'Note what you are owed and who paid you',
         b: 'WhatsApp reminders and account statements',
         c: 'Dashboard and payments report',
@@ -1635,7 +1629,7 @@ export const en: Messages = {
         c: 'Sales reports by customer and product',
       },
       inventory: {
-        name: 'Inventory',
+        name: 'Logistics',
         a: 'Your stock updates itself with every sale and purchase',
         b: 'Purchases and suppliers in one place',
         c: 'It tells you what is running low',
@@ -1769,7 +1763,7 @@ export const en: Messages = {
         title: 'First steps',
         step1: 'Sign in with your email and password.',
         step2:
-          'The menu has each part of your business: sales, collections, inventory and results.',
+          'The menu is ordered by your modules, then your records (customers, products, suppliers), tools and results.',
         step3:
           'Not sure how a screen works? Tap "Tour" at the top and I will show you step by step.',
       },
@@ -1838,8 +1832,7 @@ export const en: Messages = {
       reports: {
         title: 'Your numbers',
         step1: 'In Dashboard you see in charts how much you sell, buy, collect and are owed.',
-        step2:
-          'In Reports you choose the area (Sales, Purchases, Collections, Inventory) and the report.',
+        step2: 'In Reports you choose the module (Sales, Receivables, Logistics) and the report.',
         step3: 'Open it as PDF or Excel to save or send it.',
       },
       team: {
@@ -1950,7 +1943,7 @@ export const en: Messages = {
         },
         navigation: {
           title: 'The menu',
-          body: 'Each section of your business: sales, collections, inventory and results.',
+          body: 'Ordered by your modules, then your records, tools and results.',
         },
       },
       sales: {
@@ -2183,7 +2176,7 @@ export const en: Messages = {
         },
         chooser: {
           title: 'Choose the report',
-          body: 'First the area (Sales, Purchases, Collections, Inventory), then the report.',
+          body: 'First the module (Sales, Receivables, Logistics), then the report.',
         },
         toolbar: {
           title: 'Dates and files',

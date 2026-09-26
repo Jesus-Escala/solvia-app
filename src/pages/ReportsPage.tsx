@@ -63,7 +63,9 @@ interface ReportDef {
   id: AnyReportId;
   icon: ReactNode;
   /** Business module the report needs. */
-  module: 'sales' | 'catalog' | 'collections' | 'inventory';
+  module: 'sales' | 'collections' | 'inventory';
+  /** A second module it needs too (e.g. sold without stock: selling and keeping stock). */
+  alsoNeeds?: 'sales' | 'inventory';
   /** The stock report is a snapshot of today: no date range. */
   dated: boolean;
   /** Its columns, rows and figures come from the API (`/reports/:report/table`). */
@@ -73,7 +75,7 @@ interface ReportDef {
 /** The reports, in the order and groups the page shows them. */
 const GROUPS: Array<{ title: TranslationKey; icon: ReactNode; reports: ReportDef[] }> = [
   {
-    title: 'reports.groups.sales',
+    title: 'nav.groups.commercial',
     icon: <ShoppingCart />,
     reports: [
       { id: 'sales-detail', icon: <ReceiptText />, module: 'sales', dated: true, generic: true },
@@ -86,7 +88,14 @@ const GROUPS: Array<{ title: TranslationKey; icon: ReactNode; reports: ReportDef
     ],
   },
   {
-    title: 'reports.groups.purchases',
+    title: 'nav.groups.receivables',
+    icon: <HandCoins />,
+    reports: [
+      { id: 'collections-by-customer', icon: <HandCoins />, module: 'collections', dated: true },
+    ],
+  },
+  {
+    title: 'nav.groups.logistics',
     icon: <Warehouse />,
     reports: [
       {
@@ -110,21 +119,15 @@ const GROUPS: Array<{ title: TranslationKey; icon: ReactNode; reports: ReportDef
         dated: true,
         generic: true,
       },
-    ],
-  },
-  {
-    title: 'reports.groups.collections',
-    icon: <HandCoins />,
-    reports: [
-      { id: 'collections-by-customer', icon: <HandCoins />, module: 'collections', dated: true },
-    ],
-  },
-  {
-    title: 'reports.groups.inventory',
-    icon: <Boxes />,
-    reports: [
-      { id: 'stock', icon: <Boxes />, module: 'catalog', dated: false },
-      { id: 'shortages', icon: <AlertTriangle />, module: 'sales', dated: true },
+      // Stock is kept by Logística; "sold without stock" needs selling too.
+      { id: 'stock', icon: <Boxes />, module: 'inventory', dated: false },
+      {
+        id: 'shortages',
+        icon: <AlertTriangle />,
+        module: 'sales',
+        alsoNeeds: 'inventory',
+        dated: true,
+      },
     ],
   },
 ];
@@ -135,7 +138,9 @@ const DEFAULTS = { report: '', from: '', to: '' };
 function availableGroups(modules: Modules) {
   return GROUPS.map((group) => ({
     ...group,
-    reports: group.reports.filter((report) => modules[report.module]),
+    reports: group.reports.filter(
+      (report) => modules[report.module] && (!report.alsoNeeds || modules[report.alsoNeeds]),
+    ),
   })).filter((group) => group.reports.length > 0);
 }
 

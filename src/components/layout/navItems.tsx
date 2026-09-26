@@ -34,27 +34,17 @@ export interface NavSection {
 }
 
 /**
- * The whole navigation, grouped by area of the business: Comercial (selling, customers),
- * Cobranza (what is owed), Inventario (products, purchases, suppliers) and Resultados
- * (dashboard charts, with Cobranza, and tabular reports). Settings and help go at the bottom.
- * Items of a module the business does not have are left out (see `visibleSections`).
+ * The whole navigation, grouped by the modules a business buys — Comercial (selling), Cuentas
+ * por cobrar (what is owed) and Logística (buying) — then Mantenimientos (customers, products
+ * and suppliers, shared by the modules that use them), Herramientas (for every business) and
+ * Resultados (dashboard and reports, with what the modules give). Settings and help go at the
+ * bottom. Items of a module the business does not have are left out (see `visibleSections`).
  */
 export const NAV_SECTIONS: NavSection[] = [
   { title: null, items: [{ to: '/', label: 'nav.home', icon: <Home />, end: true }] },
   {
     title: 'nav.groups.commercial',
-    items: [
-      { to: '/sales', label: 'nav.sales', icon: <ShoppingCart />, module: 'sales' },
-      // Products serve selling and buying: next to sales when the business only sells…
-      {
-        to: '/products',
-        label: 'nav.products',
-        icon: <Package />,
-        module: 'sales',
-        when: (modules) => !modules.inventory,
-      },
-      { to: '/customers', label: 'nav.customers', icon: <Users />, module: 'customers' },
-    ],
+    items: [{ to: '/sales', label: 'nav.sales', icon: <ShoppingCart />, module: 'sales' }],
   },
   {
     title: 'nav.groups.receivables',
@@ -68,11 +58,16 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    title: 'nav.groups.inventory',
+    title: 'nav.groups.logistics',
+    items: [{ to: '/purchases', label: 'nav.purchases', icon: <Warehouse />, module: 'inventory' }],
+  },
+  {
+    // Shared records: customers (Comercial or Cuentas por cobrar), products (Comercial or
+    // Logística) and suppliers (Logística).
+    title: 'nav.groups.masters',
     items: [
-      // …and in Inventario (with its stock) when the business has it.
-      { to: '/products', label: 'nav.products', icon: <Package />, module: 'inventory' },
-      { to: '/purchases', label: 'nav.purchases', icon: <Warehouse />, module: 'inventory' },
+      { to: '/customers', label: 'nav.customers', icon: <Users />, module: 'customers' },
+      { to: '/products', label: 'nav.products', icon: <Package />, module: 'catalog' },
       { to: '/suppliers', label: 'nav.suppliers', icon: <Truck />, module: 'inventory' },
     ],
   },

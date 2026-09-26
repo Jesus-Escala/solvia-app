@@ -380,12 +380,10 @@ export function HelpPage() {
 /** The section tours by area, like the menu (an area without any section of the business hides). */
 const TOUR_GROUPS: Array<{ title: TranslationKey; sections: SectionTourId[] }> = [
   { title: 'tour.groupGeneral', sections: ['home', 'settings'] },
-  { title: 'nav.groups.commercial', sections: ['sales', 'salePos', 'products', 'customers'] },
+  { title: 'nav.groups.commercial', sections: ['sales', 'salePos'] },
   { title: 'nav.groups.receivables', sections: ['receivables'] },
-  {
-    title: 'nav.groups.inventory',
-    sections: ['products', 'purchases', 'purchasePos', 'suppliers'],
-  },
+  { title: 'nav.groups.logistics', sections: ['purchases', 'purchasePos'] },
+  { title: 'nav.groups.masters', sections: ['customers', 'products', 'suppliers'] },
   { title: 'nav.groups.tools', sections: ['locations'] },
   { title: 'nav.groups.numbers', sections: ['dashboard', 'reports'] },
 ];
@@ -398,14 +396,9 @@ function SectionTours() {
     const place = SECTION_ROUTES[section];
     return place !== null && (!place.module || modules[place.module]);
   };
-  // Products sit where the menu has them: in Inventario with that module, else in Comercial.
-  const inGroup = (group: TranslationKey, section: SectionTourId) =>
-    section !== 'products' || (group === 'nav.groups.inventory') === modules.inventory;
   const groups = TOUR_GROUPS.map((group) => ({
     ...group,
-    sections: group.sections.filter(
-      (section) => available(section) && inGroup(group.title, section),
-    ),
+    sections: group.sections.filter(available),
   })).filter((group) => group.sections.length > 0);
   return (
     <div id="section-tours" className="grid gap-x-6 gap-y-3 sm:grid-cols-2 xl:grid-cols-3">

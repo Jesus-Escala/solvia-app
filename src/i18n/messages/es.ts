@@ -43,7 +43,8 @@ export const es = {
     groups: {
       commercial: 'Comercial',
       receivables: 'Cuentas por cobrar',
-      inventory: 'Inventario',
+      logistics: 'Logística',
+      masters: 'Mantenimientos',
       numbers: 'Resultados',
       tools: 'Herramientas',
     },
@@ -147,12 +148,6 @@ export const es = {
     choose: 'Elige un reporte',
     area: 'Área de los reportes',
     search: 'Buscar en el reporte',
-    groups: {
-      sales: 'Ventas',
-      purchases: 'Compras',
-      collections: 'Cobranza',
-      inventory: 'Inventario',
-    },
     names: {
       'sales-detail': 'Tickets (detalle de ventas)',
       'sales-by-day': 'Ventas por día',
@@ -371,8 +366,7 @@ export const es = {
   },
   dashboard: {
     title: 'Dashboard',
-    subtitle:
-      'Los números de {business} en gráficos: lo que cobraste, lo que te deben y lo que viene.',
+    subtitle: 'Los números de {business} en gráficos, según los módulos de tu negocio.',
     answers: {
       collected: 'Del {from} al {to} te pagaron ⟦{amount}⟧ en {count|# pago|# pagos}.',
       more: 'Es ⟦{percent} más⟧ que en el mismo tiempo de antes.',
@@ -1330,7 +1324,7 @@ export const es = {
     },
     product: {
       label: 'Ubicación',
-      hint: 'Dónde está en tu plano (Inventario > Ubicaciones).',
+      hint: 'Dónde está en tu plano (Herramientas > Ubicaciones).',
       none: 'Sin ubicación',
       see: 'Ver en el plano',
     },
@@ -1629,19 +1623,19 @@ export const es = {
       cta: 'Quiero sumarlo',
       note: 'Pago adicional a tu plan. Puedes quitarlo cuando quieras.',
       collections: {
-        name: 'Cobranza',
+        name: 'Cuentas por cobrar',
         a: 'Anota lo que te deben y quién te pagó',
         b: 'Recordatorios por WhatsApp y estados de cuenta',
         c: 'Dashboard y reporte de cobros',
       },
       sales: {
-        name: 'Ventas',
+        name: 'Comercial',
         a: 'Registra ventas en segundos, al contado o fiadas',
         b: 'Escanea el código de barras de tus productos',
         c: 'Reportes de ventas por cliente y producto',
       },
       inventory: {
-        name: 'Inventario',
+        name: 'Logística',
         a: 'Tu stock se actualiza solo con cada venta y compra',
         b: 'Compras y proveedores en un solo lugar',
         c: 'Te avisa lo que se está acabando',
@@ -1774,7 +1768,8 @@ export const es = {
       start: {
         title: 'Primeros pasos',
         step1: 'Entra con tu correo y contraseña.',
-        step2: 'El menú tiene cada parte de tu negocio: ventas, cobranza, inventario y resultados.',
+        step2:
+          'El menú está ordenado por tus módulos y luego tus mantenimientos (clientes, productos, proveedores), herramientas y resultados.',
         step3:
           '¿No sabes cómo se usa una pantalla? Toca «Recorrido» arriba y te la muestro paso a paso.',
       },
@@ -1843,7 +1838,8 @@ export const es = {
       reports: {
         title: 'Tus números',
         step1: 'En Dashboard ves en gráficos cuánto vendes, compras, cobras y te deben.',
-        step2: 'En Reportes eliges el área (Ventas, Compras, Cobranza, Inventario) y el reporte.',
+        step2:
+          'En Reportes eliges el módulo (Comercial, Cuentas por cobrar, Logística) y el reporte.',
         step3: 'Ábrelo en PDF o Excel para guardarlo o enviarlo.',
       },
       team: {
@@ -1954,7 +1950,7 @@ export const es = {
         },
         navigation: {
           title: 'El menú',
-          body: 'Cada sección de tu negocio: ventas, cobranza, inventario y resultados.',
+          body: 'Ordenado por tus módulos y luego tus mantenimientos, herramientas y resultados.',
         },
       },
       sales: {
@@ -2181,7 +2177,7 @@ export const es = {
         },
         chooser: {
           title: 'Elegir el reporte',
-          body: 'Primero el área (Ventas, Compras, Cobranza, Inventario) y luego el reporte.',
+          body: 'Primero el módulo (Comercial, Cuentas por cobrar, Logística) y luego el reporte.',
         },
         toolbar: {
           title: 'Fechas y archivos',

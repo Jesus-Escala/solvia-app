@@ -78,8 +78,7 @@ The API must be running (`solvia-backend`: `npm run db:local` + `npm run dev`). 
 - **Selling the modules**: `components/modules/ModulesOffer.tsx` lists the modules the business
   lacks with their extra price (same reference prices as the landing and the backoffice) and a
   link to ask for them; shown on Home (admins) and on `ModuleOff`.
-- **Navigation** (`components/layout/navItems.tsx`): sections by business area — Comercial,
-  Cuentas por cobrar, Inventario, Herramientas (Ubicaciones), Resultados (Dashboard + Reportes); Productos (Ventas or Inventario) sits in Inventario when the business has it, else in Comercial (`when` on a nav item) — plus settings/help at the bottom; phones show three
+- **Navigation** (`components/layout/navItems.tsx`): by the modules a business buys — Comercial (`sales`: Ventas), Cuentas por cobrar (`collections`: Cobranza), Logística (`inventory`: Compras) — then Mantenimientos (Clientes with Comercial or Cuentas por cobrar, Productos with Comercial or Logística, Proveedores with Logística), Herramientas (Ubicaciones, every business) and Resultados (Dashboard + Reportes, both grouped by the same modules) — plus settings/help at the bottom; phones show three
   places, the "+" and "Más" (a sheet with every section). Items of disabled modules disappear.
 - **Inventory** (`inventory` module): `PurchasesPage` + `PurchaseFormModal` (stock goes up, costs
   updated), `SuppliersPage`, `AdjustStockModal` (count / loss / damage / correction), "Por

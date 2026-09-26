@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { CalendarRange, ShoppingCart, TrendingUp, Wallet, Warehouse } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { Alert, Page, Tabs, useErrorText, useUrlState } from '@/ui';
+import { Alert, Page, SegmentedControl, Tabs, useErrorText, useUrlState } from '@/ui';
 import {
   allowedGranularities,
   autoGranularity,
@@ -12,7 +12,7 @@ import {
 import { useDashboardSummary } from '../../hooks/queries';
 import { ModuleOff } from '../../components/modules/ModuleOff';
 import { useModules } from '../../hooks/useModules';
-import { useI18n } from '../../i18n/I18nProvider';
+import { useI18n, type TranslationKey } from '../../i18n/I18nProvider';
 import type { PaymentMethod } from '../../lib/types';
 import { CollectionView, type CollectionFilters } from './CollectionView';
 import { DashboardHeader } from './parts';
@@ -33,6 +33,17 @@ const ICONS: Record<View, ReactNode> = {
 
 // Everything the dashboard shows is in the URL (?view=&from=&to=&g=&method=&customer=&weekday=):
 // shareable and reload-safe.
+/** The views by module, in the order of the menu. */
+const AREAS: Array<{ title: TranslationKey; icon: ReactNode; views: View[] }> = [
+  { title: 'nav.groups.commercial', icon: <ShoppingCart />, views: ['sales'] },
+  {
+    title: 'nav.groups.receivables',
+    icon: <Wallet />,
+    views: ['collection', 'portfolio', 'projection'],
+  },
+  { title: 'nav.groups.logistics', icon: <Warehouse />, views: ['purchases'] },
+];
+
 const DEFAULTS = {
   view: '',
   from: '',
@@ -91,6 +102,11 @@ export function DashboardPage() {
 
   // A business without sales, purchases nor collections has nothing to chart.
   if (view === null) return <ModuleOff />;
+  const areas = AREAS.map((item) => ({
+    ...item,
+    views: item.views.filter((candidate) => views.includes(candidate)),
+  })).filter((item) => item.views.length > 0);
+  const area = areas.find((item) => item.views.includes(view)) ?? areas[0]!;
 
   return (
     <Page>
@@ -100,18 +116,33 @@ export function DashboardPage() {
         onRefresh={() => void queryClient.invalidateQueries({ queryKey: ['dashboard'] })}
       />
 
+      {/* First the module (like Reportes), then its views when it has several. */}
       <Tabs
         stretch
         data-tour="dashboard-views"
         label={t('dashboard.tabs.label')}
-        value={view}
-        onChange={(next) => update({ view: next })}
-        items={views.map((item) => ({
-          value: item,
-          label: t(`dashboard.tabs.${item}`),
-          icon: ICONS[item],
+        value={area.title}
+        onChange={(title) =>
+          update({ view: areas.find((item) => item.title === title)?.views[0] ?? view })
+        }
+        items={areas.map((item) => ({
+          value: item.title,
+          label: t(item.title),
+          icon: item.icon,
         }))}
       />
+      {area.views.length > 1 && (
+        <SegmentedControl
+          label={t(area.title)}
+          value={view}
+          onChange={(next) => update({ view: next })}
+          options={area.views.map((item) => ({
+            value: item,
+            label: t(`dashboard.tabs.${item}`),
+            icon: ICONS[item],
+          }))}
+        />
+      )}
       <p className="-mt-2 text-sm text-muted">{t(`dashboard.tabs.hints.${view}`)}</p>
 
       {summary.error && modules.collections && (
